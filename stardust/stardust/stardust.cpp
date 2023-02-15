@@ -6,6 +6,9 @@
 #include "insertables/graphics.h"
 #include "insertables/shared_palettes.h"
 #include "insertables/overworld.h"
+#include "insertables/title_screen.h"
+#include "insertables/global_exanimation.h"
+#include "insertables/credits.h"
 
 #include "stardust_exception.h"
 
@@ -16,12 +19,18 @@ int main(int argc, const char* argv[]) {
 		ExGraphics exgfx{ "./LunarMagic.exe", "./temp.smc", "./hack.smc" };
 		Graphics gfx{ "./LunarMagic.exe", "./temp.smc", "./hack.smc" };
 		SharedPalettes shared_palettes{ "./LunarMagic.exe", "./temp.smc", "./shared.pal" };
-		Overworld overworld{ "./LunarMagic.exe", "flips.exe", "./clean.smc", "./temp.smc", "./ow.bps" };
+		Overworld overworld{ "./flips.exe", "./clean.smc", "./LunarMagic.exe", "./temp.smc", "./ow.bps" };
+		TitleScreen title{ "./flips.exe", "./clean.smc", "./LunarMagic.exe", "./temp.smc", "./ow.bps" };
+		Credits cred{ "./flips.exe", "./clean.smc", "./LunarMagic.exe", "./temp.smc", "./ow.bps" };
+		GlobalExAnimation ex{ "./flips.exe", "./clean.smc", "./LunarMagic.exe", "./temp.smc", "./ow.bps" };
 
 		exgfx.insert();
 		gfx.insert();
 		shared_palettes.insert();
 		overworld.insert();
+		title.insert();
+		ex.insert();
+		cred.insert();
 	}
 	catch (const StardustException& e) {
 		spdlog::error(e.what());

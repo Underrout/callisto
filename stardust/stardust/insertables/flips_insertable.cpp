@@ -1,22 +1,33 @@
 #include "flips_insertable.h"
 
 namespace stardust {
-	FlipsInsertable::FlipsInsertable(const fs::path& flips_path, const fs::path& clean_rom_path, 
-		const fs::path& lunar_magic_path, const fs::path& temporary_rom_path) 
+	FlipsInsertable::FlipsInsertable(const fs::path& flips_path, const fs::path& clean_rom_path,
+		const fs::path& lunar_magic_path, const fs::path& temporary_rom_path,
+		const fs::path& bps_patch_path)
 		: LunarMagicInsertable(lunar_magic_path, temporary_rom_path), flips_path(flips_path), 
-		clean_rom_path(clean_rom_path)
+		clean_rom_path(clean_rom_path), bps_patch_path(bps_patch_path)
 	{
 		if (!fs::exists(flips_path)) {
 			throw ToolNotFoundException(fmt::format(
 				"FLIPS not found at {}",
 				flips_path.string()
 			));
-		} 
+		}
 
 		if (!fs::exists(clean_rom_path)) {
 			throw NotFoundException(fmt::format(
 				"Clean ROM not found at {}",
 				clean_rom_path.string()
+			));
+		}
+	}
+
+	void FlipsInsertable::checkPatchExists() const {
+		if (!fs::exists(bps_patch_path)) {
+			throw ResourceNotFoundException(fmt::format(
+				"{} BPS patch not found at {}",
+				getResourceName(),
+				bps_patch_path.string()
 			));
 		}
 	}
@@ -44,5 +55,88 @@ namespace stardust {
 		}
 
 		return exit_code;
+	}
+
+	fs::path FlipsInsertable::getTemporaryPatchedRomPath() const {
+		return temporary_rom_path.stem().string()
+			+ getTemporaryPatchedRomPostfix()
+			+ temporary_rom_path.extension().string();
+	}
+
+	fs::path FlipsInsertable::createTemporaryPatchedRom() const {
+		spdlog::debug(fmt::format(
+			"Creating temporary {} ROM from BPS patch at {}",
+			getResourceName(),
+			bps_patch_path.string()
+		));
+
+		const auto rom_path{ getTemporaryPatchedRomPath() };
+		const auto result{ bpsToRom(bps_patch_path, rom_path) };
+
+		if (result == 0) {
+			spdlog::debug("Successfully created overworld ROM");
+		}
+		else {
+			throw InsertionException(std::format(
+				"Failed to create temporary {} ROM at {} "
+				"from BPS patch at {} using the clean ROM from {}",
+				getResourceName(),
+				rom_path.string(),
+				bps_patch_path.string(),
+				clean_rom_path.string()
+			));
+		}
+
+		return rom_path;
+	}
+
+	void FlipsInsertable::deleteTemporaryPatchedRom(const fs::path& temporary_patch_path) const {
+		try {
+			fs::remove(temporary_patch_path);
+		}
+		catch (const fs::filesystem_error&) {
+			spdlog::warn(fmt::format(
+				"Failed to delete temporary {} ROM {}",
+				getResourceName(),
+				temporary_patch_path.string()
+			));
+		}
+	}
+
+	void FlipsInsertable::insert() {
+		spdlog::info(fmt::format("Inserting {}", getResourceName()));
+		spdlog::debug(fmt::format(
+			"Inserting {} from BPS patch {} into temporary ROM {}",
+			getResourceName(),
+			bps_patch_path.string(),
+			temporary_rom_path.string()
+		));
+
+		const auto temporary_patched_rom_path{ createTemporaryPatchedRom() };
+		const auto transfer_result{ callLunarMagic(
+			getLunarMagicFlag(),
+			temporary_rom_path.string(),
+			temporary_patched_rom_path.string()
+		) };
+
+		deleteTemporaryPatchedRom(temporary_patched_rom_path);
+
+		if (transfer_result == 0) {
+			spdlog::info(fmt::format("Successfully inserted {}!", getResourceName()));
+			spdlog::debug(fmt::format(
+				"Successfully transferred {} from {} to temporary ROM {}",
+				getResourceName(),
+				temporary_patched_rom_path.string(),
+				temporary_rom_path.string()
+			));
+		}
+		else {
+			throw InsertionException(fmt::format(
+				"Failed to transfer {} from {} to temporary ROM {}",
+				getResourceName(),
+				temporary_patched_rom_path.string(),
+				temporary_rom_path.string()
+			));
+		}
 	}
 }

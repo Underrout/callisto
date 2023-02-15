@@ -9,25 +9,25 @@
 #include "../insertion_exception.h"
 
 namespace stardust {
-	class Overworld : public FlipsInsertable {
+	class TitleScreen : public FlipsInsertable {
 	private:
 		inline std::string getTemporaryPatchedRomPostfix() const {
-			return "_overworld";
+			return "_title_screen";
 		}
 
 		inline std::string getLunarMagicFlag() const {
-			return "-TransferOverworld";
+			return "-TransferTitleScreen";
 		}
 
 		inline std::string getResourceName() const {
-			return "Overworld";
+			return "Title Screen";
 		}
 
 	public:
-		Overworld(const fs::path& flips_path, const fs::path& clean_rom_path,
+		TitleScreen(const fs::path& flips_path, const fs::path& clean_rom_path,
 			const fs::path& lunar_magic_path, const fs::path& temporary_rom_path,
-			const fs::path& overworld_bps_patch_path) 
-			: FlipsInsertable(flips_path, clean_rom_path, lunar_magic_path, temporary_rom_path, overworld_bps_patch_path) 
+			const fs::path& title_screen_bps_patch_path)
+			: FlipsInsertable(flips_path, clean_rom_path, lunar_magic_path, temporary_rom_path, title_screen_bps_patch_path) 
 		{
 			checkPatchExists();
 		}

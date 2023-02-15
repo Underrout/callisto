@@ -10,6 +10,7 @@
 
 #include "lunar_magic_insertable.h"
 #include "../not_found_exception.h"
+#include "../insertion_exception.h"
 #include "rom_insertable.h"
 
 namespace bp = boost::process;
@@ -20,10 +21,25 @@ namespace stardust {
 	protected:
 		const fs::path flips_path;
 		const fs::path clean_rom_path;
+		const fs::path bps_patch_path;
 
-		FlipsInsertable(const fs::path& flips_path, const fs::path& clean_rom_path, 
-			const fs::path& lunar_magic_path, const fs::path& temporary_rom_path);
+		fs::path getTemporaryPatchedRomPath() const;
+		fs::path createTemporaryPatchedRom() const;
+		void deleteTemporaryPatchedRom(const fs::path& patched_rom_path) const;
+
+		virtual inline std::string getTemporaryPatchedRomPostfix() const = 0;
+		virtual inline std::string getLunarMagicFlag() const = 0;
+		virtual inline std::string getResourceName() const = 0;
 
 		int bpsToRom(const fs::path& bps_path, const fs::path& output_rom_path) const;
+
+		void checkPatchExists() const;
+
+		FlipsInsertable(const fs::path& flips_path, const fs::path& clean_rom_path,
+			const fs::path& lunar_magic_path, const fs::path& temporary_rom_path,
+			const fs::path& bps_patch_path);
+
+	public:
+		void insert() override;
 	};
 }
