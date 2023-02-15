@@ -21,14 +21,28 @@ namespace stardust {
 		}
 	}
 
-	int FlipsInsertable::bpsToRom(const fs::path& bps_path, const fs::path& output_rom_path) {
+	int FlipsInsertable::bpsToRom(const fs::path& bps_path, const fs::path& output_rom_path) const {
 		spdlog::debug(fmt::format(
 			"Creating ROM {} from {} with clean ROM {}",
 			output_rom_path.string(),
 			bps_path.string(),
 			clean_rom_path.string()
 		));
-		return bp::system(flips_path.string(), "--apply", bps_path.string(),
-			clean_rom_path.string(), output_rom_path.string());
+		int exit_code{ bp::system(flips_path.string(), "--apply", bps_path.string(),
+			clean_rom_path.string(), output_rom_path.string()) };
+
+		if (exit_code == 0) {
+			spdlog::debug(fmt::format("Successfully patched to {}", output_rom_path.string()));
+		}
+		else {
+			spdlog::debug(fmt::format(
+				"Failed to create ROM {} from BPS patch {} with exit code {}",
+				output_rom_path.string(), 
+				bps_path.string(),
+				exit_code
+			));
+		}
+
+		return exit_code;
 	}
 }

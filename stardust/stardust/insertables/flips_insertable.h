@@ -24,6 +24,6 @@ namespace stardust {
 		FlipsInsertable(const fs::path& flips_path, const fs::path& clean_rom_path, 
 			const fs::path& lunar_magic_path, const fs::path& temporary_rom_path);
 
-		int bpsToRom(const fs::path& bps_path, const fs::path& output_rom_path);
+		int bpsToRom(const fs::path& bps_path, const fs::path& output_rom_path) const;
 	};
 }
