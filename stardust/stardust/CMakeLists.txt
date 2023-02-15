@@ -7,7 +7,7 @@ add_executable (stardust "stardust.cpp" "stardust.h" "insertable.h"
 "stardust_exception.h" "insertion_exception.h" "insertables/graphics.h" 
 "insertables/graphics.cpp" "insertables/exgraphics.h" "insertables/exgraphics.cpp" 
 "not_found_exception.h" "insertables/lunar_magic_insertable.h" "insertables/lunar_magic_insertable.cpp" 
-"insertables/rom_insertable.h" "insertables/shared_palettes.h" "insertables/shared_palettes.cpp")
+"insertables/rom_insertable.h" "insertables/shared_palettes.h" "insertables/shared_palettes.cpp" "insertables/flips_insertable.h" "insertables/flips_insertable.cpp")
 
 set_property(TARGET stardust PROPERTY CXX_STANDARD 20)
 
