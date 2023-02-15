@@ -17,7 +17,7 @@ namespace stardust {
 	}
 
 	void ExGraphics::createTemporaryExGraphicsFolder() const {
-		if (!fs::equivalent(temporary_exgraphics_folder_path, project_exgraphics_folder_path)) {
+		if (temporary_exgraphics_folder_path != project_exgraphics_folder_path) {
 			spdlog::debug(fmt::format(
 				"Copying project ExGraphics folder {} to temporary ExGraphics folder {}",
 				project_exgraphics_folder_path.string(),
@@ -42,7 +42,7 @@ namespace stardust {
 	}
 
 	void ExGraphics::deleteTemporaryExGraphicsFolder() const {
-		if (!fs::equivalent(temporary_exgraphics_folder_path, project_exgraphics_folder_path)) {
+		if (temporary_exgraphics_folder_path != project_exgraphics_folder_path) {
 			spdlog::debug(fmt::format(
 				"Deleting temporary ExGraphics folder {}",
 				temporary_exgraphics_folder_path.string()

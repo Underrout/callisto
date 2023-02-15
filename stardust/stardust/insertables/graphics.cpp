@@ -17,7 +17,7 @@ namespace stardust {
 	}
 
 	void Graphics::createTemporaryGraphicsFolder() const {
-		if (!fs::equivalent(temporary_graphics_folder_path, project_graphics_folder_path)) {
+		if (temporary_graphics_folder_path != project_graphics_folder_path) {
 			spdlog::debug(fmt::format(
 				"Copying project Graphics folder {} to temporary Graphics folder {}",
 				project_graphics_folder_path.string(),
@@ -42,7 +42,7 @@ namespace stardust {
 	}
 
 	void Graphics::deleteTemporaryGraphicsFolder() const {
-		if (!fs::equivalent(temporary_graphics_folder_path, project_graphics_folder_path)) {
+		if (temporary_graphics_folder_path != project_graphics_folder_path) {
 			spdlog::debug(fmt::format(
 				"Deleting temporary Graphics folder {}",
 				temporary_graphics_folder_path.string()
