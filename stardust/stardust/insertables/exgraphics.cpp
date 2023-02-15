@@ -4,10 +4,16 @@ namespace stardust {
 	const char* ExGraphics::EXGRAPHICS_FOLDER_NAME = "ExGraphics";
 
 	ExGraphics::ExGraphics(const fs::path& lunar_magic_path, const fs::path& temporary_rom_path, const fs::path& output_rom_path)
-		: lunar_magic_path(lunar_magic_path), project_exgraphics_folder_path(output_rom_path.parent_path() / EXGRAPHICS_FOLDER_NAME),
-		temporary_exgraphics_folder_path(temporary_rom_path.parent_path() / EXGRAPHICS_FOLDER_NAME), temporary_rom_path(temporary_rom_path)
+		: LunarMagicInsertable(lunar_magic_path, temporary_rom_path),
+		project_exgraphics_folder_path(output_rom_path.parent_path() / EXGRAPHICS_FOLDER_NAME),
+		temporary_exgraphics_folder_path(temporary_rom_path.parent_path() / EXGRAPHICS_FOLDER_NAME)
 	{
-
+		if (!fs::exists(project_exgraphics_folder_path)) {
+			throw ResourceNotFoundException(fmt::format(
+				"ExGraphics folder not found at {}",
+				project_exgraphics_folder_path.string()
+			));
+		}
 	}
 
 	void ExGraphics::createTemporaryExGraphicsFolder() const {
@@ -68,13 +74,12 @@ namespace stardust {
 			temporary_rom_path.string()
 		));
 
-		// TODO how does linux/mac do this? wine?
-		const auto exit_code{ bp::system(lunar_magic_path.string(), "-ImportExGFX", temporary_rom_path.string())};
+		const auto exit_code{ callLunarMagic("-ImportExGFX", temporary_rom_path.string())};
 
 		deleteTemporaryExGraphicsFolder();
 
 		if (exit_code == 0) {
-			spdlog::info("Successfully inserted Graphics!");
+			spdlog::info("Successfully inserted ExGraphics!");
 			spdlog::debug(fmt::format(
 				"Successfully inserted ExGraphics from folder {} into temporary ROM {}",
 				project_exgraphics_folder_path.string(),

@@ -3,7 +3,11 @@
 #
 
 # Add source to this project's executable.
-add_executable (stardust "stardust.cpp" "stardust.h" "insertable.h" "stardust_exception.h" "insertion_exception.h" "insertables/graphics.h" "insertables/graphics.cpp" "insertables/exgraphics.h" "insertables/exgraphics.cpp")
+add_executable (stardust "stardust.cpp" "stardust.h" "insertable.h" 
+"stardust_exception.h" "insertion_exception.h" "insertables/graphics.h" 
+"insertables/graphics.cpp" "insertables/exgraphics.h" "insertables/exgraphics.cpp" 
+"not_found_exception.h" "insertables/lunar_magic_insertable.h" "insertables/lunar_magic_insertable.cpp" 
+"insertables/rom_insertable.h" "insertables/shared_palettes.h" "insertables/shared_palettes.cpp")
 
 set_property(TARGET stardust PROPERTY CXX_STANDARD 20)
 

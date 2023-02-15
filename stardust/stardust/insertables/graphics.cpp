@@ -4,10 +4,16 @@ namespace stardust {
 	const char* Graphics::GRAPHICS_FOLDER_NAME = "Graphics";
 
 	Graphics::Graphics(const fs::path& lunar_magic_path, const fs::path& temporary_rom_path, const fs::path& output_rom_path)
-		: lunar_magic_path(lunar_magic_path), project_graphics_folder_path(output_rom_path.parent_path() / GRAPHICS_FOLDER_NAME), 
-		temporary_graphics_folder_path(temporary_rom_path.parent_path() / GRAPHICS_FOLDER_NAME), temporary_rom_path(temporary_rom_path)
+		: LunarMagicInsertable(lunar_magic_path, temporary_rom_path), 
+		project_graphics_folder_path(output_rom_path.parent_path() / GRAPHICS_FOLDER_NAME),
+		temporary_graphics_folder_path(temporary_rom_path.parent_path() / GRAPHICS_FOLDER_NAME)
 	{
-
+		if (!fs::exists(project_graphics_folder_path)) {
+			throw ResourceNotFoundException(fmt::format(
+				"Graphics folder not found at {}",
+				project_graphics_folder_path.string()
+			));
+		}
 	}
 
 	void Graphics::createTemporaryGraphicsFolder() const {
@@ -67,8 +73,7 @@ namespace stardust {
 			temporary_rom_path.string()
 		));
 
-		// TODO how does linux/mac do this? wine?
-		const auto exit_code{ bp::system(lunar_magic_path.string(), "-ImportGFX", temporary_rom_path.string())};
+		const auto exit_code{ callLunarMagic("-ImportGFX", temporary_rom_path.string())};
 
 		deleteTemporaryGraphicsFolder();
 
