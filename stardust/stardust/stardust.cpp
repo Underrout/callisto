@@ -10,6 +10,7 @@
 #include "insertables/global_exanimation.h"
 #include "insertables/credits.h"
 #include "insertables/title_moves.h"
+#include "insertables/level.h"
 
 #include "stardust_exception.h"
 
@@ -25,6 +26,7 @@ int main(int argc, const char* argv[]) {
 		Credits cred{ "./flips.exe", "./clean.smc", "./LunarMagic.exe", "./temp.smc", "./ow.bps" };
 		GlobalExAnimation ex{ "./flips.exe", "./clean.smc", "./LunarMagic.exe", "./temp.smc", "./ow.bps" };
 		TitleMoves title_moves{ "./LunarMagic.exe", "./temp.smc", "./title.zst" };
+		Level level{ "./LunarMagic.exe", "./temp.smc", "./level.mwl" };
 
 		exgfx.insert();
 		gfx.insert();
@@ -33,7 +35,8 @@ int main(int argc, const char* argv[]) {
 		title.insert();
 		ex.insert();
 		cred.insert();
-		title_moves.insert();
+		// title_moves.insert();
+		level.insert();
 	}
 	catch (const StardustException& e) {
 		spdlog::error(e.what());
