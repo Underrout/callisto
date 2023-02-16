@@ -11,6 +11,7 @@
 #include "insertables/credits.h"
 #include "insertables/title_moves.h"
 #include "insertables/level.h"
+#include "insertables/binary_map16.h"
 
 #include "stardust_exception.h"
 
@@ -27,6 +28,7 @@ int main(int argc, const char* argv[]) {
 		GlobalExAnimation ex{ "./flips.exe", "./clean.smc", "./LunarMagic.exe", "./temp.smc", "./ow.bps" };
 		TitleMoves title_moves{ "./LunarMagic.exe", "./temp.smc", "./title.zst" };
 		Level level{ "./LunarMagic.exe", "./temp.smc", "./level.mwl" };
+		BinaryMap16 binary_map16{ "./LunarMagic.exe", "./temp.smc", "./all.map16" };
 
 		exgfx.insert();
 		gfx.insert();
@@ -37,6 +39,7 @@ int main(int argc, const char* argv[]) {
 		cred.insert();
 		// title_moves.insert();
 		level.insert();
+		binary_map16.insert();
 	}
 	catch (const StardustException& e) {
 		spdlog::error(e.what());
