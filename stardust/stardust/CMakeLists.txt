@@ -9,7 +9,7 @@ add_executable (stardust "stardust.cpp" "stardust.h" "insertable.h"
 "not_found_exception.h" "insertables/lunar_magic_insertable.h" "insertables/lunar_magic_insertable.cpp" 
 "insertables/rom_insertable.h" "insertables/shared_palettes.h" "insertables/shared_palettes.cpp" 
 "insertables/flips_insertable.h" "insertables/flips_insertable.cpp" "insertables/overworld.h" 
- "insertables/title_screen.h"  "insertables/global_exanimation.h" "insertables/credits.h")
+ "insertables/title_screen.h"  "insertables/global_exanimation.h" "insertables/credits.h" "insertables/title_moves.h" "insertables/title_moves.cpp")
 
 set_property(TARGET stardust PROPERTY CXX_STANDARD 20)
 

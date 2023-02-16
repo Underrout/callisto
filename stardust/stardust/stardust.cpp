@@ -9,6 +9,7 @@
 #include "insertables/title_screen.h"
 #include "insertables/global_exanimation.h"
 #include "insertables/credits.h"
+#include "insertables/title_moves.h"
 
 #include "stardust_exception.h"
 
@@ -23,6 +24,7 @@ int main(int argc, const char* argv[]) {
 		TitleScreen title{ "./flips.exe", "./clean.smc", "./LunarMagic.exe", "./temp.smc", "./ow.bps" };
 		Credits cred{ "./flips.exe", "./clean.smc", "./LunarMagic.exe", "./temp.smc", "./ow.bps" };
 		GlobalExAnimation ex{ "./flips.exe", "./clean.smc", "./LunarMagic.exe", "./temp.smc", "./ow.bps" };
+		TitleMoves title_moves{ "./LunarMagic.exe", "./temp.smc", "./title.zst" };
 
 		exgfx.insert();
 		gfx.insert();
@@ -31,6 +33,7 @@ int main(int argc, const char* argv[]) {
 		title.insert();
 		ex.insert();
 		cred.insert();
+		title_moves.insert();
 	}
 	catch (const StardustException& e) {
 		spdlog::error(e.what());
