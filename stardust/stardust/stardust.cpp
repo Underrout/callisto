@@ -12,6 +12,7 @@
 #include "insertables/title_moves.h"
 #include "insertables/level.h"
 #include "insertables/binary_map16.h"
+#include "insertables/text_map16.h"
 
 #include "stardust_exception.h"
 
@@ -29,6 +30,7 @@ int main(int argc, const char* argv[]) {
 		TitleMoves title_moves{ "./LunarMagic.exe", "./temp.smc", "./title.zst" };
 		Level level{ "./LunarMagic.exe", "./temp.smc", "./level.mwl" };
 		BinaryMap16 binary_map16{ "./LunarMagic.exe", "./temp.smc", "./all.map16" };
+		TextMap16 text_map16{ "./LunarMagic.exe", "./temp.smc", "./map16_folder", "./cli.exe" };
 
 		exgfx.insert();
 		gfx.insert();
@@ -40,6 +42,7 @@ int main(int argc, const char* argv[]) {
 		// title_moves.insert();
 		level.insert();
 		binary_map16.insert();
+		text_map16.insert();
 	}
 	catch (const StardustException& e) {
 		spdlog::error(e.what());
