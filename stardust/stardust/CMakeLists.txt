@@ -3,7 +3,15 @@
 #
 
 # Add source to this project's executable.
-add_executable (stardust "stardust.cpp" "stardust.h" "insertable.h" "stardust_exception.h" "insertion_exception.h")
+add_executable (stardust "stardust.cpp" "stardust.h" "insertable.h" 
+"stardust_exception.h" "insertion_exception.h" "insertables/graphics.h" 
+"insertables/graphics.cpp" "insertables/exgraphics.h" "insertables/exgraphics.cpp" 
+"not_found_exception.h" "insertables/lunar_magic_insertable.h" "insertables/lunar_magic_insertable.cpp" 
+"insertables/rom_insertable.h" "insertables/shared_palettes.h" "insertables/shared_palettes.cpp" 
+"insertables/flips_insertable.h" "insertables/flips_insertable.cpp" "insertables/overworld.h" 
+ "insertables/title_screen.h"  "insertables/global_exanimation.h" "insertables/credits.h" "insertables/title_moves.h" "insertables/title_moves.cpp" "insertables/level.h" "insertables/level.cpp" "insertables/binary_map16.h" "insertables/binary_map16.cpp" "insertables/text_map16.h" "insertables/text_map16.cpp")
+
+set_property(TARGET stardust PROPERTY CXX_STANDARD 20)
 
 include(FetchContent)
 FetchContent_Declare(
@@ -53,14 +61,14 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(spdlog)
 
-set(BOOST_INCLUDE_LIBRARIES process)
-set(BOOST_ENABLE_CMAKE ON)
-FetchContent_Declare(
-        Boost
-        GIT_REPOSITORY https://github.com/boostorg/boost.git
-        GIT_TAG boost-1.81.0
+set(Boost_USE_STATIC_LIBS ON)
+
+find_package(Boost 1.79.0 REQUIRED
+    COMPONENTS
+        system
+        filesystem
+        thread
 )
-FetchContent_MakeAvailable(Boost)
 
 FetchContent_Declare(
         fmt
@@ -73,11 +81,7 @@ target_link_libraries(stardust PRIVATE nlohmann_json::nlohmann_json)
 target_link_libraries(stardust PUBLIC CLI11::CLI11)
 target_link_libraries(stardust PUBLIC toml11::toml11)
 target_link_libraries(stardust PUBLIC spdlog::spdlog)
-target_link_libraries(stardust PRIVATE Boost::process)
+target_link_libraries(stardust PRIVATE Boost::system Boost::filesystem Boost::thread)
 target_link_libraries(stardust PRIVATE fmt::fmt)
-
-if (CMAKE_VERSION VERSION_GREATER 3.12)
-  set_property(TARGET stardust PROPERTY CXX_STANDARD 20)
-endif()
 
 # TODO: Add tests and install targets if needed.
