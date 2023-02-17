@@ -14,6 +14,8 @@
 #include "insertables/binary_map16.h"
 #include "insertables/text_map16.h"
 
+#include "insertables/pixi.h"
+
 #include "stardust_exception.h"
 
 using namespace stardust;
@@ -31,6 +33,7 @@ int main(int argc, const char* argv[]) {
 		Level level{ "./LunarMagic.exe", "./temp.smc", "./level.mwl" };
 		BinaryMap16 binary_map16{ "./LunarMagic.exe", "./temp.smc", "./all.map16" };
 		TextMap16 text_map16{ "./LunarMagic.exe", "./temp.smc", "./map16_folder", "./cli.exe" };
+		Pixi pixi{ "./pixi/pixi.exe", "./temp.smc", "-l ./pixi/list.txt" };
 
 		exgfx.insert();
 		gfx.insert();
@@ -43,6 +46,7 @@ int main(int argc, const char* argv[]) {
 		level.insert();
 		binary_map16.insert();
 		text_map16.insert();
+		pixi.insert();
 	}
 	catch (const StardustException& e) {
 		spdlog::error(e.what());
