@@ -1,5 +1,7 @@
 ﻿#include <spdlog/spdlog.h>
 
+// #include <conio.h>
+
 #include "stardust.h"
 
 #include "insertables/exgraphics.h"
@@ -14,6 +16,7 @@
 #include "insertables/binary_map16.h"
 #include "insertables/text_map16.h"
 #include "insertables/external_tool.h"
+#include "insertables/patch.h"
 
 #include "insertables/pixi.h"
 
@@ -22,6 +25,10 @@
 using namespace stardust;
 
 int main(int argc, const char* argv[]) {
+	spdlog::set_level(spdlog::level::debug);
+
+	// getch();
+
 	try {
 		ExGraphics exgfx{"./LunarMagic.exe", "./temp.smc", "./hack.smc"};
 		Graphics gfx{ "./LunarMagic.exe", "./temp.smc", "./hack.smc" };
@@ -37,6 +44,7 @@ int main(int argc, const char* argv[]) {
 		Pixi pixi{ "./", "./temp.smc", "-l ./list.txt -d" };
 		ExternalTool uberasm{ "UberASM", fs::canonical("./uberasm/UberASMTool.exe"), "list.txt ../temp.smc" };
 		ExternalTool addmusick{ "AddMusicK", fs::canonical("./addmusick/AddMusicK.exe"), "../temp.smc" };
+		Patch patch{ "./", "./temp.smc", fs::canonical("./patch.asm") };
 
 		exgfx.insert();
 		gfx.insert();
@@ -52,6 +60,7 @@ int main(int argc, const char* argv[]) {
 		pixi.insert();
 		uberasm.insert();
 		addmusick.insert();
+		patch.insert();
 	}
 	catch (const StardustException& e) {
 		spdlog::error(e.what());

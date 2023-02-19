@@ -14,7 +14,7 @@ namespace stardust {
 
 		const auto prev_folder{ fs::current_path() };
 		fs::current_path(pixi_folder_path);
-		const auto exit_code{ pixi_run(char_args.size(), &char_args[0], false)};
+		const auto exit_code{ pixi_run(char_args.size(), char_args.data(), false)};
 		fs::current_path(prev_folder);
 
 		int pixi_output_size;
