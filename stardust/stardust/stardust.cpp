@@ -22,7 +22,7 @@ using namespace stardust;
 
 int main(int argc, const char* argv[]) {
 	try {
-		ExGraphics exgfx{ "./LunarMagic.exe", "./temp.smc", "./hack.smc" };
+		ExGraphics exgfx{"./LunarMagic.exe", "./temp.smc", "./hack.smc"};
 		Graphics gfx{ "./LunarMagic.exe", "./temp.smc", "./hack.smc" };
 		SharedPalettes shared_palettes{ "./LunarMagic.exe", "./temp.smc", "./shared.pal" };
 		Overworld overworld{ "./flips.exe", "./clean.smc", "./LunarMagic.exe", "./temp.smc", "./ow.bps" };
@@ -33,7 +33,7 @@ int main(int argc, const char* argv[]) {
 		Level level{ "./LunarMagic.exe", "./temp.smc", "./level.mwl" };
 		BinaryMap16 binary_map16{ "./LunarMagic.exe", "./temp.smc", "./all.map16" };
 		TextMap16 text_map16{ "./LunarMagic.exe", "./temp.smc", "./map16_folder", "./cli.exe" };
-		Pixi pixi{ "./pixi/pixi.exe", "./temp.smc", "-l ./pixi/list.txt" };
+		Pixi pixi{ "./", "./temp.smc", "-l ./list.txt -d" };
 
 		exgfx.insert();
 		gfx.insert();
