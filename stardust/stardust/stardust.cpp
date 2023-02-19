@@ -13,6 +13,7 @@
 #include "insertables/level.h"
 #include "insertables/binary_map16.h"
 #include "insertables/text_map16.h"
+#include "insertables/external_tool.h"
 
 #include "insertables/pixi.h"
 
@@ -34,6 +35,8 @@ int main(int argc, const char* argv[]) {
 		BinaryMap16 binary_map16{ "./LunarMagic.exe", "./temp.smc", "./all.map16" };
 		TextMap16 text_map16{ "./LunarMagic.exe", "./temp.smc", "./map16_folder", "./cli.exe" };
 		Pixi pixi{ "./", "./temp.smc", "-l ./list.txt -d" };
+		ExternalTool uberasm{ "UberASM", fs::canonical("./uberasm/UberASMTool.exe"), "list.txt ../temp.smc" };
+		ExternalTool addmusick{ "AddMusicK", fs::canonical("./addmusick/AddMusicK.exe"), "../temp.smc" };
 
 		exgfx.insert();
 		gfx.insert();
@@ -47,8 +50,13 @@ int main(int argc, const char* argv[]) {
 		binary_map16.insert();
 		text_map16.insert();
 		pixi.insert();
+		uberasm.insert();
+		addmusick.insert();
 	}
 	catch (const StardustException& e) {
+		spdlog::error(e.what());
+	}
+	catch (const std::runtime_error& e) {
 		spdlog::error(e.what());
 	}
 }

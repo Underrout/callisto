@@ -13,7 +13,7 @@ add_executable (stardust "stardust.cpp" "stardust.h" "insertable.h"
  "insertables/title_screen.h"  "insertables/global_exanimation.h" "insertables/credits.h" 
  "insertables/title_moves.h" "insertables/title_moves.cpp" "insertables/level.h" "insertables/level.cpp" 
  "insertables/binary_map16.h" "insertables/binary_map16.cpp" "insertables/text_map16.h" "insertables/text_map16.cpp" 
-  "insertables/pixi.cpp" "insertables/pixi.h")
+  "insertables/pixi.cpp" "insertables/pixi.h" "insertables/external_tool.h" "insertables/external_tool.cpp")
 
 set(CMAKE_CXX_STANDARD 20)
 
@@ -116,5 +116,4 @@ target_include_directories(stardust PUBLIC ${pixi_SOURCE_DIR}/src)
 add_custom_command(TARGET stardust POST_BUILD 
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
     $<TARGET_FILE:asar> $<TARGET_FILE_DIR:stardust>
-    COMMENT "Copying asar dynamic library to output directory"
 )
