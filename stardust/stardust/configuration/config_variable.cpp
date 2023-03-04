@@ -27,14 +27,13 @@ namespace stardust {
 		}
 	}
 
-
 	void IntegerConfigVariable::trySet(toml::value& table, ConfigurationLevel level) {
 		checkNotSet(level);
 
 		auto toml_value{ getTomlValue(table) };
 
 		if (toml_value.has_value()) {
-			values.insert({ level, toml_value.value() });
+			values.insert({ level, static_cast<std::int16_t>(toml_value.value()) });
 		}
 	}
 }

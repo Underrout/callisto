@@ -43,15 +43,15 @@ int main(int argc, const char* argv[]) {
 		{"trans", "rights"}
 	};
 
-	config.project_root.trySet(tom, ConfigurationLevel::PROJECT, ".", user_variables);
-	config.rom_size.trySet(tom, ConfigurationLevel::PROJECT);
-	config.config_name.trySet(tom, ConfigurationLevel::PROJECT, user_variables);
-
-	std::cout << config.project_root.getOrThrow().string() << std::endl;
-	std::cout << config.config_name.getOrThrow() << std::endl;
-	std::cout << config.rom_size.getOrThrow() << std::endl;
-
 	try {
+		config.project_root.trySet(tom, ConfigurationLevel::PROJECT, ".", user_variables);
+		config.rom_size.trySet(tom, ConfigurationLevel::PROJECT);
+		config.config_name.trySet(tom, ConfigurationLevel::PROJECT, user_variables);
+
+		std::cout << config.project_root.getOrThrow().string() << std::endl;
+		std::cout << config.config_name.getOrThrow() << std::endl;
+		std::cout << config.rom_size.getOrThrow() << std::endl;
+
 		ExGraphics exgfx{"./LunarMagic.exe", "./temp.smc", "./hack.smc"};
 		Graphics gfx{ "./LunarMagic.exe", "./temp.smc", "./hack.smc" };
 		SharedPalettes shared_palettes{ "./LunarMagic.exe", "./temp.smc", "./shared.pal" };

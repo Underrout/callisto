@@ -152,7 +152,7 @@ namespace stardust {
 		}
 
 	public:
-		V getOrThrow() const {
+		virtual V getOrThrow() const {
 			if (values.empty()) {
 				throw MissingConfigVariableException(fmt::format(
 					"Configuration variable '{}' not specified",
@@ -163,6 +163,15 @@ namespace stardust {
 			// getting value of largest key, meaning the highest level, i.e. project settings will override user settings, etc. 
 			return std::max_element(values.begin(), values.end(), 
 				[](const auto& v1, const auto& v2) { return v1.first < v2.first; })->second;
+		}
+
+		virtual V getOrDefault(V default_value) const {
+			try {
+				return getOrThrow();
+			}
+			catch (const MissingConfigVariableException&) {
+				return default_value;
+			}
 		}
 
 		bool isSet() const {
