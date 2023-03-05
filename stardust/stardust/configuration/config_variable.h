@@ -179,7 +179,8 @@ namespace stardust {
 		}
 
 		ConfigVariable(const std::vector<std::string>& keys) : keys(keys), 
-			name(std::accumulate(keys.begin(), keys.end(), std::string("."))) {}
+			name(std::accumulate(keys.begin(), keys.end(), std::string(), 
+				[](const auto& s1, const auto& s2) { return s1.empty() ? s2 : s1 + '.' + s2; })) {}
 	};
 
 	class PathConfigVariable : public ConfigVariable<toml::string, fs::path> {
