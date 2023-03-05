@@ -15,7 +15,7 @@ add_executable (stardust "stardust.cpp" "stardust.h" "insertable.h"
  "insertables/binary_map16.h" "insertables/binary_map16.cpp" "insertables/text_map16.h" "insertables/text_map16.cpp" 
   "insertables/pixi.cpp" "insertables/pixi.h" "insertables/external_tool.h" "insertables/external_tool.cpp" "insertables/patch.h" "insertables/patch.cpp"
 "configuration/config_exception.h" "configuration/config_variable.cpp" "configuration/config_variable.h" "configuration/configuration.h"
-"configuration/configuration_level.h")
+"configuration/configuration_level.h" "configuration/configuration.cpp")
 
 set(CMAKE_CXX_STANDARD 20)
 

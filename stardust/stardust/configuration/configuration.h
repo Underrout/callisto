@@ -1,17 +1,23 @@
 #pragma once
 
 #include <filesystem>
+#include <map>
 
 #include <toml.hpp>
 #include <fmt/core.h>
 
 #include "config_variable.h"
+#include "config_exception.h"
 
 namespace fs = std::filesystem;
 
 namespace stardust {
 	class Configuration {
+	private:
+
 	public:
+		static std::map<std::string, std::string> parseUserVariables(const std::vector<toml::value>& tables,
+			const std::map<std::string, std::string>& previous_user_variables = {});
 		StringConfigVariable config_name{ {"settings", "config_name"} };
 		PathConfigVariable project_root{ {"settings", "project_root"} };
 		IntegerConfigVariable rom_size{ {"settings", "rom_size"} };

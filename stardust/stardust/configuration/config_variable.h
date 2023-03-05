@@ -26,9 +26,40 @@ namespace stardust {
 		const std::vector<std::string> keys;
 		std::unordered_map<ConfigurationLevel, V> values{};
 
-		std::string formatUserVariables(const std::string& str, 
-			const std::map<std::string, std::string>& user_variables) const {
-			
+		std::optional<toml::value> getTomlValue(toml::value& table) const {
+			auto value{ std::ref(table) };
+
+			try {
+				for (const auto& key : keys) {
+					value = std::ref(toml::find(value.get(), key));
+				}
+			}
+			catch (const std::out_of_range&) {
+				// at least one of the keys was not present
+				return std::nullopt;
+			}
+
+			return value.get();
+		}
+
+		void checkNotSet(ConfigurationLevel level, const toml::value& value) const {
+			if (values.count(level) != 0) {
+				throw TomlException(value, fmt::format(
+					"Configuration variable '{}' specified multiple times",
+					name
+				),
+					{},
+					"Configuration variables may not be specified multiple times at the same level"
+				);
+			}
+		}
+
+	public:
+		static std::string formatUserVariables(const toml::value& value,
+			const std::map<std::string, std::string>& user_variables) {
+
+			std::string str{ toml::get<toml::string>(value) };
+
 			std::ostringstream out{};
 			std::ostringstream variable_name{};
 
@@ -40,8 +71,10 @@ namespace stardust {
 
 				if (character == '{') {
 					if (i == str.size() - 1) {
-						throw UserVariableException("Unclosed user variable usage",
-							{ "Close the user variable usage, i.e. instead of '{user_variable' write '{user_variable}'" }, 
+						throw TomlException(
+							value,
+							"Unclosed user variable usage",
+							{ "Close the user variable usage, i.e. instead of '{user_variable' write '{user_variable}'" },
 							"Braces around user variable name must be closed"
 						);
 					}
@@ -49,8 +82,10 @@ namespace stardust {
 
 					if (next_character == '{') {
 						if (parsing_variable_name) {
-							throw UserVariableException("Malformed user variable usage",
-								{ "To escape the '{' and '}' characters, use '{{' and '}}' respectively." }, 
+							throw TomlException(
+								value,
+								"Malformed user variable usage",
+								{ "To escape the '{' and '}' characters, use '{{' and '}}' respectively." },
 								"Cannot use '{' character inside user variable usage"
 							);
 						}
@@ -61,7 +96,9 @@ namespace stardust {
 					}
 					else {
 						if (parsing_variable_name) {
-							throw UserVariableException("Nested user variable usage is not allowed",
+							throw TomlException(
+								value,
+								"Nested user variable usage is not allowed",
 								{ "'{user_variable{user_variable}}' and similar are not valid, did you mean '{user_variable}{user_variable}'?" },
 								"Cannot nest user variable usages inside each other"
 							);
@@ -77,13 +114,16 @@ namespace stardust {
 						const std::string name{ variable_name.str() };
 
 						if (user_variables.count(name) == 0) {
-							throw UserVariableException(fmt::format(
-								"User variable '{}' not found",
-								name
-							),
+							throw TomlException(
+								value,
+								fmt::format(
+									"User variable '{}' not found",
+									name
+								),
 								{
 									"User variables must be specified in a '[variables]' table",
 									"User variables are case-sensitive",
+									"User variables are not shared between files, except project and profile files",
 									"To escape the '{' and '}' characters, use '{{' and '}}' respectively."
 								},
 								fmt::format("'{}' does not exist", name)
@@ -99,7 +139,9 @@ namespace stardust {
 							++i;
 						}
 						else {
-							throw UserVariableException("Malformed user variable usage",
+							throw TomlException(
+								value,
+								"Malformed user variable usage",
 								{ "To escape the '{' and '}' characters, use '{{' and '}}' respectively." },
 								"Invalid '}' character"
 							);
@@ -118,7 +160,9 @@ namespace stardust {
 			}
 
 			if (parsing_variable_name) {
-				throw UserVariableException("Unclosed user variable usage",
+				throw TomlException(
+					value,
+					"Unclosed user variable usage",
 					{ "Close the user variable usage, i.e. instead of '{user_variable' write '{user_variable}'" },
 					"Braces around user variable name must be closed"
 				);
@@ -127,43 +171,6 @@ namespace stardust {
 			return out.str();
 		}
 
-		std::string formatUserVariablesLogFailure(const std::string& str,
-			const std::map<std::string, std::string>& user_variables, const toml::value& value) const {
-			try {
-				return formatUserVariables(str, user_variables);
-			}
-			catch (const UserVariableException& e) {
-				spdlog::error(toml::format_error(e.what(), value, e.comment, e.hints));
-				throw;
-			}
-		}
-
-		std::optional<toml::value> getTomlValue(toml::value& table) const {
-			auto value{ std::ref(table) };
-
-			try {
-				for (const auto& key : keys) {
-					value = std::ref(toml::find(value.get(), key));
-				}
-			}
-			catch (const std::out_of_range&) {
-				// at least one of the keys was not present
-				return std::nullopt;
-			}
-
-			return value.get();
-		}
-
-		void checkNotSet(ConfigurationLevel level) const {
-			if (values.count(level) != 0) {
-				throw DuplicateConfigVariableException(fmt::format(
-					"Configuration variable '{}' specified multiple times",
-					name
-				));
-			}
-		}
-
-	public:
 		virtual V getOrThrow() const {
 			if (values.empty()) {
 				throw MissingConfigVariableException(fmt::format(

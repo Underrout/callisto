@@ -25,6 +25,7 @@
 
 #include "configuration/configuration.h"
 #include "configuration/configuration_level.h"
+#include "configuration/config_exception.h"
 
 using namespace stardust;
 
@@ -34,22 +35,37 @@ int main(int argc, const char* argv[]) {
 	getch();
 
 	try {
-		auto tom{ toml::parse("./config.toml") };
-
 		Configuration config{};
 
-		std::map<std::string, std::string> user_variables{
-			{"lol", "stuff"},
-			{"hella", "HELLA"},
-			{"trans", "rights"},
-			{"patches", "./PATCH3S"}
-		};
+		{
+			auto tom{ toml::parse("./config.toml") };
+			auto tom2{ toml::parse("./config2.toml") };
 
-		config.project_root.trySet(tom, ConfigurationLevel::PROJECT, ".", user_variables);
-		config.rom_size.trySet(tom, ConfigurationLevel::PROJECT);
-		config.config_name.trySet(tom, ConfigurationLevel::PROJECT, user_variables);
-		config.patches.trySet(tom, ConfigurationLevel::PROJECT, ".", user_variables);
-		config.build_order.trySet(tom, ConfigurationLevel::PROJECT, user_variables);
+			const auto vars1{ Configuration::parseUserVariables({ tom }) };
+
+			for (const auto& [key, val] : vars1) {
+				std::cout << key << " = " << val << std::endl;
+			}
+
+
+			for (const auto& [key, val] : Configuration::parseUserVariables({ tom2 }, vars1)) {
+				std::cout << key << " = " << val << std::endl;
+			}
+
+			std::map<std::string, std::string> user_variables{
+				{"lol", "stuff"},
+				{"hella", "HELLA"},
+				{"trans", "rights"},
+				{"patches", "./PATCH3S"}
+			};
+
+			config.project_root.trySet(tom, ConfigurationLevel::PROJECT, ".", user_variables);
+			config.rom_size.trySet(tom, ConfigurationLevel::PROJECT);
+			config.config_name.trySet(tom, ConfigurationLevel::PROJECT, user_variables);
+			config.patches.trySet(tom, ConfigurationLevel::PROJECT, ".", user_variables);
+			config.patches.trySet(tom, ConfigurationLevel::PROFILE, ".", user_variables);
+			config.build_order.trySet(tom, ConfigurationLevel::PROJECT, user_variables);
+		}
 
 		std::cout << config.project_root.getOrThrow().string() << std::endl;
 		std::cout << config.config_name.getOrThrow() << std::endl;
@@ -96,6 +112,12 @@ int main(int argc, const char* argv[]) {
 		patch.insert();
 
 		return 0;
+	}
+	catch (const TomlException2& e) {
+		spdlog::error(toml::format_error(e.what(), e.toml_value, e.comment, e.toml_value2, e.comment2, e.hints));
+	}
+	catch (const TomlException& e) {
+		spdlog::error(toml::format_error(e.what(), e.toml_value, e.comment, e.hints));
 	}
 	catch (const toml::syntax_error& e) {
 		spdlog::error(e.what());
