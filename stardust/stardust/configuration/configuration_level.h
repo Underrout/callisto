@@ -2,8 +2,11 @@
 
 namespace stardust {
 	enum class ConfigurationLevel {
-		USER = 0,
-		PROJECT = 1,
-		PROFILE = 2
+		USER,
+		PROJECT,
+		PROFILE,
+
+		// end of enum marker
+		_COUNT
 	};
 }

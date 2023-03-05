@@ -165,7 +165,7 @@ namespace stardust {
 				[](const auto& v1, const auto& v2) { return v1.first < v2.first; })->second;
 		}
 
-		virtual V getOrDefault(V default_value) const {
+		V getOrDefault(V default_value) const {
 			try {
 				return getOrThrow();
 			}
@@ -202,6 +202,24 @@ namespace stardust {
 	class IntegerConfigVariable : public ConfigVariable<toml::integer, std::int16_t> {
 	public:
 		void trySet(toml::value& table, ConfigurationLevel level);
+
+		using ConfigVariable::ConfigVariable;
+	};
+
+	class StringVectorConfigVariable : public ConfigVariable<toml::array, std::vector<std::string>> {
+	public:
+		void trySet(toml::value& table, ConfigurationLevel level, 
+			const std::map<std::string, std::string>& user_variables);
+
+		using ConfigVariable::ConfigVariable;
+	};
+
+	class ExtendablePathVectorConfigVariable : public ConfigVariable<toml::array, std::vector<fs::path>> {
+	public:
+		void trySet(toml::value& table, ConfigurationLevel level, const fs::path& relative_to,
+			const std::map<std::string, std::string>& user_variables);
+
+		std::vector<fs::path> getOrThrow() const override;
 
 		using ConfigVariable::ConfigVariable;
 	};

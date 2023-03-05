@@ -40,17 +40,28 @@ int main(int argc, const char* argv[]) {
 	std::map<std::string, std::string> user_variables{
 		{"lol", "stuff"},
 		{"hella", "HELLA"},
-		{"trans", "rights"}
+		{"trans", "rights"},
+		{"patches", "./PATCH3S"}
 	};
 
 	try {
 		config.project_root.trySet(tom, ConfigurationLevel::PROJECT, ".", user_variables);
 		config.rom_size.trySet(tom, ConfigurationLevel::PROJECT);
 		config.config_name.trySet(tom, ConfigurationLevel::PROJECT, user_variables);
+		config.patches.trySet(tom, ConfigurationLevel::PROJECT, ".", user_variables);
+		config.build_order.trySet(tom, ConfigurationLevel::PROJECT, user_variables);
 
 		std::cout << config.project_root.getOrThrow().string() << std::endl;
 		std::cout << config.config_name.getOrThrow() << std::endl;
 		std::cout << config.rom_size.getOrThrow() << std::endl;
+
+		for (const auto& patch : config.patches.getOrThrow()) {
+			std::cout << patch << std::endl;
+		}
+
+		for (const auto& order_entry : config.build_order.getOrThrow()) {
+			std::cout << order_entry << std::endl;
+		}
 
 		ExGraphics exgfx{"./LunarMagic.exe", "./temp.smc", "./hack.smc"};
 		Graphics gfx{ "./LunarMagic.exe", "./temp.smc", "./hack.smc" };
