@@ -9,6 +9,7 @@
 #include <iostream>
 #include <sstream>
 
+#include <spdlog/spdlog.h>
 #include <toml.hpp>
 #include <fmt/core.h>
 
@@ -126,7 +127,18 @@ namespace stardust {
 			return out.str();
 		}
 
-		std::optional<T> getTomlValue(toml::value& table) const {
+		std::string formatUserVariablesLogFailure(const std::string& str,
+			const std::map<std::string, std::string>& user_variables, const toml::value& value) const {
+			try {
+				return formatUserVariables(str, user_variables);
+			}
+			catch (const UserVariableException& e) {
+				spdlog::error(toml::format_error(e.what(), value, e.comment, e.hints));
+				throw;
+			}
+		}
+
+		std::optional<toml::value> getTomlValue(toml::value& table) const {
 			auto value{ std::ref(table) };
 
 			try {
@@ -139,7 +151,7 @@ namespace stardust {
 				return std::nullopt;
 			}
 
-			return toml::get<T>(value.get());
+			return value.get();
 		}
 
 		void checkNotSet(ConfigurationLevel level) const {

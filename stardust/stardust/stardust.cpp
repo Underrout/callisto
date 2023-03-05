@@ -33,18 +33,18 @@ int main(int argc, const char* argv[]) {
 
 	getch();
 
-	auto tom{ toml::parse("./config.toml") };
-
-	Configuration config{};
-
-	std::map<std::string, std::string> user_variables{
-		{"lol", "stuff"},
-		{"hella", "HELLA"},
-		{"trans", "rights"},
-		{"patches", "./PATCH3S"}
-	};
-
 	try {
+		auto tom{ toml::parse("./config.toml") };
+
+		Configuration config{};
+
+		std::map<std::string, std::string> user_variables{
+			{"lol", "stuff"},
+			{"hella", "HELLA"},
+			{"trans", "rights"},
+			{"patches", "./PATCH3S"}
+		};
+
 		config.project_root.trySet(tom, ConfigurationLevel::PROJECT, ".", user_variables);
 		config.rom_size.trySet(tom, ConfigurationLevel::PROJECT);
 		config.config_name.trySet(tom, ConfigurationLevel::PROJECT, user_variables);
@@ -96,6 +96,15 @@ int main(int argc, const char* argv[]) {
 		patch.insert();
 
 		return 0;
+	}
+	catch (const toml::syntax_error& e) {
+		spdlog::error(e.what());
+	}
+	catch (const toml::type_error& e) {
+		spdlog::error(e.what());
+	}
+	catch (const toml::internal_error& e) {
+		spdlog::error(e.what());
 	}
 	catch (const StardustException& e) {
 		spdlog::error(e.what());

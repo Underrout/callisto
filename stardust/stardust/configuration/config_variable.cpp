@@ -8,7 +8,9 @@ namespace stardust {
 		const auto toml_value{ getTomlValue(table) };
 
 		if (toml_value.has_value()) {
-			std::string formatted{ formatUserVariables(std::string(toml_value.value()), user_variables) };
+			std::string formatted{ formatUserVariablesLogFailure(
+				toml::get<toml::string>(toml_value.value()), user_variables, toml_value.value())
+			};
 
 			values.insert({ level, fs::absolute(fs::weakly_canonical(relative_to / formatted)) });
 		}
@@ -21,7 +23,9 @@ namespace stardust {
 		const auto toml_value{ getTomlValue(table) };
 
 		if (toml_value.has_value()) {
-			std::string formatted{ formatUserVariables(std::string(toml_value.value()), user_variables) };
+			std::string formatted{ formatUserVariablesLogFailure(
+				toml::get<toml::string>(toml_value.value()), user_variables, toml_value.value())
+			};
 
 			values.insert({ level, formatted });
 		}
@@ -33,7 +37,7 @@ namespace stardust {
 		auto toml_value{ getTomlValue(table) };
 
 		if (toml_value.has_value()) {
-			values.insert({ level, static_cast<std::int16_t>(toml_value.value()) });
+			values.insert({ level, static_cast<std::int16_t>(toml::get<toml::integer>(toml_value.value())) });
 		}
 	}
 
@@ -46,9 +50,9 @@ namespace stardust {
 		if (toml_array.has_value()) {
 			std::vector<fs::path> converted{};
 
-			for (const auto& entry : toml_array.value()) {
+			for (const auto& entry : toml::get<toml::array>(toml_array.value())) {
 				const auto& value{ toml::get<toml::string>(entry) };
-				const auto formatted{ formatUserVariables(value, user_variables) };
+				const auto formatted{ formatUserVariablesLogFailure(value, user_variables, entry) };
 
 				const auto full_path{ fs::absolute(fs::weakly_canonical(relative_to / formatted)) };
 
@@ -91,10 +95,10 @@ namespace stardust {
 		if (toml_array.has_value()) {
 			std::vector<std::string> converted{};
 
-			for (const auto& entry : toml_array.value()) {
+			for (const auto& entry : toml::get<toml::array>(toml_array.value())) {
 				const auto& value{ toml::get<toml::string>(entry) };
 
-				converted.push_back(formatUserVariables(value, user_variables));
+				converted.push_back(formatUserVariablesLogFailure(value, user_variables, entry));
 			}
 
 			values.insert({ level, converted });
