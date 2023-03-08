@@ -26,7 +26,7 @@ namespace stardust {
 		const std::vector<std::string> keys;
 		std::unordered_map<ConfigurationLevel, V> values{};
 
-		std::optional<toml::value> getTomlValue(toml::value& table) const {
+		std::optional<toml::value> getTomlValue(const toml::value& table) const {
 			auto value{ std::ref(table) };
 
 			try {
@@ -184,7 +184,7 @@ namespace stardust {
 				[](const auto& v1, const auto& v2) { return v1.first < v2.first; })->second;
 		}
 
-		V getOrDefault(V default_value) const {
+		V getOrDefault(const V& default_value) const {
 			try {
 				return getOrThrow();
 			}
@@ -204,7 +204,10 @@ namespace stardust {
 
 	class PathConfigVariable : public ConfigVariable<toml::string, fs::path> {
 	public:
-		void trySet(toml::value& table, ConfigurationLevel level, const fs::path& relative_to, 
+		bool trySet(const toml::value& table, ConfigurationLevel level, const PathConfigVariable& relative_to,
+			const std::map<std::string, std::string>& user_variables);
+
+		bool trySet(const toml::value& table, ConfigurationLevel level, const fs::path& relative_to,
 			const std::map<std::string, std::string>& user_variables);
 
 		using ConfigVariable::ConfigVariable;
@@ -212,22 +215,29 @@ namespace stardust {
 
 	class StringConfigVariable : public ConfigVariable<toml::string, std::string> {
 	public:
-		void trySet(toml::value& table, ConfigurationLevel level,
+		bool trySet(const toml::value& table, ConfigurationLevel level,
 			const std::map<std::string, std::string>& user_variables);
+
+		using ConfigVariable::ConfigVariable;
+	};
+
+	class BoolConfigVariable : public ConfigVariable<toml::boolean, bool> {
+	public:
+		bool trySet(const toml::value& table, ConfigurationLevel level);
 
 		using ConfigVariable::ConfigVariable;
 	};
 
 	class IntegerConfigVariable : public ConfigVariable<toml::integer, std::int16_t> {
 	public:
-		void trySet(toml::value& table, ConfigurationLevel level);
+		bool trySet(const toml::value& table, ConfigurationLevel level);
 
 		using ConfigVariable::ConfigVariable;
 	};
 
 	class StringVectorConfigVariable : public ConfigVariable<toml::array, std::vector<std::string>> {
 	public:
-		void trySet(toml::value& table, ConfigurationLevel level, 
+		bool trySet(const toml::value& table, ConfigurationLevel level,
 			const std::map<std::string, std::string>& user_variables);
 
 		using ConfigVariable::ConfigVariable;
@@ -235,7 +245,7 @@ namespace stardust {
 
 	class ExtendablePathVectorConfigVariable : public ConfigVariable<toml::array, std::vector<fs::path>> {
 	public:
-		void trySet(toml::value& table, ConfigurationLevel level, const fs::path& relative_to,
+		bool trySet(const toml::value& table, ConfigurationLevel level, const PathConfigVariable& relative_to,
 			const std::map<std::string, std::string>& user_variables);
 
 		std::vector<fs::path> getOrThrow() const override;

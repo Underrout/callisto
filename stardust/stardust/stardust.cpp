@@ -35,49 +35,19 @@ int main(int argc, const char* argv[]) {
 	getch();
 
 	try {
-		Configuration config{};
+		Configuration::ConfigFileMap config_files{
+				{ ConfigurationLevel::PROJECT, {"./config.toml"}},
+				{ ConfigurationLevel::PROFILE, {}},
+				{ ConfigurationLevel::USER, {}}
+		};
 
-		{
-			auto tom{ toml::parse("./config.toml") };
-			auto tom2{ toml::parse("./config2.toml") };
+		Configuration::VariableFileMap variable_files{
+				{ ConfigurationLevel::PROJECT, {"./config.toml"}},
+				{ ConfigurationLevel::PROFILE, {}},
+				{ ConfigurationLevel::USER, {}}
+		};
 
-			const auto vars1{ Configuration::parseUserVariables({ tom }) };
-
-			for (const auto& [key, val] : vars1) {
-				std::cout << key << " = " << val << std::endl;
-			}
-
-
-			for (const auto& [key, val] : Configuration::parseUserVariables({ tom2 }, vars1)) {
-				std::cout << key << " = " << val << std::endl;
-			}
-
-			std::map<std::string, std::string> user_variables{
-				{"lol", "stuff"},
-				{"hella", "HELLA"},
-				{"trans", "rights"},
-				{"patches", "./PATCH3S"}
-			};
-
-			config.project_root.trySet(tom, ConfigurationLevel::PROJECT, ".", user_variables);
-			config.rom_size.trySet(tom, ConfigurationLevel::PROJECT);
-			config.config_name.trySet(tom, ConfigurationLevel::PROJECT, user_variables);
-			config.patches.trySet(tom, ConfigurationLevel::PROJECT, ".", user_variables);
-			config.patches.trySet(tom, ConfigurationLevel::PROFILE, ".", user_variables);
-			config.build_order.trySet(tom, ConfigurationLevel::PROJECT, user_variables);
-		}
-
-		std::cout << config.project_root.getOrThrow().string() << std::endl;
-		std::cout << config.config_name.getOrThrow() << std::endl;
-		std::cout << config.rom_size.getOrThrow() << std::endl;
-
-		for (const auto& patch : config.patches.getOrThrow()) {
-			std::cout << patch << std::endl;
-		}
-
-		for (const auto& order_entry : config.build_order.getOrThrow()) {
-			std::cout << order_entry << std::endl;
-		}
+		Configuration config{ config_files, variable_files, fs::absolute(".") };
 
 		ExGraphics exgfx{"./LunarMagic.exe", "./temp.smc", "./hack.smc"};
 		Graphics gfx{ "./LunarMagic.exe", "./temp.smc", "./hack.smc" };
