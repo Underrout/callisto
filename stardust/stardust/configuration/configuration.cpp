@@ -8,6 +8,7 @@ namespace stardust {
 		const auto config_files{ parseConfigFiles(config_file_map) };
 
 		discoverProjectRoot(config_files, user_variables, stardust_root_directory);
+		discoverLogFilePath(config_files, user_variables);
 		discoverGenericTools(config_files, user_variables);
 		discoverToolDirectories(config_files, user_variables);
 		discoverEmulators(config_files, user_variables);
@@ -101,6 +102,15 @@ namespace stardust {
 			for (const auto& config : config_file_map.at(config_level)) {
 				project_root.trySet(config, config_level, stardust_root_directory,
 					user_variable_map.at(config_level));
+			}
+		}
+	}
+
+	void Configuration::discoverLogFilePath(const ParsedConfigFileMap& config_file_map, const UserVariableMap& user_variable_map) {
+		for (int i = 0; i != static_cast<int>(ConfigurationLevel::_COUNT); ++i) {
+			const auto config_level{ static_cast<ConfigurationLevel>(i) };
+			for (const auto& config : config_file_map.at(config_level)) {
+				log_file.trySet(config, config_level, project_root, user_variable_map.at(config_level));
 			}
 		}
 	}

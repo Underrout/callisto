@@ -30,6 +30,7 @@ namespace stardust {
 
 		void discoverProjectRoot(const ParsedConfigFileMap& config_file_map, const UserVariableMap& user_variable_map,
 			const fs::path& stardust_root_directory);
+		void discoverLogFilePath(const ParsedConfigFileMap& config_file_map, const UserVariableMap& user_variable_map);
 		void discoverGenericTools(const ParsedConfigFileMap& config_file_map, const UserVariableMap& user_variable_map);
 		void discoverToolDirectories(const ParsedConfigFileMap& config_file_map, const UserVariableMap& user_variable_map);
 		void discoverEmulators(const ParsedConfigFileMap& config_file_map, const UserVariableMap& user_variable_map);
@@ -50,6 +51,7 @@ namespace stardust {
 		StringConfigVariable config_name{ {"settings", "config_name"} };
 		PathConfigVariable project_root{ {"settings", "project_root"} };
 		IntegerConfigVariable rom_size{ {"settings", "rom_size"} };
+		PathConfigVariable log_file{ {"settings", "log_file"} };
 
 		PathConfigVariable project_rom{ {"output", "project_rom"} };
 		PathConfigVariable temporary_rom{ {"output", "temporary_rom"} };
