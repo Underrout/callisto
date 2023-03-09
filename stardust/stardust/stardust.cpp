@@ -1,6 +1,7 @@
 ﻿#include <spdlog/spdlog.h>
+#include <toml.hpp>
 
-// #include <conio.h>
+#include <conio.h>
 
 #include "stardust.h"
 
@@ -22,14 +23,32 @@
 
 #include "stardust_exception.h"
 
+#include "configuration/configuration.h"
+#include "configuration/configuration_level.h"
+#include "configuration/config_exception.h"
+
 using namespace stardust;
 
 int main(int argc, const char* argv[]) {
 	spdlog::set_level(spdlog::level::debug);
 
-	// getch();
+	getch();
 
 	try {
+		Configuration::ConfigFileMap config_files{
+				{ ConfigurationLevel::PROJECT, {"./config.toml"}},
+				{ ConfigurationLevel::PROFILE, {}},
+				{ ConfigurationLevel::USER, {}}
+		};
+
+		Configuration::VariableFileMap variable_files{
+				{ ConfigurationLevel::PROJECT, {"./config.toml"}},
+				{ ConfigurationLevel::PROFILE, {}},
+				{ ConfigurationLevel::USER, {}}
+		};
+
+		Configuration config{ config_files, variable_files, fs::absolute(".") };
+
 		ExGraphics exgfx{"./LunarMagic.exe", "./temp.smc", "./hack.smc"};
 		Graphics gfx{ "./LunarMagic.exe", "./temp.smc", "./hack.smc" };
 		SharedPalettes shared_palettes{ "./LunarMagic.exe", "./temp.smc", "./shared.pal" };
@@ -61,11 +80,30 @@ int main(int argc, const char* argv[]) {
 		uberasm.insert();
 		addmusick.insert();
 		patch.insert();
+
+		return 0;
+	}
+	catch (const TomlException2& e) {
+		spdlog::error(toml::format_error(e.what(), e.toml_value, e.comment, e.toml_value2, e.comment2, e.hints));
+	}
+	catch (const TomlException& e) {
+		spdlog::error(toml::format_error(e.what(), e.toml_value, e.comment, e.hints));
+	}
+	catch (const toml::syntax_error& e) {
+		spdlog::error(e.what());
+	}
+	catch (const toml::type_error& e) {
+		spdlog::error(e.what());
+	}
+	catch (const toml::internal_error& e) {
+		spdlog::error(e.what());
 	}
 	catch (const StardustException& e) {
 		spdlog::error(e.what());
+		return 1;
 	}
 	catch (const std::runtime_error& e) {
 		spdlog::error(e.what());
+		return 1;
 	}
 }
