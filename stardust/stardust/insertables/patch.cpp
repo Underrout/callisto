@@ -82,6 +82,8 @@ namespace stardust {
 			for (int i = 0; i != warning_count; ++i) {
 				spdlog::warn(warnings[i].fullerrdata);
 			}
+			std::ofstream out_rom{ temporary_rom_path, std::ios::out | std::ios::binary };
+			out_rom.write(rom_bytes.data(), rom_bytes.size());
 			spdlog::info(fmt::format("Successfully applied patch {}!", project_relative_path.string()));
 		}
 		else {
