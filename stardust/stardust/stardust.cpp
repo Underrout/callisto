@@ -1,5 +1,7 @@
 ﻿#include <spdlog/spdlog.h>
 
+// #include <conio.h>
+
 #include "stardust.h"
 
 #include "insertables/exgraphics.h"
@@ -13,14 +15,22 @@
 #include "insertables/level.h"
 #include "insertables/binary_map16.h"
 #include "insertables/text_map16.h"
+#include "insertables/external_tool.h"
+#include "insertables/patch.h"
+
+#include "insertables/pixi.h"
 
 #include "stardust_exception.h"
 
 using namespace stardust;
 
 int main(int argc, const char* argv[]) {
+	spdlog::set_level(spdlog::level::debug);
+
+	// getch();
+
 	try {
-		ExGraphics exgfx{ "./LunarMagic.exe", "./temp.smc", "./hack.smc" };
+		ExGraphics exgfx{"./LunarMagic.exe", "./temp.smc", "./hack.smc"};
 		Graphics gfx{ "./LunarMagic.exe", "./temp.smc", "./hack.smc" };
 		SharedPalettes shared_palettes{ "./LunarMagic.exe", "./temp.smc", "./shared.pal" };
 		Overworld overworld{ "./flips.exe", "./clean.smc", "./LunarMagic.exe", "./temp.smc", "./ow.bps" };
@@ -31,6 +41,10 @@ int main(int argc, const char* argv[]) {
 		Level level{ "./LunarMagic.exe", "./temp.smc", "./level.mwl" };
 		BinaryMap16 binary_map16{ "./LunarMagic.exe", "./temp.smc", "./all.map16" };
 		TextMap16 text_map16{ "./LunarMagic.exe", "./temp.smc", "./map16_folder", "./cli.exe" };
+		Pixi pixi{ "./", "./temp.smc", "-l ./list.txt -d" };
+		ExternalTool uberasm{ "UberASM", fs::canonical("./uberasm/UberASMTool.exe"), "list.txt ../temp.smc" };
+		ExternalTool addmusick{ "AddMusicK", fs::canonical("./addmusick/AddMusicK.exe"), "../temp.smc" };
+		Patch patch{ "./", "./temp.smc", fs::canonical("./patch.asm") };
 
 		exgfx.insert();
 		gfx.insert();
@@ -43,8 +57,15 @@ int main(int argc, const char* argv[]) {
 		level.insert();
 		binary_map16.insert();
 		text_map16.insert();
+		pixi.insert();
+		uberasm.insert();
+		addmusick.insert();
+		patch.insert();
 	}
 	catch (const StardustException& e) {
+		spdlog::error(e.what());
+	}
+	catch (const std::runtime_error& e) {
 		spdlog::error(e.what());
 	}
 }

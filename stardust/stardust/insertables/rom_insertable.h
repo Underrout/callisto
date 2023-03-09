@@ -8,7 +8,6 @@
 #include "../insertable.h"
 #include "../not_found_exception.h"
 
-namespace bp = boost::process;
 namespace fs = std::filesystem; 
 
 namespace stardust {

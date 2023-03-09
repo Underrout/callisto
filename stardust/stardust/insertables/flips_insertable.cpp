@@ -77,7 +77,7 @@ namespace stardust {
 			spdlog::debug("Successfully created overworld ROM");
 		}
 		else {
-			throw InsertionException(std::format(
+			throw InsertionException(fmt::format(
 				"Failed to create temporary {} ROM at {} "
 				"from BPS patch at {} using the clean ROM from {}",
 				getResourceName(),

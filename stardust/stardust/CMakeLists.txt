@@ -3,21 +3,25 @@
 #
 
 # Add source to this project's executable.
+
 add_executable (stardust "stardust.cpp" "stardust.h" "insertable.h" 
 "stardust_exception.h" "insertion_exception.h" "insertables/graphics.h" 
 "insertables/graphics.cpp" "insertables/exgraphics.h" "insertables/exgraphics.cpp" 
 "not_found_exception.h" "insertables/lunar_magic_insertable.h" "insertables/lunar_magic_insertable.cpp" 
 "insertables/rom_insertable.h" "insertables/shared_palettes.h" "insertables/shared_palettes.cpp" 
 "insertables/flips_insertable.h" "insertables/flips_insertable.cpp" "insertables/overworld.h" 
- "insertables/title_screen.h"  "insertables/global_exanimation.h" "insertables/credits.h" "insertables/title_moves.h" "insertables/title_moves.cpp" "insertables/level.h" "insertables/level.cpp" "insertables/binary_map16.h" "insertables/binary_map16.cpp" "insertables/text_map16.h" "insertables/text_map16.cpp")
+ "insertables/title_screen.h"  "insertables/global_exanimation.h" "insertables/credits.h" 
+ "insertables/title_moves.h" "insertables/title_moves.cpp" "insertables/level.h" "insertables/level.cpp" 
+ "insertables/binary_map16.h" "insertables/binary_map16.cpp" "insertables/text_map16.h" "insertables/text_map16.cpp" 
+  "insertables/pixi.cpp" "insertables/pixi.h" "insertables/external_tool.h" "insertables/external_tool.cpp" "insertables/patch.h" "insertables/patch.cpp")
 
-set_property(TARGET stardust PROPERTY CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD 20)
 
 include(FetchContent)
 FetchContent_Declare(
         cli11
         GIT_REPOSITORY https://github.com/CLIUtils/CLI11
-        GIT_TAG c2ea58c7f9bb2a1da2d3d7f5b462121ac6a07f16  # v2.3.1 commit tag
+        GIT_TAG v2.3.1
 )
 FetchContent_MakeAvailable(cli11)
 
@@ -43,21 +47,21 @@ target_link_libraries(
 FetchContent_Declare(
         toml11
         GIT_REPOSITORY https://github.com/ToruNiina/toml11.git
-        GIT_TAG dcfe39a783a94e8d52c885e5883a6fbb21529019  # v3.7.1 commit tag
+        GIT_TAG v3.7.1
 )
 FetchContent_MakeAvailable(toml11)
 
 FetchContent_Declare(
         json
         GIT_REPOSITORY https://github.com/nlohmann/json.git
-        GIT_TAG bc889afb4c5bf1c0d8ee29ef35eaaf4c8bef8a5d  # v3.11.2 commit tag
+        GIT_TAG v3.11.2
 )
 FetchContent_MakeAvailable(json)
 
 FetchContent_Declare(
         spdlog
         GIT_REPOSITORY https://github.com/gabime/spdlog.git
-        GIT_TAG ad0e89cbfb4d0c1ce4d097e134eb7be67baebb36  # v1.11.0 commit tag
+        GIT_TAG v1.11.0
 )
 FetchContent_MakeAvailable(spdlog)
 
@@ -68,6 +72,7 @@ find_package(Boost 1.79.0 REQUIRED
         system
         filesystem
         thread
+        program_options
 )
 
 FetchContent_Declare(
@@ -77,11 +82,39 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(fmt)
 
+set(CMAKE_POLICY_DEFAULT_CMP0077 NEW)
+set(ASAR_GEN_EXE OFF)
+set(ASAR_GEN_EXE_TEST OFF)
+set(ASAR_GEN_DLL_TEST OFF)
+FetchContent_Declare(
+	asar
+	GIT_REPOSITORY https://github.com/RPGHacker/asar
+	GIT_TAG v1.81
+	SOURCE_SUBDIR src
+)
+FetchContent_MakeAvailable(asar)
+set_target_properties(asar PROPERTIES CXX_STANDARD 14)
+
+set(PIXI_BUILD_TESTS OFF)
+FetchContent_Declare(
+    pixi
+    GIT_REPOSITORY https://github.com/JackTheSpades/SpriteToolSuperDelux
+    GIT_TAG be9a3cff94a067d53cb1d8395fb4961da146a4fe
+)
+FetchContent_MakeAvailable(pixi)
+
 target_link_libraries(stardust PRIVATE nlohmann_json::nlohmann_json)
 target_link_libraries(stardust PUBLIC CLI11::CLI11)
 target_link_libraries(stardust PUBLIC toml11::toml11)
 target_link_libraries(stardust PUBLIC spdlog::spdlog)
-target_link_libraries(stardust PRIVATE Boost::system Boost::filesystem Boost::thread)
+target_link_libraries(stardust PRIVATE Boost::system Boost::filesystem Boost::thread Boost::program_options)
 target_link_libraries(stardust PRIVATE fmt::fmt)
+target_link_libraries(stardust PUBLIC pixi_api_static)
 
-# TODO: Add tests and install targets if needed.
+target_include_directories(stardust PUBLIC ${pixi_SOURCE_DIR}/src)
+target_include_directories(stardust PUBLIC ${asar_SOURCE_DIR}/src)
+
+add_custom_command(TARGET stardust POST_BUILD 
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+    $<TARGET_FILE:asar> $<TARGET_FILE_DIR:stardust>
+)

@@ -2,8 +2,6 @@
 
 #include "../insertable.h"
 
-#include <boost/process/system.hpp>
-
 #include <fmt/core.h>
 
 #include <spdlog/spdlog.h>
