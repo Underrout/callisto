@@ -14,19 +14,19 @@
 #include "../insertion_exception.h"
 #include "../not_found_exception.h"
 
-constexpr auto MAX_ROM_SIZE = 16 * 1024 * 1024;
-
 namespace fs = std::filesystem;
 
 namespace stardust {
 	class Patch : public RomInsertable {
 	private:
+		static constexpr auto MAX_ROM_SIZE = 16 * 1024 * 1024;
+
 		const fs::path patch_path;
 		const fs::path project_relative_path;
 		std::vector<const char*> additional_include_paths;
 
 	public:
-		Patch(const fs::path& project_root_path, const fs::path& temporary_rom, 
+		Patch(const fs::path& project_root_path, const fs::path& temporary_rom_path,
 			const fs::path& patch_path, const std::vector<fs::path>& additional_include_paths = {});
 
 		void insert() override;

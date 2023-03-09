@@ -38,7 +38,7 @@ namespace stardust {
 
 		int rom_size{ static_cast<int>(rom_bytes.size()) };
 		const auto header_size{ rom_size & 0x7FFF };
-		const std::string str_patch_path{ std::string(patch_path.string()) };
+		const auto str_patch_path{ patch_path.string() };
 
 		int unheadered_rom_size{ rom_size - header_size };
 
@@ -73,6 +73,13 @@ namespace stardust {
 			true
 		};
 
+		// need to call this again since PIXI might have called asar_close
+		if (!asar_init()) {
+			throw ToolNotFoundException(
+				"Asar library file not found, did you forget to copy it alongside stardust?"
+			);
+		}
+
 		asar_reset();
 		const bool succeeded{ asar_patch_ex(&params) };
 
@@ -84,6 +91,7 @@ namespace stardust {
 			}
 			std::ofstream out_rom{ temporary_rom_path, std::ios::out | std::ios::binary };
 			out_rom.write(rom_bytes.data(), rom_bytes.size());
+			out_rom.close();
 			spdlog::info(fmt::format("Successfully applied patch {}!", project_relative_path.string()));
 		}
 		else {

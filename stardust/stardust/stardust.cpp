@@ -18,6 +18,7 @@
 #include "insertables/text_map16.h"
 #include "insertables/external_tool.h"
 #include "insertables/patch.h"
+#include "insertables/globule.h"
 
 #include "insertables/pixi.h"
 
@@ -64,6 +65,8 @@ int main(int argc, const char* argv[]) {
 		ExternalTool uberasm{ "UberASM", fs::canonical("./uberasm/UberASMTool.exe"), "list.txt ../temp.smc" };
 		ExternalTool addmusick{ "AddMusicK", fs::canonical("./addmusick/AddMusicK.exe"), "../temp.smc" };
 		Patch patch{ "./", "./temp.smc", fs::canonical("./patch.asm") };
+		Globule globule{ "./", "./temp.smc", fs::canonical("./globule.asm"), 
+			fs::canonical("./imprints"), fs::canonical("./call.asm"), {"Data", "cod"}, {}};
 
 		exgfx.insert();
 		gfx.insert();
@@ -77,6 +80,7 @@ int main(int argc, const char* argv[]) {
 		binary_map16.insert();
 		text_map16.insert();
 		pixi.insert();
+		globule.insert();
 		uberasm.insert();
 		addmusick.insert();
 		patch.insert();
