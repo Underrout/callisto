@@ -25,7 +25,17 @@ namespace stardust {
 		std::map<std::string, std::string> local_user_variables{};
 		std::map<std::string, const toml::value&> local_toml_values{};
 
-		for (const auto& [key, value] : toml::find<toml::table>(table, "variables")) {
+		toml::table variables;
+
+		try {
+			variables = toml::find<toml::table>(table, "variables");
+		}
+		catch (const std::out_of_range&) {
+			// no variable table in file
+			return {};
+		}
+
+		for (const auto& [key, value] : variables) {
 			if (user_variables.count(key) != 0) {
 				throw TomlException2(
 					value,
@@ -63,16 +73,21 @@ namespace stardust {
 
 		for (int i{ 0 }; i != static_cast<int>(ConfigurationLevel::_COUNT); ++i) {
 			const auto config_level{ static_cast<ConfigurationLevel>(i) };
-			const auto potential_variable_file{ variable_file_map.at(config_level) };
+			if (variable_file_map.count(config_level) != 0) {
+				const auto potential_variable_file{ variable_file_map.at(config_level) };
 
-			if (fs::exists(potential_variable_file) && fs::is_regular_file(potential_variable_file)) {
-				auto inherited_variables{ config_level == ConfigurationLevel::PROFILE
-					? user_variable_map.at(ConfigurationLevel::PROJECT) : std::map<std::string, std::string>() };
+				if (fs::exists(potential_variable_file) && fs::is_regular_file(potential_variable_file)) {
+					auto inherited_variables{ config_level == ConfigurationLevel::PROFILE
+						? user_variable_map.at(ConfigurationLevel::PROJECT) : std::map<std::string, std::string>() };
 
-				user_variable_map.insert({
-					config_level,
-					parseUserVariables(toml::parse(potential_variable_file), inherited_variables)
-				});
+					user_variable_map.insert({
+						config_level,
+						parseUserVariables(toml::parse(potential_variable_file), inherited_variables)
+						});
+				}
+				else {
+					user_variable_map.insert({ config_level, {} });
+				}
 			}
 			else {
 				user_variable_map.insert({ config_level, {} });
@@ -89,6 +104,13 @@ namespace stardust {
 			parsed_config_file_map.insert({ level, {} });
 			for (const auto& config_file_path : config_file_paths) {
 				parsed_config_file_map.at(level).push_back(toml::parse(config_file_path));
+			}
+		}
+
+		for (int i = 0; i != static_cast<int>(ConfigurationLevel::_COUNT); ++i) {
+			const auto config_level{ static_cast<ConfigurationLevel>(i) };
+			if (parsed_config_file_map.count(config_level) == 0) {
+				parsed_config_file_map.insert({ config_level, {} });
 			}
 		}
 

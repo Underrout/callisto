@@ -27,6 +27,7 @@
 #include "configuration/configuration.h"
 #include "configuration/configuration_level.h"
 #include "configuration/config_exception.h"
+#include "configuration/configuration_manager.h"
 
 using namespace stardust;
 
@@ -36,19 +37,9 @@ int main(int argc, const char* argv[]) {
 	getch();
 
 	try {
-		Configuration::ConfigFileMap config_files{
-				{ ConfigurationLevel::PROJECT, {"./config.toml"}},
-				{ ConfigurationLevel::PROFILE, {}},
-				{ ConfigurationLevel::USER, {}}
-		};
+		ConfigurationManager config_manager{ fs::current_path() };
 
-		Configuration::VariableFileMap variable_files{
-				{ ConfigurationLevel::PROJECT, {"./config.toml"}},
-				{ ConfigurationLevel::PROFILE, {}},
-				{ ConfigurationLevel::USER, {}}
-		};
-
-		Configuration config{ config_files, variable_files, fs::absolute(".") };
+		config_manager.getConfiguration({});
 
 		ExGraphics exgfx{"./LunarMagic.exe", "./temp.smc", "./hack.smc"};
 		Graphics gfx{ "./LunarMagic.exe", "./temp.smc", "./hack.smc" };
