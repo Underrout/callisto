@@ -14,7 +14,7 @@ namespace fs = std::filesystem;
 
 namespace stardust {
 	class TitleMoves : public LunarMagicInsertable {
-	private:
+	protected:
 		const fs::path title_moves_path;
 
 	public:

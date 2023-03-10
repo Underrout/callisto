@@ -18,7 +18,7 @@ namespace fs = std::filesystem;
 
 namespace stardust {
 	class Patch : public RomInsertable {
-	private:
+	protected:
 		static constexpr auto MAX_ROM_SIZE = 16 * 1024 * 1024;
 
 		const fs::path patch_path;

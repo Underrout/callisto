@@ -14,7 +14,7 @@ namespace fs = std::filesystem;
 
 namespace stardust {
 	class TextMap16 : public LunarMagicInsertable {
-	private:
+	protected:
 		const fs::path map16_folder_path;
 		const fs::path conversion_tool_path;
 

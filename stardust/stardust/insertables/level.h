@@ -14,7 +14,7 @@ namespace fs = std::filesystem;
 
 namespace stardust {
 	class Level : public LunarMagicInsertable {
-	private:
+	protected:
 		const fs::path mwl_file;
 
 	public:

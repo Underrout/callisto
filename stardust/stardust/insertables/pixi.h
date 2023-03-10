@@ -14,7 +14,7 @@ namespace fs = std::filesystem;
 
 namespace stardust {
 	class Pixi : public RomInsertable {
-	private:
+	protected:
 		const fs::path pixi_folder_path;
 		const std::string pixi_options;
 

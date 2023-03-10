@@ -23,7 +23,7 @@ namespace fs = std::filesystem;
 
 namespace stardust {
 	class Globule : public RomInsertable {
-	private:
+	protected:
 		static constexpr auto MAX_ROM_SIZE = 16 * 1024 * 1024;
 
 		const fs::path globule_path;

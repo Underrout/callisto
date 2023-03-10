@@ -14,7 +14,7 @@ namespace fs = std::filesystem;
 
 namespace stardust {
 	class Graphics : public LunarMagicInsertable {
-	private:
+	protected:
 		static const char* GRAPHICS_FOLDER_NAME;
 
 		const fs::path project_graphics_folder_path;

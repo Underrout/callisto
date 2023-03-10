@@ -13,7 +13,7 @@ namespace fs = std::filesystem;
 
 namespace stardust {
 	class SharedPalettes : public LunarMagicInsertable {
-	private:
+	protected:
 		const fs::path shared_palettes_path;
 
 	public:
