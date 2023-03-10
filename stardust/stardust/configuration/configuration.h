@@ -22,6 +22,12 @@ namespace stardust {
 		using VariableFileMap = std::map<ConfigurationLevel, fs::path>;
 
 	private:
+		static constexpr std::array VALID_STATIC_BUILD_ORDER_SYMBOLS{
+			"Globules", "Graphics", "ExGraphics", "Map16", "TitleMoves", "SharedPalettes",
+			"Overworld", "Titlescreen", "Credits", "GlobalExAnimation", 
+			"Patches", "PIXI", "Levels", "AddMusicK"
+		};
+
 		using ParsedConfigFileMap = std::map<ConfigurationLevel, std::vector<toml::value>>;
 		using UserVariableMap = std::map<ConfigurationLevel, std::map<std::string, std::string>>;
 
@@ -40,6 +46,12 @@ namespace stardust {
 			const std::map<std::string, std::string>& user_variables);
 		void fillOneConfigurationFile(const toml::value& config_file, ConfigurationLevel level, 
 			const std::map<std::string, std::string>& user_variables);
+		void discoverBuildOrder(const toml::value& config_file, ConfigurationLevel level,
+			const std::map<std::string, std::string>& user_variables);
+		bool verifyBuildOrder(const toml::array& build_order, const std::map<std::string, std::string>& user_variables) const;
+		bool isValidStaticBuildOrderSymbol(const std::string& symbol) const;
+		bool isValidPatchSymbol(const fs::path& patch_path) const;
+		bool isValidGlobuleSymbol(const fs::path& globule_path) const;
 
 	public:
 		static std::map<std::string, std::string> parseUserVariables(const toml::value& table,

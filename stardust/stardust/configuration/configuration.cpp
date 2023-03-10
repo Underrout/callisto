@@ -231,6 +231,7 @@ namespace stardust {
 		const std::map<std::string, std::string>& user_variables) {
 		for (const auto& config_file : config_files) {
 			fillOneConfigurationFile(config_file, level, user_variables);
+			discoverBuildOrder(config_file, level, user_variables);
 		}
 	}
 
@@ -276,8 +277,6 @@ namespace stardust {
 
 		globule_header.trySet(config_file, level, root, user_variables);
 
-		build_order.trySet(config_file, level, user_variables);
-
 		for (auto& [_, tool] : generic_tool_configurations) {
 			tool.executable.trySet(config_file, level, tool.working_directory, user_variables);
 			tool.options.trySet(config_file, level, user_variables);
@@ -285,5 +284,94 @@ namespace stardust {
 			tool.dependency_report_file.trySet(config_file, level, tool.working_directory, user_variables);
 			tool.dont_pass_rom.trySet(config_file, level);
 		}
+	}
+
+	void Configuration::discoverBuildOrder(const toml::value& config_file, ConfigurationLevel level,
+		const std::map<std::string, std::string>& user_variables) {
+		try {
+			const auto& orders{ toml::find(config_file, "orders") };
+			const auto& toml_build_order{ toml::find(orders, "build_order") };
+
+			if (verifyBuildOrder(toml::get<toml::array>(toml_build_order), user_variables)) {
+				build_order.trySet(config_file, level, user_variables);
+			}
+		}
+		catch (const std::out_of_range&) {
+			return;
+		}
+	}
+
+	bool Configuration::verifyBuildOrder(const toml::array& build_order, const std::map<std::string, std::string>& user_variables) const {
+		for (const auto& symbol : build_order) {
+			const auto& as_string{ 
+				ConfigVariable<toml::string, std::string>::formatUserVariables(toml::get<std::string>(symbol), user_variables)
+			};
+
+			if (isValidStaticBuildOrderSymbol(as_string)) {
+				continue;
+			} 
+			if (generic_tool_configurations.count(as_string) != 0) {
+				continue;
+			}
+			fs::path as_path{ as_string };
+			if (!as_path.is_absolute()) {
+				as_path = project_root.getOrThrow() / as_path;
+			}
+			as_path = fs::absolute(fs::weakly_canonical(as_path));
+
+			if (isValidPatchSymbol(as_path) || isValidGlobuleSymbol(as_path)) {
+				continue;
+			}
+
+			throw TomlException(
+				symbol,
+				"Invalid symbol in build order",
+				{
+					fmt::format(
+						"Valid symbols are paths that appear in the resources.patches or resources.globules lists, "
+						"the name of any tool appearing in the tools.generic table or any of the "
+						"following: {}",
+						fmt::join(VALID_STATIC_BUILD_ORDER_SYMBOLS, ", ")
+					)
+				},
+				fmt::format("'{}' is not a valid build symbol", as_string)
+			);
+		}
+		return true;
+	}
+
+	bool Configuration::isValidPatchSymbol(const fs::path& patch_path) const {
+		if (!patches.isSet()) {
+			return false;
+		}
+
+		for (const auto& patch : patches.getOrThrow()) {
+			if (patch_path == patch) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	bool Configuration::isValidGlobuleSymbol(const fs::path& globule_path) const {
+		if (!globules.isSet()) {
+			return false;
+		}
+
+		for (const auto& globule : globules.getOrThrow()) {
+			if (globule_path == globule) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	bool Configuration::isValidStaticBuildOrderSymbol(const std::string& symbol) const {
+		for (const auto& entry : VALID_STATIC_BUILD_ORDER_SYMBOLS) {
+			if (entry == symbol) {
+				return true;
+			}
+		}
+		return false;
 	}
 }
