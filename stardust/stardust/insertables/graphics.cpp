@@ -59,6 +59,12 @@ namespace stardust {
 		}
 	}
 
+	std::unordered_set<Dependency> Graphics::determineDependencies() {
+		auto dependencies{ LunarMagicInsertable::determineDependencies() };
+		dependencies.insert(Dependency(project_graphics_folder_path));
+		return dependencies;
+	}
+
 	void Graphics::insert() {
 		if (!fs::exists(project_graphics_folder_path)) {
 			throw InsertionException(fmt::format("No Graphics folder found at {}", project_graphics_folder_path.string()));

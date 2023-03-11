@@ -72,6 +72,13 @@ namespace stardust {
 		}
 	}
 
+	std::unordered_set<Dependency> TextMap16::determineDependencies() {
+		auto dependencies{ LunarMagicInsertable::determineDependencies() };
+		dependencies.insert(conversion_tool_path);
+		dependencies.insert(map16_folder_path);
+		return dependencies;
+	}
+
 	void TextMap16::insert() {
 		spdlog::info("Inserting Map16");
 		spdlog::debug(fmt::format(

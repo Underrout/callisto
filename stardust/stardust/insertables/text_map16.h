@@ -22,6 +22,8 @@ namespace stardust {
 		fs::path generateTemporaryMap16File() const;
 		void deleteTemporaryMap16File() const;
 
+		std::unordered_set<Dependency> determineDependencies() override;
+
 	public:
 		void insert() override;
 

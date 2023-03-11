@@ -12,6 +12,12 @@ namespace stardust {
 		}
 	}
 
+	std::unordered_set<Dependency> BinaryMap16::determineDependencies() {
+		auto dependencies{ LunarMagicInsertable::determineDependencies() };
+		dependencies.insert(map16_file_path);
+		return dependencies;
+	}
+
 	void BinaryMap16::insert() {
 		spdlog::info("Inserting Map16");
 		spdlog::debug(fmt::format(

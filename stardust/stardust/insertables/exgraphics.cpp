@@ -60,6 +60,12 @@ namespace stardust {
 		}
 	}
 
+	std::unordered_set<Dependency> ExGraphics::determineDependencies() {
+		auto dependencies{ LunarMagicInsertable::determineDependencies() };
+		dependencies.insert(Dependency(project_exgraphics_folder_path));
+		return dependencies;
+	}
+
 	void ExGraphics::insert() {
 		if (!fs::exists(project_exgraphics_folder_path)) {
 			throw InsertionException(fmt::format("No ExGraphics folder found at {}", project_exgraphics_folder_path.string()));

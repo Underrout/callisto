@@ -17,6 +17,8 @@ namespace stardust {
 	protected:
 		const fs::path map16_file_path;
 
+		std::unordered_set<Dependency> determineDependencies() override;
+
 	public:
 		void insert() override;
 

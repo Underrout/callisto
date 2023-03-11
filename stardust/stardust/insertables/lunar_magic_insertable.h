@@ -25,5 +25,7 @@ namespace stardust {
 		int callLunarMagic(Args... args) {
 			return bp::system(lunar_magic_path.string(), args...);
 		}
+
+		std::unordered_set<Dependency> determineDependencies() override;
 	};
 }

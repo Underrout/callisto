@@ -10,4 +10,8 @@ namespace stardust {
 			));
 		}
 	}
+
+	std::unordered_set<Dependency> LunarMagicInsertable::determineDependencies() {
+		return { Dependency(lunar_magic_path) };
+	}
 }

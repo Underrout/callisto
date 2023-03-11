@@ -12,6 +12,12 @@ namespace stardust {
 		}
 	}
 
+	std::unordered_set<Dependency> Level::determineDependencies() {
+		auto dependencies{ LunarMagicInsertable::determineDependencies() };
+		dependencies.insert(Dependency(mwl_file));
+		return dependencies;
+	}
+
 	void Level::insert() {
 		spdlog::debug(fmt::format(
 			"Inserting level from MWL file {} into temporary ROM {}",

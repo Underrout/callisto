@@ -13,6 +13,12 @@ namespace stardust {
 		}
 	}
 
+	std::unordered_set<Dependency> TitleMoves::determineDependencies() {
+		auto dependencies{ LunarMagicInsertable::determineDependencies() };
+		dependencies.insert(title_moves_path);
+		return dependencies;
+	}
+
 	void TitleMoves::insert() {
 		spdlog::info("Inserting Title Moves");
 		spdlog::debug(fmt::format(

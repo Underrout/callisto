@@ -12,6 +12,12 @@ namespace stardust {
 		}
 	}
 
+	std::unordered_set<Dependency> SharedPalettes::determineDependencies() {
+		auto dependencies{ LunarMagicInsertable::determineDependencies() };
+		dependencies.insert(shared_palettes_path);
+		return dependencies;
+	}
+
 	void SharedPalettes::insert() {
 		spdlog::info("Inserting Shared Palettes");
 		spdlog::debug(fmt::format(

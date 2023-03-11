@@ -17,6 +17,8 @@ namespace stardust {
 	protected:
 		const fs::path title_moves_path;
 
+		std::unordered_set<Dependency> determineDependencies() override;
+
 	public:
 		void insert() override;
 

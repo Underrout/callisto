@@ -39,6 +39,8 @@ namespace stardust {
 			const fs::path& lunar_magic_path, const fs::path& temporary_rom_path,
 			const fs::path& bps_patch_path);
 
+		std::unordered_set<Dependency> determineDependencies() override;
+
 	public:
 		void insert() override;
 	};

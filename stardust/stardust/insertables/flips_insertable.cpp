@@ -22,6 +22,13 @@ namespace stardust {
 		}
 	}
 
+	std::unordered_set<Dependency> FlipsInsertable::determineDependencies() {
+		auto dependencies{ LunarMagicInsertable::determineDependencies() };
+		dependencies.insert(Dependency(flips_path));
+		dependencies.insert(Dependency(bps_patch_path));
+		return dependencies;
+	}
+
 	void FlipsInsertable::checkPatchExists() const {
 		if (!fs::exists(bps_patch_path)) {
 			throw ResourceNotFoundException(fmt::format(

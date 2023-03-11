@@ -28,6 +28,7 @@
 #include "configuration/configuration_level.h"
 #include "configuration/config_exception.h"
 #include "configuration/configuration_manager.h"
+#include "dependency/dependency.h"
 
 using namespace stardust;
 

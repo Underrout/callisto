@@ -16,6 +16,8 @@ namespace stardust {
 	protected:
 		const fs::path shared_palettes_path;
 
+		std::unordered_set<Dependency> determineDependencies() override;
+
 	public:
 		void insert() override;
 

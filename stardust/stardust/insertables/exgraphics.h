@@ -23,6 +23,8 @@ namespace stardust {
 		void createTemporaryExGraphicsFolder() const;
 		void deleteTemporaryExGraphicsFolder() const;
 
+		std::unordered_set<Dependency> determineDependencies() override;
+
 	public:
 		void insert() override;
 
