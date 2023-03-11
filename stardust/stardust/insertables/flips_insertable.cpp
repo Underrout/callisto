@@ -26,6 +26,7 @@ namespace stardust {
 		auto dependencies{ LunarMagicInsertable::determineDependencies() };
 		dependencies.insert(Dependency(flips_path));
 		dependencies.insert(Dependency(bps_patch_path));
+		dependencies.insert(Dependency(clean_rom_path));
 		return dependencies;
 	}
 
