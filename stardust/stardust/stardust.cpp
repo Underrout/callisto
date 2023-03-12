@@ -40,7 +40,7 @@ int main(int argc, const char* argv[]) {
 	try {
 		ConfigurationManager config_manager{ fs::current_path() };
 
-		config_manager.getConfiguration({});
+		const auto config{ config_manager.getConfiguration({}) };
 
 		ExGraphics exgfx{"./LunarMagic.exe", "./temp.smc", "./hack.smc"};
 		Graphics gfx{ "./LunarMagic.exe", "./temp.smc", "./hack.smc" };
@@ -53,29 +53,51 @@ int main(int argc, const char* argv[]) {
 		Level level{ "./LunarMagic.exe", "./temp.smc", "./level.mwl" };
 		BinaryMap16 binary_map16{ "./LunarMagic.exe", "./temp.smc", "./all.map16" };
 		TextMap16 text_map16{ "./LunarMagic.exe", "./temp.smc", "./map16_folder", "./cli.exe" };
-		Pixi pixi{ "./", "./temp.smc", "-l ./list.txt -d" };
-		ExternalTool uberasm{ "UberASM", fs::canonical("./uberasm/UberASMTool.exe"), "list.txt", "./", "./temp.smc", false };
-		ExternalTool addmusick{ "AddMusicK", fs::canonical("./addmusick/AddMusicK.exe"), "", "./", "./temp.smc", false };
+
+		std::unordered_set<Dependency> pixi_deps{};
+		for (const auto& rep : config.pixi_static_dependencies.getOrThrow()) {
+			pixi_deps.insert(Dependency(rep));
+		}
+
+
+		Pixi pixi{ "./", "./temp.smc", "-l ./list.txt -d", pixi_deps, config.pixi_dependency_report_file.getOrThrow()};
+
+		std::unordered_set<Dependency> uber_deps{};
+		for (const auto& rep : config.generic_tool_configurations.at("UberASM").static_dependencies.getOrThrow()) {
+			uber_deps.insert(Dependency(rep));
+		}
+
+		ExternalTool uberasm{ "UberASM", fs::canonical("./uberasm/UberASMTool.exe"), "list.txt", "./", "./temp.smc", false,
+			uber_deps,
+			config.generic_tool_configurations.at("UberASM").dependency_report_file.getOrThrow()
+		};
+
+		std::unordered_set<Dependency> amk_deps{};
+		for (const auto& rep : config.generic_tool_configurations.at("AddMusicK").static_dependencies.getOrThrow()) {
+			amk_deps.insert(Dependency(rep));
+		}
+		ExternalTool addmusick{ "AddMusicK", fs::canonical("./addmusick/AddMusicK.exe"), "", "./addmusick", "../temp.smc", false, amk_deps, 
+			config.generic_tool_configurations.at("AddMusicK").dependency_report_file.getOrThrow() };
 		Patch patch{ "./", "./temp.smc", fs::canonical("./patch.asm") };
 		Globule globule{ "./", "./temp.smc", fs::canonical("./globule.asm"), 
 			fs::canonical("./imprints"), fs::canonical("./call.asm"), {"Data", "cod"}, {}};
 
-		exgfx.insert();
-		gfx.insert();
-		shared_palettes.insert();
-		overworld.insert();
-		title.insert();
-		ex.insert();
-		cred.insert();
+		exgfx.insertWithDependencies();
+		gfx.insertWithDependencies();
+		shared_palettes.insertWithDependencies();
+		overworld.insertWithDependencies();
+		title.insertWithDependencies();
+		ex.insertWithDependencies();
+		cred.insertWithDependencies();
 		// title_moves.insert();
-		level.insert();
-		binary_map16.insert();
-		text_map16.insert();
-		pixi.insert();
-		globule.insert();
-		uberasm.insert();
-		addmusick.insert();
-		patch.insert();
+		level.insertWithDependencies();
+		binary_map16.insertWithDependencies();
+		text_map16.insertWithDependencies();
+		pixi.insertWithDependencies();
+		globule.insertWithDependencies();
+		uberasm.insertWithDependencies();
+		addmusick.insertWithDependencies();
+		patch.insertWithDependencies();
 
 		return 0;
 	}

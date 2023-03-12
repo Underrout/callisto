@@ -173,16 +173,6 @@ namespace stardust {
 						// pass
 					}
 
-					try {
-						const auto& pixi_table{ toml::find(tools_table, "AddMusicK") };
-
-						amk_working_dir.trySet(config, config_level, project_root,
-							user_variable_map.at(config_level));
-					}
-					catch (const std::out_of_range&) {
-						// pass
-					}
-
 					const auto& generic_tools_table{ toml::find<toml::table>(tools_table, "generic") };
 
 					for (const auto& [key, value] : generic_tools_table) {
@@ -256,11 +246,6 @@ namespace stardust {
 		pixi_options.trySet(config_file, level, user_variables);
 		pixi_static_dependencies.trySet(config_file, level, pixi_working_dir, user_variables);
 		pixi_dependency_report_file.trySet(config_file, level, pixi_working_dir, user_variables);
-
-		amk_path.trySet(config_file, level, amk_working_dir, user_variables);
-		amk_options.trySet(config_file, level, user_variables);
-		amk_static_dependencies.trySet(config_file, level, amk_working_dir, user_variables);
-		amk_dependency_report_file.trySet(config_file, level, amk_working_dir, user_variables);
 
 		initial_patch.trySet(config_file, level, root, user_variables);
 		levels.trySet(config_file, level, root, user_variables);

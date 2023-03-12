@@ -41,7 +41,7 @@ namespace stardust {
 			throw DependencyException(fmt::format(
 				"No dependency report file found at {}, are you sure this is the "
 				"correct path and that you have installed quickbuild correctly?",
-				dependency_report_file_path.value()
+				dependency_report_file_path.value().string()
 			));
 		}
 
