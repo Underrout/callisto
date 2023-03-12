@@ -3,11 +3,16 @@
 namespace stardust {
 	ExternalTool::ExternalTool(const std::string& tool_name, const fs::path& tool_exe_path, const std::string& tool_options,
 		const fs::path& working_directory, const std::optional<fs::path>& temporary_rom, bool take_user_input, 
-		const std::unordered_set<Dependency>& static_dependencies, const std::optional<fs::path>& dependency_report_file_path)
+		const std::vector<fs::path>& static_dependencies, const std::optional<fs::path>& dependency_report_file_path)
 		: tool_name(tool_name), tool_exe_path(tool_exe_path), tool_options(tool_options), working_directory(working_directory),
 		take_user_input(take_user_input), temporary_rom(temporary_rom), static_dependencies(static_dependencies), 
 		dependency_report_file_path(dependency_report_file_path)
 	{
+		// delete potential previous dependency report
+		if (dependency_report_file_path.has_value()) {
+			fs::remove(dependency_report_file_path.value());
+		}
+
 		if (!fs::exists(tool_exe_path)) {
 			throw ToolNotFoundException(fmt::format(
 				"{} executable not found at {}",
@@ -45,7 +50,9 @@ namespace stardust {
 			));
 		}
 
-		auto dependencies{ static_dependencies };
+		std::unordered_set<Dependency> dependencies{};
+		std::transform(static_dependencies.begin(), static_dependencies.end(), std::inserter(dependencies, dependencies.begin()),
+			[](const auto& entry) { return Dependency(entry); });
 		const auto reported{ Insertable::extractDependenciesFromReport(dependency_report_file_path.value()) };
 
 		dependencies.insert(reported.begin(), reported.end());

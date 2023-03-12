@@ -33,7 +33,7 @@ namespace stardust {
 			));
 		}
 
-		Dependency(const json& j) : dependent_path(j.at("path")), last_write_time(
+		Dependency(const json& j) : dependent_path(j["path"].get<std::string>()), last_write_time(
 			std::chrono::time_point<fs::_File_time_clock>(
 				std::chrono::milliseconds(j["timestamp"].get<long>()))
 			) {}

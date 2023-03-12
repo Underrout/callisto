@@ -54,7 +54,9 @@ namespace stardust {
 			));
 		}
 
-		auto dependencies{ static_dependencies };
+		std::unordered_set<Dependency> dependencies{};
+		std::transform(static_dependencies.begin(), static_dependencies.end(), std::inserter(dependencies, dependencies.begin()),
+			[](const auto& entry) { return Dependency(entry); });
 		const auto reported{ Insertable::extractDependenciesFromReport(dependency_report_file_path.value()) };
 
 		dependencies.insert(reported.begin(), reported.end());
@@ -79,10 +81,15 @@ namespace stardust {
 	}
 
 	Pixi::Pixi(const fs::path& pixi_folder_path, const fs::path& temporary_rom_path, const std::string& pixi_options,
-		const std::unordered_set<Dependency>& static_dependencies, const std::optional<fs::path>& dependency_report_file_path)
+		const std::vector<fs::path>& static_dependencies, const std::optional<fs::path>& dependency_report_file_path)
 		: RomInsertable(temporary_rom_path), pixi_folder_path(pixi_folder_path), pixi_options(pixi_options),
 		static_dependencies(static_dependencies), dependency_report_file_path(dependency_report_file_path)
 	{
+		// delete potential previous dependency report
+		if (dependency_report_file_path.has_value()) {
+			fs::remove(dependency_report_file_path.value());
+		}
+
 		if (!fs::exists(pixi_folder_path)) {
 			throw NotFoundException(fmt::format(
 				"PIXI folder {} does not exist",

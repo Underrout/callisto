@@ -6,6 +6,9 @@ namespace stardust {
 		: RomInsertable(temporary_rom_path), project_relative_path(fs::relative(patch_path, project_root_path)),
 		patch_path(patch_path) 
 	{
+		// delete potential previous dependency report
+		fs::remove(patch_path.parent_path() / ".dependencies");
+
 		if (!fs::exists(patch_path)) {
 			throw ResourceNotFoundException(fmt::format(
 				"Patch {} does not exist",

@@ -24,7 +24,7 @@ namespace stardust {
 		const std::string tool_options;
 		const fs::path working_directory;
 		bool take_user_input;
-		const std::unordered_set<Dependency> static_dependencies;
+		const std::vector<fs::path> static_dependencies;
 		const std::optional<fs::path> dependency_report_file_path;
 
 		std::unordered_set<Dependency> determineDependencies() override;
@@ -32,7 +32,7 @@ namespace stardust {
 	public:
 		ExternalTool(const std::string& tool_name, const fs::path& tool_exe_path, const std::string& tool_options,
 			const fs::path& working_directory, const std::optional<fs::path>& temporary_rom, bool take_user_input, 
-			const std::unordered_set<Dependency>& static_dependencies = {},
+			const std::vector<fs::path>& static_dependencies = {},
 			const std::optional<fs::path>& dependency_report_file_path = {});
 
 		void insert() override;

@@ -10,6 +10,9 @@ namespace stardust {
 		globule_path(globule_path), imprint_directory(imprint_directory), globule_call_file(globule_call_file),
 		other_globule_names(other_globule_names), globule_header_file(globule_header_file) 
 	{
+		// delete potential previous dependency report
+		fs::remove(globule_path.parent_path() / ".dependencies");
+
 		if (!fs::exists(globule_path)) {
 			throw ResourceNotFoundException(fmt::format(
 				"Globule {} does not exist",
