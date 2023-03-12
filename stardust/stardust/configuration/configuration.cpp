@@ -253,7 +253,6 @@ namespace stardust {
 		lunar_magic_path.trySet(config_file, level, root, user_variables);
 		lunar_magic_level_import_flags.trySet(config_file, level, user_variables);
 
-		pixi_list_file.trySet(config_file, level, pixi_working_dir, user_variables);
 		pixi_options.trySet(config_file, level, user_variables);
 		pixi_static_dependencies.trySet(config_file, level, pixi_working_dir, user_variables);
 		pixi_dependency_report_file.trySet(config_file, level, pixi_working_dir, user_variables);

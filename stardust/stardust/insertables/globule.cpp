@@ -181,4 +181,11 @@ namespace stardust {
 
 		imprint.close();
 	}
+
+	std::unordered_set<Dependency> Globule::determineDependencies() {
+		const auto dependencies{ Insertable::extractDependenciesFromReport(
+			globule_path.parent_path() / ".dependencies"
+		) };
+		return dependencies;
+	}
 }

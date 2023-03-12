@@ -25,7 +25,7 @@ namespace stardust {
 		static constexpr std::array VALID_STATIC_BUILD_ORDER_SYMBOLS{
 			"Globules", "Graphics", "ExGraphics", "Map16", "TitleMoves", "SharedPalettes",
 			"Overworld", "Titlescreen", "Credits", "GlobalExAnimation", 
-			"Patches", "PIXI", "Levels", "AddMusicK"
+			"Patches", "PIXI", "Levels"
 		};
 
 		using ParsedConfigFileMap = std::map<ConfigurationLevel, std::vector<toml::value>>;
@@ -75,16 +75,9 @@ namespace stardust {
 		StringConfigVariable lunar_magic_level_import_flags{ {"tools", "LunarMagic", "level_import_flags"} };
 
 		PathConfigVariable pixi_working_dir{ {"tools", "PIXI", "directory"} };
-		PathConfigVariable pixi_list_file{ {"tools", "PIXI", "list_file"} };
 		StringConfigVariable pixi_options{ {"tools", "PIXI", "options"} };
 		ExtendablePathVectorConfigVariable pixi_static_dependencies{ {"tools", "PIXI", "static_dependencies"} };
 		PathConfigVariable pixi_dependency_report_file{ {"tools", "PIXI", "dependency_report_file"} };
-
-		PathConfigVariable amk_working_dir{ {"tools", "AddMusicK", "directory"} };
-		PathConfigVariable amk_path{ {"tools", "AddMusicK", "executable"} };
-		StringConfigVariable amk_options{ {"tools", "AddMusicK", "options"} };
-		ExtendablePathVectorConfigVariable amk_static_dependencies{ {"tools", "AddMusicK", "static_dependencies"} };
-		PathConfigVariable amk_dependency_report_file{ {"tools", "AddMusicK", "dependency_report_file"} };
 
 		PathConfigVariable initial_patch{ {"resources", "initial_patch"} };
 		PathConfigVariable levels{ {"resources", "levels"} };

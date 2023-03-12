@@ -20,28 +20,12 @@ namespace stardust {
 		const std::optional<fs::file_time_type> last_write_time;
 
 		Dependency(const fs::path& dependent_path)
-			: dependent_path(dependent_path), 
+			: dependent_path(dependent_path),
 			last_write_time(fs::exists(dependent_path) ? std::make_optional(fs::last_write_time(dependent_path)) : std::nullopt)
 		{}
 
 		bool operator==(const Dependency& other) const {
 			return dependent_path == other.dependent_path;
-		}
-
-		static std::unordered_set<Dependency> fromDependencyReportFile(const fs::path& dependency_report_file_path) {
-			if (!fs::exists(dependency_report_file_path)) {
-				return {};
-			}
-
-			std::unordered_set<Dependency> dependencies{};
-
-			std::ifstream dependency_file{ dependency_report_file_path };
-			std::string line;
-			while (std::getline(dependency_file, line)) {
-				dependencies.insert(Dependency(line));
-			}
-
-			return dependencies;
 		}
 	};
 }

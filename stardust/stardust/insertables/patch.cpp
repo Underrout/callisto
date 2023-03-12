@@ -112,4 +112,11 @@ namespace stardust {
 			));
 		}
 	}
+
+	std::unordered_set<Dependency> Patch::determineDependencies() {
+		const auto dependencies{ Insertable::extractDependenciesFromReport(
+			patch_path.parent_path() / ".dependencies"
+		) };
+		return dependencies;
+	}
 }

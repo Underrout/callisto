@@ -25,6 +25,8 @@ namespace stardust {
 		const fs::path project_relative_path;
 		std::vector<const char*> additional_include_paths;
 
+		std::unordered_set<Dependency> determineDependencies() override;
+
 	public:
 		Patch(const fs::path& project_root_path, const fs::path& temporary_rom_path,
 			const fs::path& patch_path, const std::vector<fs::path>& additional_include_paths = {});

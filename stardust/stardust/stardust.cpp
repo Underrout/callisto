@@ -54,8 +54,8 @@ int main(int argc, const char* argv[]) {
 		BinaryMap16 binary_map16{ "./LunarMagic.exe", "./temp.smc", "./all.map16" };
 		TextMap16 text_map16{ "./LunarMagic.exe", "./temp.smc", "./map16_folder", "./cli.exe" };
 		Pixi pixi{ "./", "./temp.smc", "-l ./list.txt -d" };
-		ExternalTool uberasm{ "UberASM", fs::canonical("./uberasm/UberASMTool.exe"), "list.txt ../temp.smc" };
-		ExternalTool addmusick{ "AddMusicK", fs::canonical("./addmusick/AddMusicK.exe"), "../temp.smc" };
+		ExternalTool uberasm{ "UberASM", fs::canonical("./uberasm/UberASMTool.exe"), "list.txt", "./", "./temp.smc", false };
+		ExternalTool addmusick{ "AddMusicK", fs::canonical("./addmusick/AddMusicK.exe"), "", "./", "./temp.smc", false };
 		Patch patch{ "./", "./temp.smc", fs::canonical("./patch.asm") };
 		Globule globule{ "./", "./temp.smc", fs::canonical("./globule.asm"), 
 			fs::canonical("./imprints"), fs::canonical("./call.asm"), {"Data", "cod"}, {}};
