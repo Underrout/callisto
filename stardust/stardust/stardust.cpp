@@ -86,6 +86,14 @@ int main(int argc, const char* argv[]) {
 		addmusick.insertWithDependencies();
 		patch.insertWithDependencies();
 
+		for (const auto& block : patch.getWrittenBlocks()) {
+			spdlog::info(fmt::format(
+				"Wrote {} bytes to {:06X}",
+				block.numbytes,
+				block.snesoffset
+			));
+		}
+
 		return 0;
 	}
 	catch (const TomlException2& e) {

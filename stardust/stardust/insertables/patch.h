@@ -24,6 +24,7 @@ namespace stardust {
 		const fs::path patch_path;
 		const fs::path project_relative_path;
 		std::vector<const char*> additional_include_paths;
+		std::vector<writtenblockdata> written_blocks;
 
 		std::unordered_set<Dependency> determineDependencies() override;
 
@@ -32,5 +33,7 @@ namespace stardust {
 			const fs::path& patch_path, const std::vector<fs::path>& additional_include_paths = {});
 
 		void insert() override;
+
+		const std::vector<writtenblockdata>& getWrittenBlocks();
 	};
 }
