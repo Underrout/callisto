@@ -94,6 +94,15 @@ int main(int argc, const char* argv[]) {
 			));
 		}
 
+		for (const auto& block : pixi.getExtraByteInfo()) {
+			spdlog::info(fmt::format(
+				"{}: {}, {}",
+				block.config_file_path.string(),
+				block.byte_count,
+				block.extra_byte_count
+			));
+		}
+
 		return 0;
 	}
 	catch (const TomlException2& e) {

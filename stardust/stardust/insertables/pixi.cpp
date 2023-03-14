@@ -41,6 +41,10 @@ namespace stardust {
 		}
 	}
 
+	const std::vector<Pixi::ExtraByteInfo>& Pixi::getExtraByteInfo() const{
+		return extra_bytes;
+	}
+
 	std::unordered_set<Dependency> Pixi::determineDependencies() {
 		if (!dependency_report_file_path.has_value()) {
 			throw DependencyException("No dependency report file specified for PIXI");
@@ -60,6 +64,8 @@ namespace stardust {
 		const auto reported{ Insertable::extractDependenciesFromReport(dependency_report_file_path.value()) };
 
 		dependencies.insert(reported.begin(), reported.end());
+
+		std::vector<ExtraByteInfo> extra_byte_infos{};
 		
 		// little hacky, basically just checks if for any .asm file there exists a .cfg or .json file with the same name and location, 
 		// if so, they're added as dependencies, should work well in practice but may include superflous files in some edge cases
@@ -68,14 +74,33 @@ namespace stardust {
 				const auto cfg{ fs::path(dependency.dependent_path).replace_extension(".cfg") };
 				const auto json{ fs::path(dependency.dependent_path).replace_extension(".json") };
 
+				pixi_sprite_t sprite_idx{ nullptr };
+				fs::path config_file_path;
 				if (fs::exists(cfg)) {
-					dependencies.insert(Dependency(cfg));
+					sprite_idx = pixi_parse_cfg_sprite(cfg.string().c_str());
+					config_file_path = cfg;
 				}
+				// if both exist... do what? idk, give json priority for now
 				if (fs::exists(json)) {
-					dependencies.insert(Dependency(json));
+					sprite_idx = pixi_parse_json_sprite(json.string().c_str());
+					config_file_path = json;
+				}
+
+				if (sprite_idx != nullptr) {
+					dependencies.insert(Dependency(config_file_path));
+
+					const auto bytes{ pixi_sprite_byte_count(sprite_idx) };
+					const auto extra_bytes{ pixi_sprite_extra_byte_count(sprite_idx) };
+					auto sprite_number{ pixi_sprite_number(sprite_idx) };
+
+					pixi_sprite_free(sprite_idx);
+
+					extra_byte_infos.push_back(ExtraByteInfo(config_file_path, bytes, extra_bytes));
 				}
 			}
 		}
+
+		extra_bytes = extra_byte_infos;
 
 		return dependencies;
 	}
