@@ -10,9 +10,6 @@ namespace stardust {
 		globule_path(globule_path), imprint_directory(imprint_directory), globule_call_file(globule_call_file),
 		other_globule_names(other_globule_names), globule_header_file(globule_header_file) 
 	{
-		// delete potential previous dependency report
-		fs::remove(globule_path.parent_path() / ".dependencies");
-
 		if (!fs::exists(globule_path)) {
 			throw ResourceNotFoundException(fmt::format(
 				"Globule {} does not exist",
@@ -41,6 +38,9 @@ namespace stardust {
 	void Globule::insert() {
 		std::string patch_path{ (boost::filesystem::temp_directory_path() / boost::filesystem::unique_path().string()).string() };
 		std::ofstream temp_patch{ patch_path };
+
+		// delete potential previous dependency report
+		fs::remove(globule_path.parent_path() / ".dependencies");
 
 		if (globule_path.extension() == ".asm") {
 			spdlog::info(fmt::format("Inserting ASM globule {}", project_relative_path.string()));
@@ -190,10 +190,13 @@ namespace stardust {
 	}
 
 	std::unordered_set<Dependency> Globule::determineDependencies() {
-		const auto dependencies{ Insertable::extractDependenciesFromReport(
-			globule_path.parent_path() / ".dependencies"
-		) };
-		return dependencies;
+		if (globule_path.extension() == ".asm") {
+			const auto dependencies{ Insertable::extractDependenciesFromReport(
+				globule_path.parent_path() / ".dependencies"
+			) };
+			return dependencies;
+		}
+		return {};
 	}
 
 	void Globule::fixAsarMemoryLeak() const {

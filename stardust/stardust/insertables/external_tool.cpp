@@ -8,11 +8,6 @@ namespace stardust {
 		take_user_input(take_user_input), temporary_rom(temporary_rom), static_dependencies(static_dependencies), 
 		dependency_report_file_path(dependency_report_file_path)
 	{
-		// delete potential previous dependency report
-		if (dependency_report_file_path.has_value()) {
-			fs::remove(dependency_report_file_path.value());
-		}
-
 		if (!fs::exists(tool_exe_path)) {
 			throw ToolNotFoundException(fmt::format(
 				"{} executable not found at {}",
@@ -62,6 +57,11 @@ namespace stardust {
 	}
 
 	void ExternalTool::insert() {
+		// delete potential previous dependency report
+		if (dependency_report_file_path.has_value()) {
+			fs::remove(dependency_report_file_path.value());
+		}
+
 		spdlog::info(fmt::format("Running {}", tool_name));
 		spdlog::debug(fmt::format(
 			"Running {} using {} and options {}",

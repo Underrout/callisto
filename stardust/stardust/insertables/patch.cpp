@@ -6,9 +6,6 @@ namespace stardust {
 		: RomInsertable(temporary_rom_path), project_relative_path(fs::relative(patch_path, project_root_path)),
 		patch_path(patch_path) 
 	{
-		// delete potential previous dependency report
-		fs::remove(patch_path.parent_path() / ".dependencies");
-
 		if (!fs::exists(patch_path)) {
 			throw ResourceNotFoundException(fmt::format(
 				"Patch {} does not exist",
@@ -34,6 +31,9 @@ namespace stardust {
 
 	void Patch::insert() {
 		spdlog::info(fmt::format("Applying patch {}", project_relative_path.string()));
+
+		// delete potential previous dependency report
+		fs::remove(patch_path.parent_path() / ".dependencies");
 
 		std::ifstream rom_file(temporary_rom_path, std::ios::in | std::ios::binary);
 		std::vector<char> rom_bytes((std::istreambuf_iterator<char>(rom_file)), (std::istreambuf_iterator<char>()));

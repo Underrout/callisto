@@ -4,6 +4,11 @@ namespace stardust {
 	void Pixi::insert() {
 		spdlog::info("Running PIXI");
 
+		if (dependency_report_file_path.has_value()) {
+			// delete potential previous dependency report
+			fs::remove(dependency_report_file_path.value());
+		}
+
 		// TODO this is apparently not portable...
 		std::vector<std::string> args{ boost::program_options::split_winmain(pixi_options) };
 
