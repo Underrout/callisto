@@ -117,6 +117,8 @@ namespace stardust {
 		asar_reset();
 		const bool succeeded{ asar_patch_ex(&params) };
 
+		fs::remove(patch_path);
+
 		if (succeeded) {
 			int warning_count;
 			const auto warnings{ asar_getwarnings(&warning_count) };
