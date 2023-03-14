@@ -124,7 +124,7 @@ namespace stardust {
 		}
 	}
 
-	const std::vector<writtenblockdata>& Patch::getWrittenBlocks() {
+	const std::vector<writtenblockdata>& Patch::getWrittenBlocks() const {
 		return written_blocks;
 	}
 

@@ -34,6 +34,6 @@ namespace stardust {
 
 		void insert() override;
 
-		const std::vector<writtenblockdata>& getWrittenBlocks();
+		const std::vector<writtenblockdata>& getWrittenBlocks() const;
 	};
 }
