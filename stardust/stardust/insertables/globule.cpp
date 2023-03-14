@@ -184,6 +184,8 @@ namespace stardust {
 			imprint << fmt::format("!{}_{} = ${:06X}", prefix, name, label.location) << std::endl;
 		}
 
+		fixAsarMemoryLeak();
+
 		imprint.close();
 	}
 
@@ -192,5 +194,41 @@ namespace stardust {
 			globule_path.parent_path() / ".dependencies"
 		) };
 		return dependencies;
+	}
+
+	void Globule::fixAsarMemoryLeak() const {
+		// apparently labels will leak unless you patch a file 
+		// without labels and then get them again, so I guess we'll do this?
+
+		const memoryfile empty_patch{ "empty.asm", "", 0 };
+		int size;
+
+		const patchparams params{
+			sizeof(patchparams),
+			"empty.asm",
+			nullptr,
+			0,
+			&size,
+			nullptr,
+			0,
+			true,
+			nullptr,
+			0,
+			nullptr,
+			nullptr,
+			nullptr,
+			0,
+			nullptr,
+			0,
+			false,
+			true
+		};
+
+		if (!asar_patch_ex(&params)) {
+			spdlog::warn("Failed to clean up asar labels, stardust might leak memory.");
+			return;
+		}
+		int labels;
+		asar_getalllabels(&labels);
 	}
 }

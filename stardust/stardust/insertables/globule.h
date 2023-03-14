@@ -38,6 +38,8 @@ namespace stardust {
 
 		std::unordered_set<Dependency> determineDependencies() override;
 
+		void fixAsarMemoryLeak() const;
+
 	public:
 
 		Globule(const fs::path& project_root_path, const fs::path& temporary_rom_path,
