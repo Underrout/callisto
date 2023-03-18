@@ -19,7 +19,6 @@
 #include "insertables/external_tool.h"
 #include "insertables/patch.h"
 #include "insertables/globule.h"
-
 #include "insertables/pixi.h"
 
 #include "stardust_exception.h"
@@ -30,10 +29,12 @@
 #include "configuration/configuration_manager.h"
 #include "dependency/dependency.h"
 
+#include "builders/rebuilder.h"
+
 using namespace stardust;
 
 int main(int argc, const char* argv[]) {
-	spdlog::set_level(spdlog::level::debug);
+	spdlog::set_level(spdlog::level::info);
 
 	getch();
 
@@ -42,66 +43,8 @@ int main(int argc, const char* argv[]) {
 
 		const auto config{ config_manager.getConfiguration({}) };
 
-		ExGraphics exgfx{"./LunarMagic.exe", "./temp.smc", "./hack.smc"};
-		Graphics gfx{ "./LunarMagic.exe", "./temp.smc", "./hack.smc" };
-		SharedPalettes shared_palettes{ "./LunarMagic.exe", "./temp.smc", "./shared.pal" };
-		Overworld overworld{ "./flips.exe", "./clean.smc", "./LunarMagic.exe", "./temp.smc", "./ow.bps" };
-		TitleScreen title{ "./flips.exe", "./clean.smc", "./LunarMagic.exe", "./temp.smc", "./ow.bps" };
-		Credits cred{ "./flips.exe", "./clean.smc", "./LunarMagic.exe", "./temp.smc", "./ow.bps" };
-		GlobalExAnimation ex{ "./flips.exe", "./clean.smc", "./LunarMagic.exe", "./temp.smc", "./ow.bps" };
-		TitleMoves title_moves{ "./LunarMagic.exe", "./temp.smc", "./title.zst" };
-		Level level{ "./LunarMagic.exe", "./temp.smc", "./level.mwl" };
-		BinaryMap16 binary_map16{ "./LunarMagic.exe", "./temp.smc", "./all.map16" };
-		TextMap16 text_map16{ "./LunarMagic.exe", "./temp.smc", "./map16_folder", "./cli.exe" };
-
-
-		Pixi pixi{ "./", "./temp.smc", "-l ./list.txt -d", config.pixi_static_dependencies.getOrThrow(), config.pixi_dependency_report_file.getOrThrow()};
-
-		ExternalTool uberasm{ "UberASM", fs::canonical("./uberasm/UberASMTool.exe"), "list.txt", "./", "./temp.smc", false,
-			config.generic_tool_configurations.at("UberASM").static_dependencies.getOrThrow(),
-			config.generic_tool_configurations.at("UberASM").dependency_report_file.getOrThrow()
-		};
-
-		ExternalTool addmusick{ "AddMusicK", fs::canonical("./addmusick/AddMusicK.exe"), "", "./addmusick", "../temp.smc", false, 
-			config.generic_tool_configurations.at("AddMusicK").static_dependencies.getOrThrow(),
-			config.generic_tool_configurations.at("AddMusicK").dependency_report_file.getOrThrow() };
-		Patch patch{ "./", "./temp.smc", fs::canonical("./patch.asm") };
-		Globule globule{ "./", "./temp.smc", fs::canonical("./globule.asm"), 
-			fs::canonical("./imprints"), fs::canonical("./call.asm"), {"Data", "cod"}, {}};
-
-		exgfx.insertWithDependencies();
-		gfx.insertWithDependencies();
-		shared_palettes.insertWithDependencies();
-		overworld.insertWithDependencies();
-		title.insertWithDependencies();
-		ex.insertWithDependencies();
-		cred.insertWithDependencies();
-		// title_moves.insert();
-		level.insertWithDependencies();
-		binary_map16.insertWithDependencies();
-		text_map16.insertWithDependencies();
-		pixi.insertWithDependencies();
-		globule.insertWithDependencies();
-		uberasm.insertWithDependencies();
-		addmusick.insertWithDependencies();
-		patch.insertWithDependencies();
-
-		for (const auto& block : patch.getWrittenBlocks()) {
-			spdlog::info(fmt::format(
-				"Wrote {} bytes to {:06X}",
-				block.numbytes,
-				block.snesoffset
-			));
-		}
-
-		for (const auto& block : pixi.getExtraByteInfo()) {
-			spdlog::info(fmt::format(
-				"{}: {}, {}",
-				block.config_file_path.string(),
-				block.byte_count,
-				block.extra_byte_count
-			));
-		}
+		Rebuilder rebuilder{};
+		rebuilder.build(config);
 
 		return 0;
 	}

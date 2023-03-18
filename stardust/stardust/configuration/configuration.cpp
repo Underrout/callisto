@@ -14,6 +14,64 @@ namespace stardust {
 		discoverEmulators(config_files, user_variables);
 
 		fillInConfiguration(config_files, user_variables);
+
+		finalizeBuildOrder();
+	}
+
+	void Configuration::verifyPatchGlobuleExclusivity() {
+		if (patches.isSet() && globules.isSet()) {
+			for (const auto& patch : patches.getOrThrow()) {
+				for (const auto& globule : globules.getOrThrow()) {
+					if (patch == globule) {
+						throw ConfigException(fmt::format(
+							"{} cannot be used as a globule and patch at the same time",
+							patch.string()
+						));
+					}
+				}
+			}
+		}
+	}
+
+	void Configuration::finalizeBuildOrder() {
+		verifyPatchGlobuleExclusivity();
+
+		for (const auto& symbol : _build_order.getOrDefault({})) {
+			const auto descriptors{ symbolToDescriptor(symbol) };
+			build_order.insert(build_order.end(), descriptors.begin(), descriptors.end());
+		}
+	}
+
+	std::unordered_set<fs::path> Configuration::getExplicitGlobules() const {
+		std::unordered_set<fs::path> explicit_globules{};
+
+		for (const auto& entry : _build_order.getOrDefault({})) {
+			const auto path{ PathUtil::normalize(entry, project_root.getOrThrow()) };
+			for (const auto& globule : globules.getOrDefault({})) {
+				if (path == globule) {
+					explicit_globules.insert(path);
+					break;
+				}
+			}
+		}
+
+		return explicit_globules;
+	}
+
+	std::unordered_set<fs::path> Configuration::getExplicitPatches() const {
+		std::unordered_set<fs::path> explicit_patches{};
+
+		for (const auto& entry : _build_order.getOrDefault({})) {
+			const auto path{ PathUtil::normalize(entry, project_root.getOrThrow()) };
+			for (const auto& patch : patches.getOrDefault({})) {
+				if (path == patch) {
+					explicit_patches.insert(path);
+					break;
+				}
+			}
+		}
+
+		return explicit_patches;
 	}
 
 	std::map<std::string, std::string> Configuration::parseUserVariables(const toml::value& table,
@@ -233,6 +291,10 @@ namespace stardust {
 		config_name.trySet(config_file, level, user_variables);
 
 		rom_size.trySet(config_file, level);
+
+		use_text_map16_format.trySet(config_file, level);
+
+		clean_rom.trySet(config_file, level, root, user_variables);
 		
 		project_rom.trySet(config_file, level, root, user_variables);
 		temporary_rom.trySet(config_file, level, root, user_variables);
@@ -253,6 +315,7 @@ namespace stardust {
 		map16.trySet(config_file, level, root, user_variables);
 		overworld.trySet(config_file, level, root, user_variables);
 		titlescreen.trySet(config_file, level, root, user_variables);
+		title_moves.trySet(config_file, level, root, user_variables);
 		credits.trySet(config_file, level, root, user_variables);
 		global_exanimation.trySet(config_file, level, root, user_variables);
 
@@ -277,7 +340,7 @@ namespace stardust {
 			const auto& toml_build_order{ toml::find(orders, "build_order") };
 
 			if (verifyBuildOrder(toml::get<toml::array>(toml_build_order), user_variables)) {
-				build_order.trySet(config_file, level, user_variables);
+				_build_order.trySet(config_file, level, user_variables);
 			}
 		}
 		catch (const std::out_of_range&) {
@@ -297,13 +360,9 @@ namespace stardust {
 			if (generic_tool_configurations.count(as_string) != 0) {
 				continue;
 			}
-			fs::path as_path{ as_string };
-			if (!as_path.is_absolute()) {
-				as_path = project_root.getOrThrow() / as_path;
-			}
-			as_path = fs::absolute(fs::weakly_canonical(as_path));
+			const auto path{ PathUtil::normalize(as_string, project_root.getOrThrow()) };
 
-			if (isValidPatchSymbol(as_path) || isValidGlobuleSymbol(as_path)) {
+			if (isValidPatchSymbol(path) || isValidGlobuleSymbol(path)) {
 				continue;
 			}
 
@@ -357,5 +416,103 @@ namespace stardust {
 			}
 		}
 		return false;
+	}
+
+	std::vector<Descriptor> Configuration::symbolToDescriptor(const std::string& symbol) const {
+		if (symbol == "Graphics") {
+			return { Descriptor(Symbol::GRAPHICS) };
+		}
+		else if (symbol == "ExGraphics") {
+			return { Descriptor(Symbol::EX_GRAPHICS) };
+		}
+		else if (symbol == "Map16") {
+			return { Descriptor(Symbol::MAP16) };
+		}
+		else if (symbol == "TitleScreenMovement") {
+			return { Descriptor(Symbol::TITLE_SCREEN_MOVEMENT) };
+		}
+		else if (symbol == "SharedPalettes") {
+			return { Descriptor(Symbol::SHARED_PALETTES) }; 
+		}
+		else if (symbol == "Overworld") {
+			return { Descriptor(Symbol::OVERWORLD) };
+		}
+		else if (symbol == "TitleScreen") {
+			return { Descriptor(Symbol::TITLE_SCREEN) };
+		}
+		else if (symbol == "Credits") {
+			return { Descriptor(Symbol::CREDITS) };
+		}
+		else if (symbol == "GlobalExAnimation") {
+			return { Descriptor(Symbol::GLOBAL_EX_ANIMATION) };
+		}
+		else if (symbol == "Patches") {
+			if (patches.isSet()) {
+				std::vector<Descriptor> patch_descriptors{};
+
+				const auto explicit_patches{ getExplicitPatches() };
+
+				for (const auto& patch : patches.getOrDefault({})) {
+					if (explicit_patches.count(patch) == 0) {
+						patch_descriptors.emplace_back(Symbol::PATCH, patch.string());
+					}
+				}
+
+				return patch_descriptors;
+			}
+			else {
+				return {};
+			}
+		}
+		else if (symbol == "Globules") {
+			if (globules.isSet()) {
+				std::vector<Descriptor> globule_descriptors{};
+
+				const auto explicit_globules{ getExplicitGlobules() };
+
+				for (const auto& globule : globules.getOrDefault({})) {
+					if (explicit_globules.count(globule) == 0) {
+						globule_descriptors.emplace_back(Symbol::GLOBULE, globule.string());
+					}
+				}
+
+				return globule_descriptors;
+			}
+
+			return {};
+		}
+		else if (symbol == "Levels") {
+			if (levels.isSet() && fs::exists(levels.getOrThrow())) {
+				std::vector<Descriptor> level_descriptors{};
+
+				for (const auto& entry : fs::directory_iterator(levels.getOrThrow())) {
+					level_descriptors.emplace_back(Symbol::LEVEL, entry.path().string());
+				}
+				return level_descriptors;
+			}
+			else {
+				return {};
+			}
+		}
+		else if (symbol == "PIXI") {
+			return { Descriptor(Symbol::PIXI) };
+		}
+		else {
+			if (isValidPatchSymbol(PathUtil::normalize(symbol, project_root.getOrThrow()))) {
+				return { Descriptor(Symbol::PATCH, PathUtil::normalize(symbol, project_root.getOrThrow()).string()) };
+			}
+			if (isValidGlobuleSymbol(PathUtil::normalize(symbol, project_root.getOrThrow()))) {
+				return { Descriptor(Symbol::GLOBULE, PathUtil::normalize(symbol, project_root.getOrThrow()).string()) };
+			}
+			for (const auto& [name, config] : generic_tool_configurations) {
+				if (symbol == name) {
+					return { Descriptor(Symbol::EXTERNAL_TOOL, symbol) };
+				}
+			}
+			throw ConfigException(fmt::format(
+				"Unknown build order symbol '{}'",
+				symbol
+			));
+		}
 	}
 }

@@ -42,5 +42,7 @@ namespace stardust {
 			insert();
 			return determineDependencies();
 		}
+
+		virtual ~Insertable() {}
 	};
 }

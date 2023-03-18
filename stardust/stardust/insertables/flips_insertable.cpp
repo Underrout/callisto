@@ -66,9 +66,9 @@ namespace stardust {
 	}
 
 	fs::path FlipsInsertable::getTemporaryPatchedRomPath() const {
-		return temporary_rom_path.stem().string()
+		return temporary_rom_path.parent_path() / (temporary_rom_path.stem().string()
 			+ getTemporaryPatchedRomPostfix()
-			+ temporary_rom_path.extension().string();
+			+ temporary_rom_path.extension().string());
 	}
 
 	fs::path FlipsInsertable::createTemporaryPatchedRom() const {

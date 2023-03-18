@@ -3,6 +3,7 @@
 #include <filesystem>
 #include <array>
 #include <map>
+#include <unordered_set>
 
 #include <boost/range.hpp>
 #include <toml.hpp>
@@ -12,6 +13,8 @@
 #include "emulator_configuration.h"
 #include "config_variable.h"
 #include "config_exception.h"
+#include "../path_util.h"
+#include "../descriptor.h"
 
 namespace fs = std::filesystem;
 
@@ -20,13 +23,16 @@ namespace stardust {
 	public:
 		using ConfigFileMap = std::map<ConfigurationLevel, std::vector<fs::path>>;
 		using VariableFileMap = std::map<ConfigurationLevel, fs::path>;
+		using BuildOrder = std::vector<Descriptor>;
 
 	private:
 		static constexpr std::array VALID_STATIC_BUILD_ORDER_SYMBOLS{
-			"Globules", "Graphics", "ExGraphics", "Map16", "TitleMoves", "SharedPalettes",
-			"Overworld", "Titlescreen", "Credits", "GlobalExAnimation", 
+			"Globules", "Graphics", "ExGraphics", "Map16", "TitleScreenMovement", "SharedPalettes",
+			"Overworld", "TitleScreen", "Credits", "GlobalExAnimation", 
 			"Patches", "PIXI", "Levels"
 		};
+
+		StringVectorConfigVariable _build_order{ {"orders", "build_order"} };
 
 		using ParsedConfigFileMap = std::map<ConfigurationLevel, std::vector<toml::value>>;
 		using UserVariableMap = std::map<ConfigurationLevel, std::map<std::string, std::string>>;
@@ -52,6 +58,13 @@ namespace stardust {
 		bool isValidStaticBuildOrderSymbol(const std::string& symbol) const;
 		bool isValidPatchSymbol(const fs::path& patch_path) const;
 		bool isValidGlobuleSymbol(const fs::path& globule_path) const;
+		void verifyPatchGlobuleExclusivity();
+		void finalizeBuildOrder();
+
+		std::unordered_set<fs::path> getExplicitGlobules() const;
+		std::unordered_set<fs::path> getExplicitPatches() const;
+
+		std::vector<Descriptor> symbolToDescriptor(const std::string &symbol) const;
 
 	public:
 		static std::map<std::string, std::string> parseUserVariables(const toml::value& table,
@@ -63,7 +76,9 @@ namespace stardust {
 		StringConfigVariable config_name{ {"settings", "config_name"} };
 		PathConfigVariable project_root{ {"settings", "project_root"} };
 		IntegerConfigVariable rom_size{ {"settings", "rom_size"} };
+		BoolConfigVariable use_text_map16_format{ {"settings", "use_text_map16_format"} };
 		PathConfigVariable log_file{ {"settings", "log_file"} };
+		PathConfigVariable clean_rom{ {"settings", "clean_rom"} };
 
 		PathConfigVariable project_rom{ {"output", "project_rom"} };
 		PathConfigVariable temporary_rom{ {"output", "temporary_rom"} };
@@ -85,6 +100,7 @@ namespace stardust {
 		PathConfigVariable map16{ {"resources", "map16"} };
 		PathConfigVariable overworld{ {"resources", "overworld"} };
 		PathConfigVariable titlescreen{ {"resources", "titlescreen"} };
+		PathConfigVariable title_moves{ {"resources", "titlescreen_movement"} };
 		PathConfigVariable credits{ {"resources", "credits"} };
 		PathConfigVariable global_exanimation{ {"resources", "global_exanimation"} };
 
@@ -93,7 +109,7 @@ namespace stardust {
 
 		PathConfigVariable globule_header{ {"resources", "globule_header"} };
 
-		StringVectorConfigVariable build_order{ {"orders", "build_order"} };
+		BuildOrder build_order{};
 
 		std::map<std::string, ToolConfiguration> generic_tool_configurations{};
 

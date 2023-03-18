@@ -19,7 +19,7 @@ namespace stardust {
 	}
 
 	void Level::insert() {
-		spdlog::debug(fmt::format(
+		spdlog::info(fmt::format(
 			"Inserting level from MWL file {} into temporary ROM {}",
 			mwl_file.string(),
 			temporary_rom_path.string()
@@ -32,7 +32,7 @@ namespace stardust {
 		};
 
 		if (exit_code == 0) {
-			spdlog::debug(fmt::format(
+			spdlog::info(fmt::format(
 				"Successfully inserted level from MWL file {} into temporary ROM {}",
 				mwl_file.string(),
 				temporary_rom_path.string()

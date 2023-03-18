@@ -8,9 +8,8 @@ namespace stardust {
 
 		if (toml_value.has_value()) {
 			checkNotSet(level, toml_value.value());
-			const auto formatted{ formatUserVariables(toml_value.value(), user_variables) };
-			const auto joined_path{ fs::path(formatted).is_absolute() ? formatted : relative_to.getOrThrow() / formatted };
-			const auto full_path{ fs::absolute(fs::weakly_canonical(joined_path)) };
+			const auto formatted{ formatUserVariables(toml_value.value(), user_variables) };;
+			const auto full_path{ PathUtil::normalize(formatted, relative_to.getOrThrow()) };
 			spdlog::debug(fmt::format(
 				"Setting {} = {}",
 				name,
@@ -30,8 +29,7 @@ namespace stardust {
 		if (toml_value.has_value()) {
 			checkNotSet(level, toml_value.value());
 			const auto formatted{ formatUserVariables(toml_value.value(), user_variables) };
-			const auto joined_path{ fs::path(formatted).is_absolute() ? formatted : relative_to / formatted };
-			const auto full_path{ fs::absolute(fs::weakly_canonical(joined_path)) };
+			const auto full_path{ PathUtil::normalize(formatted, relative_to) };
 			spdlog::debug(fmt::format(
 				"Setting {} = {}",
 				name,
@@ -91,8 +89,7 @@ namespace stardust {
 
 			for (const auto& entry : toml::get<toml::array>(toml_array.value())) {
 				const auto formatted{ formatUserVariables(entry, user_variables) };
-				const auto joined_path{ fs::path(formatted).is_absolute() ? formatted : relative_to.getOrThrow() / formatted };
-				const auto full_path{ fs::absolute(fs::weakly_canonical(joined_path)) };
+				const auto full_path{ PathUtil::normalize(formatted, relative_to.getOrThrow()) };
 				converted.push_back(full_path);
 				as_strings.push_back(full_path.string());
 			}

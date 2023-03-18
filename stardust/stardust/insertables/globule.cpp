@@ -3,12 +3,12 @@
 namespace stardust {
 	Globule::Globule(const fs::path& project_root_path, const fs::path& temporary_rom_path,
 		const fs::path& globule_path, const fs::path& imprint_directory, const fs::path& globule_call_file,
-		const std::unordered_set<std::string>& other_globule_names,
+		const std::vector<fs::path>& other_globule_paths,
 		const std::optional<fs::path> globule_header_file,
 		const std::vector<fs::path>& additional_include_paths) :
 		RomInsertable(temporary_rom_path), project_relative_path(fs::relative(globule_path, project_root_path)),
 		globule_path(globule_path), imprint_directory(imprint_directory), globule_call_file(globule_call_file),
-		other_globule_names(other_globule_names), globule_header_file(globule_header_file) 
+		globule_header_file(globule_header_file)
 	{
 		if (!fs::exists(globule_path)) {
 			throw ResourceNotFoundException(fmt::format(
@@ -31,6 +31,10 @@ namespace stardust {
 		std::strcpy(copy, path.string().c_str());
 		return copy;
 			});
+
+		for (const auto& other_globule_path : other_globule_paths) {
+			other_globule_names.insert(globulePathToName(other_globule_path));
+		}
 	}
 
 	// TODO this whole thing is pretty much the same as the Patch.insert() method, probably merge 
@@ -51,7 +55,7 @@ namespace stardust {
 				<< "freecode cleaned" << std::endl << std::endl;
 
 			if (globule_header_file.has_value()) {
-				temp_patch << "incsrc \"" << globule_header_file.value() << '"' << std::endl << std::endl;
+				temp_patch << "incsrc " << globule_header_file.value() << std::endl << std::endl;
 			}
 
 			temp_patch << "incsrc \"" << globule_path.string() << '"' << std::endl;
@@ -151,6 +155,13 @@ namespace stardust {
 		}
 	}
 
+	std::string Globule::globulePathToName(const fs::path& path) {
+		auto prefix{ path.stem().string() };
+		std::replace(prefix.begin(), prefix.end(), ' ', '_');
+
+		return prefix;
+	}
+
 	void Globule::emitImprintFile() const {
 		fs::create_directories(imprint_directory);
 
@@ -160,6 +171,8 @@ namespace stardust {
 
 		int label_number{};
 		const auto labels{ asar_getalllabels(&label_number) };
+
+		const auto globule_name{ globulePathToName(globule_path) };
 
 		for (int i{ 0 }; i != label_number; ++i) {
 			const auto& label{ labels[i] };
@@ -173,18 +186,17 @@ namespace stardust {
 			const auto underscore_idx{ name.find('_', 0) };
 			if (other_globule_names.count(name) != 0 || 
 				(underscore_idx != -1 && other_globule_names.count(name.substr(0, underscore_idx)) != 0)) {
-				// label belongs to imported globule, skip it
-				continue;
+				if (name.substr(0, underscore_idx) != globule_name) {
+					// label belongs to imported globule, skip it
+					continue;
+				}
 			}
 
-			auto prefix{ globule_path.stem().string() };
-			std::replace(prefix.begin(), prefix.end(), ' ', '_');
-
-			imprint << fmt::format("{}_{} = ${:06X}", prefix, name, label.location) << std::endl;
-			imprint << fmt::format("!{}_{} = ${:06X}", prefix, name, label.location) << std::endl;
+			imprint << fmt::format("{}_{} = ${:06X}", globule_name, name, label.location) << std::endl;
+			imprint << fmt::format("!{}_{} = ${:06X}", globule_name, name, label.location) << std::endl;
 		}
 
-		fixAsarMemoryLeak();
+		// fixAsarMemoryLeak();
 
 		imprint.close();
 	}

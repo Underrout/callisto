@@ -15,6 +15,7 @@
 
 #include "configuration_level.h"
 #include "config_exception.h"
+#include "../path_util.h"
 
 namespace fs = std::filesystem;
 
