@@ -59,7 +59,6 @@ namespace stardust {
 		const auto reported{ Insertable::extractDependenciesFromReport(dependency_report_file_path.value()) };
 
 		dependencies.insert(reported.begin(), reported.end());
-		dependencies.insert(tool_exe_path);
 
 		return dependencies;
 	}
