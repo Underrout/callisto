@@ -51,6 +51,11 @@ namespace stardust {
 				std::vector<Interval> intervals{};
 				
 				for (const auto& written_block : patch->getWrittenBlocks()) {
+					if (written_block.snesoffset == 0x80FFDC && written_block.numbytes == 4) {
+						// discard writes to checksum/inverse checksum
+						continue;
+					}
+
 					const auto our_interval{ Interval(
 							written_block.snesoffset,
 							written_block.snesoffset + written_block.numbytes
