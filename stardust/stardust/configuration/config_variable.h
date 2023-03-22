@@ -22,8 +22,10 @@ namespace fs = std::filesystem;
 namespace stardust {
 	template<typename T, typename V>
 	class ConfigVariable {
-	protected:
+	public:
 		const std::string name;
+	
+	protected:
 		const std::vector<std::string> keys;
 		std::unordered_map<ConfigurationLevel, V> values{};
 

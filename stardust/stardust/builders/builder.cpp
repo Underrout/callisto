@@ -16,101 +16,45 @@ namespace stardust {
 		const auto name{ descriptor.name };
 
 		if (symbol == Symbol::GRAPHICS) {
-			return std::make_shared<Graphics>(
-				config.lunar_magic_path.getOrThrow(),
-				config.temporary_rom.getOrThrow(),
-				config.project_rom.getOrThrow()
-			);
+			return std::make_shared<Graphics>(config);
 		}
 		else if (symbol == Symbol::EX_GRAPHICS) {
-			return std::make_shared<ExGraphics>(
-				config.lunar_magic_path.getOrThrow(),
-				config.temporary_rom.getOrThrow(),
-				config.project_rom.getOrThrow()
-			);
+			return std::make_shared<ExGraphics>(config);
 		}
 		else if (symbol == Symbol::MAP16) {
 			if (config.use_text_map16_format.getOrDefault(false)) {
-				return std::make_shared<TextMap16>(
-					config.lunar_magic_path.getOrThrow(),
-					config.temporary_rom.getOrThrow(),
-					config.map16.getOrThrow(),
-					"." // TODO make it so the map16 conversion tool is integrated
-				);
+				return std::make_shared<TextMap16>(config);
 			}
 			else {
-				return std::make_shared<BinaryMap16>(
-					config.lunar_magic_path.getOrThrow(),
-					config.temporary_rom.getOrThrow(),
-					config.map16.getOrThrow()
-				);
+				return std::make_shared<BinaryMap16>(config);
 			}
 		}
 		else if (symbol == Symbol::TITLE_SCREEN_MOVEMENT) {
-			return { std::make_shared<TitleMoves>(
-				config.lunar_magic_path.getOrThrow(),
-				config.temporary_rom.getOrThrow(),
-				config.title_moves.getOrThrow()
-			) };
+			return std::make_shared<TitleMoves>(config);
 		}
 		else if (symbol == Symbol::SHARED_PALETTES) {
-			return std::make_shared<SharedPalettes>(
-				config.lunar_magic_path.getOrThrow(),
-				config.temporary_rom.getOrThrow(),
-				config.shared_palettes.getOrThrow()
-			);
+			return std::make_shared<SharedPalettes>(config);
 		}
 		else if (symbol == Symbol::OVERWORLD) {
-			return std::make_shared<Overworld>(
-				config.flips_path.getOrThrow(),
-				config.clean_rom.getOrThrow(),
-				config.lunar_magic_path.getOrThrow(),
-				config.temporary_rom.getOrThrow(),
-				config.overworld.getOrThrow()
-			);
+			return std::make_shared<Overworld>(config);
 		}
 		else if (symbol == Symbol::TITLE_SCREEN) {
-			return std::make_shared<TitleScreen>(
-				config.flips_path.getOrThrow(),
-				config.clean_rom.getOrThrow(),
-				config.lunar_magic_path.getOrThrow(),
-				config.temporary_rom.getOrThrow(),
-				config.titlescreen.getOrThrow()
-			);
+			return std::make_shared<TitleScreen>(config);
 		}
 		else if (symbol == Symbol::CREDITS) {
-			return std::make_shared<Credits>(
-				config.flips_path.getOrThrow(),
-				config.clean_rom.getOrThrow(),
-				config.lunar_magic_path.getOrThrow(),
-				config.temporary_rom.getOrThrow(),
-				config.credits.getOrThrow()
-			);
+			return std::make_shared<Credits>(config);
 		}
 		else if (symbol == Symbol::GLOBAL_EX_ANIMATION) {
-			return std::make_shared<GlobalExAnimation>(
-				config.flips_path.getOrThrow(),
-				config.clean_rom.getOrThrow(),
-				config.lunar_magic_path.getOrThrow(),
-				config.temporary_rom.getOrThrow(),
-				config.global_exanimation.getOrThrow()
-			);
+			return std::make_shared<GlobalExAnimation>(config);
 		}
 		else if (symbol == Symbol::PIXI) {
-			return std::make_shared<Pixi>(
-				config.pixi_working_dir.getOrThrow(),
-				config.temporary_rom.getOrThrow(),
-				config.pixi_options.getOrDefault(""),
-				config.pixi_static_dependencies.getOrDefault({}),
-				config.pixi_dependency_report_file.getOrDefault({})
-			);
+			return std::make_shared<Pixi>(config);
 		}
 		else if (symbol == Symbol::PATCH) {
 			std::vector<fs::path> include_paths{ PathUtil::getStardustCache(config.project_root.getOrThrow()) };
 
 			return std::make_shared<Patch>(
-				config.project_root.getOrThrow(),
-				config.temporary_rom.getOrThrow(),
+				config,
 				name.value(),
 				include_paths
 			);
@@ -120,13 +64,11 @@ namespace stardust {
 			std::vector<fs::path> include_paths{ stardust_cache };
 
 			return std::make_shared<Globule>(
-				config.project_root.getOrThrow(),
-				config.temporary_rom.getOrThrow(),
+				config,
 				name.value(),
 				stardust_cache / "globules",
 				stardust_cache / "call.asm",
 				config.globules.getOrDefault({}),
-				config.globule_header.getOrDefault({}),
 				include_paths
 			);
 		}
@@ -134,19 +76,13 @@ namespace stardust {
 			const auto& tool_config{ config.generic_tool_configurations.at(name.value()) };
 			return std::make_shared<ExternalTool>(
 				name.value(),
-				tool_config.executable.getOrThrow(),
-				tool_config.options.getOrDefault(""),
-				tool_config.working_directory.getOrThrow(),
-				config.temporary_rom.getOrThrow(),
-				false,
-				tool_config.static_dependencies.getOrDefault({}),
-				tool_config.dependency_report_file.getOrDefault({})
+				config,
+				tool_config
 			);
 		}
 		else if (symbol == Symbol::LEVEL) {
 			return std::make_shared<Level>(
-				config.lunar_magic_path.getOrThrow(),
-				config.temporary_rom.getOrThrow(), 
+				config,
 				name.value()
 			);
 		}

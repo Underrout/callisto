@@ -1,13 +1,21 @@
 #include "external_tool.h"
 
 namespace stardust {
-	ExternalTool::ExternalTool(const std::string& tool_name, const fs::path& tool_exe_path, const std::string& tool_options,
-		const fs::path& working_directory, const std::optional<fs::path>& temporary_rom, bool take_user_input, 
-		const std::vector<fs::path>& static_dependencies, const std::optional<fs::path>& dependency_report_file_path)
-		: tool_name(tool_name), tool_exe_path(tool_exe_path), tool_options(tool_options), working_directory(working_directory),
-		take_user_input(take_user_input), temporary_rom(temporary_rom), static_dependencies(static_dependencies), 
-		dependency_report_file_path(dependency_report_file_path)
+	ExternalTool::ExternalTool(const std::string& name, const Configuration& config, const ToolConfiguration& tool_config)
+		: tool_name(name), tool_exe_path(tool_config.executable.getOrThrow()),
+		tool_options(tool_config.options.getOrDefault("")),
+		working_directory(tool_config.working_directory.getOrThrow()),
+		take_user_input(tool_config.takes_user_input.getOrDefault(false)),
+		pass_rom(tool_config.pass_rom.getOrDefault(true)),
+		temporary_rom(config.temporary_rom.getOrThrow()), 
+		static_dependencies(tool_config.static_dependencies.getOrDefault({})),
+		dependency_report_file_path(tool_config.dependency_report_file.getOrDefault({}))
 	{
+		registerConfigurationDependency(tool_config.executable);
+		registerConfigurationDependency(tool_config.options, ConfigurationDependency::Policy::REINSERT);
+		registerConfigurationDependency(tool_config.working_directory, ConfigurationDependency::Policy::REINSERT);
+		registerConfigurationDependency(tool_config.pass_rom, ConfigurationDependency::Policy::REINSERT);
+
 		if (!fs::exists(tool_exe_path)) {
 			throw ToolNotFoundException(fmt::format(
 				"{} executable not found at {}",
@@ -32,7 +40,7 @@ namespace stardust {
 		}
 	}
 
-	std::unordered_set<Dependency> ExternalTool::determineDependencies() {
+	std::unordered_set<ResourceDependency> ExternalTool::determineDependencies() {
 		if (!dependency_report_file_path.has_value()) {
 			throw DependencyException(fmt::format("No dependency report file specified for {}", tool_name));
 		}
@@ -45,9 +53,9 @@ namespace stardust {
 			));
 		}
 
-		std::unordered_set<Dependency> dependencies{};
+		std::unordered_set<ResourceDependency> dependencies{};
 		std::transform(static_dependencies.begin(), static_dependencies.end(), std::inserter(dependencies, dependencies.begin()),
-			[](const auto& entry) { return Dependency(entry); });
+			[](const auto& entry) { return ResourceDependency(entry); });
 		const auto reported{ Insertable::extractDependenciesFromReport(dependency_report_file_path.value()) };
 
 		dependencies.insert(reported.begin(), reported.end());
@@ -80,7 +88,7 @@ namespace stardust {
 				"\"{}\" {}{}",
 				tool_exe_path.string(),
 				tool_options,
-				temporary_rom.has_value() ? " \"" + temporary_rom.value().string() + '"' : ""
+				pass_rom ? " \"" + temporary_rom.value().string() + '"' : ""
 			), bp::std_in < stdin, bp::std_out > stdout, bp::std_err > stderr);
 		}
 		else {
@@ -88,7 +96,7 @@ namespace stardust {
 				"\"{}\" {}{}",
 				tool_exe_path.string(),
 				tool_options,
-				temporary_rom.has_value() ? " \"" + temporary_rom.value().string() + '"' : ""
+				pass_rom ? " \"" + temporary_rom.value().string() + '"' : ""
 			), bp::std_in < bp::null, bp::std_out > stdout, bp::std_err > stderr);
 		}
 		fs::current_path(prev_folder);

@@ -11,6 +11,8 @@
 #include "../not_found_exception.h"
 #include "rom_insertable.h"
 
+#include "../configuration/configuration.h"
+
 namespace bp = boost::process;
 namespace fs = std::filesystem;
 
@@ -19,13 +21,13 @@ namespace stardust {
 	protected:
 		const fs::path lunar_magic_path;
 
-		LunarMagicInsertable(const fs::path& lunar_magic_path, const fs::path& temporary_rom_path);
+		LunarMagicInsertable(const Configuration& config);
 
 		template<typename... Args>
 		int callLunarMagic(Args... args) {
 			return bp::system(lunar_magic_path.string(), args...);
 		}
 
-		std::unordered_set<Dependency> determineDependencies() override;
+		std::unordered_set<ResourceDependency> determineDependencies() override;
 	};
 }

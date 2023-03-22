@@ -1,29 +1,23 @@
 #include "text_map16.h"
 
 namespace stardust {
-	TextMap16::TextMap16(const fs::path& lunar_magic_path, 
-		const fs::path& temporary_rom_path, const fs::path& map16_folder_path, const fs::path& conversion_tool_path)
-		: LunarMagicInsertable(lunar_magic_path, temporary_rom_path), map16_folder_path(map16_folder_path),
-		conversion_tool_path(conversion_tool_path)
+	TextMap16::TextMap16(const Configuration& config)
+		: LunarMagicInsertable(config), map16_folder_path(config.map16.getOrThrow())
 	{
+		registerConfigurationDependency(config.map16, ConfigurationDependency::Policy::REINSERT);
+		registerConfigurationDependency(config.use_text_map16_format, ConfigurationDependency::Policy::REINSERT);
+
 		if (!fs::exists(map16_folder_path)) {
 			throw ResourceNotFoundException(fmt::format(
 				"Map16 folder not found at {}",
 				map16_folder_path.string()
 			));
 		}
-
-		if (!fs::exists(conversion_tool_path)) {
-			throw ToolNotFoundException(fmt::format(
-				"Human Readable Map16 CLI not found at {}",
-				conversion_tool_path.string()
-			));
-		}
 	}
 
 	fs::path TextMap16::getTemporaryMap16FilePath() const
 	{
-		return map16_folder_path.string() + ".map16";
+		return temporary_rom_path.parent_path() / (map16_folder_path.string() + ".map16");
 	}
 
 	fs::path TextMap16::generateTemporaryMap16File() const
@@ -36,24 +30,13 @@ namespace stardust {
 		));
 
 		const auto temp_map16{ getTemporaryMap16FilePath() };
-
-		const auto exit_code{ bp::system(
-			conversion_tool_path.string(),
-			"--to-map16",
-			map16_folder_path.string(),
-			temp_map16.string()
-		)};
-
-		if (exit_code == 0) {
-			spdlog::info("Succesfully generated Map16 file");
+		
+		try {
+			HumanReadableMap16::to_map16::convert(map16_folder_path, temp_map16);
 		}
-		else {
-			throw InsertionException(fmt::format(
-				"Failed to generate temporary map16 file at {} from map16 folder at {} using conversion tool at {}",
-				temp_map16.string(),
-				map16_folder_path.string(),
-				conversion_tool_path.string()
-			));
+		catch (HumanMap16Exception& e) {
+			spdlog::error(e.get_detailed_error_message());
+			throw InsertionException("Failed to convert map16 folder to file");
 		}
 
 		return temp_map16;
@@ -72,9 +55,8 @@ namespace stardust {
 		}
 	}
 
-	std::unordered_set<Dependency> TextMap16::determineDependencies() {
+	std::unordered_set<ResourceDependency> TextMap16::determineDependencies() {
 		auto dependencies{ LunarMagicInsertable::determineDependencies() };
-		dependencies.insert(conversion_tool_path);
 		dependencies.insert(map16_folder_path);
 		return dependencies;
 	}

@@ -1,12 +1,13 @@
 #include "globule.h"
 
 namespace stardust {
-	Globule::Globule(const fs::path& project_root_path, const fs::path& temporary_rom_path,
-		const fs::path& globule_path, const fs::path& imprint_directory, const fs::path& globule_call_file,
+	Globule::Globule(const Configuration& config,
+		const fs::path& globule_path, const fs::path& imprint_directory,
+		const fs::path& globule_call_file,
 		const std::vector<fs::path>& other_globule_paths,
-		const std::optional<fs::path> globule_header_file,
 		const std::vector<fs::path>& additional_include_paths) :
-		RomInsertable(temporary_rom_path), project_relative_path(fs::relative(globule_path, project_root_path)),
+		RomInsertable(config), 
+		project_relative_path(fs::relative(globule_path, registerConfigurationDependency(config.project_root).getOrThrow())),
 		globule_path(globule_path), imprint_directory(imprint_directory), globule_call_file(globule_call_file),
 		globule_header_file(globule_header_file)
 	{
@@ -201,7 +202,7 @@ namespace stardust {
 		imprint.close();
 	}
 
-	std::unordered_set<Dependency> Globule::determineDependencies() {
+	std::unordered_set<ResourceDependency> Globule::determineDependencies() {
 		if (globule_path.extension() == ".asm") {
 			const auto dependencies{ Insertable::extractDependenciesFromReport(
 				globule_path.parent_path() / ".dependencies"

@@ -27,6 +27,8 @@ namespace stardust {
 	class Builder {
 	protected:
 		using Insertables = std::vector<std::pair<Descriptor, std::shared_ptr<Insertable>>>;
+		using DependencyVector = std::vector<std::pair<Descriptor, std::pair<std::unordered_set<ResourceDependency>,
+			std::unordered_set<ConfigurationDependency>>>>;
 	
 		static Insertables buildOrderToInsertables(const Configuration& config);
 		static std::shared_ptr<Insertable> descriptorToInsertable(const Descriptor& descriptor, const Configuration& config);

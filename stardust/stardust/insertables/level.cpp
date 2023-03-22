@@ -1,8 +1,8 @@
 #include "level.h"
 
 namespace stardust {
-	Level::Level(const fs::path& lunar_magic_path, const fs::path& temporary_rom_path, const fs::path& mwl_file)
-		: LunarMagicInsertable(lunar_magic_path, temporary_rom_path), mwl_file(mwl_file)
+	Level::Level(const Configuration& config, const fs::path& mwl_file)
+		: LunarMagicInsertable(config), mwl_file(mwl_file)
 	{
 		if (!fs::exists(mwl_file)) {
 			throw ResourceNotFoundException(fmt::format(
@@ -12,9 +12,9 @@ namespace stardust {
 		}
 	}
 
-	std::unordered_set<Dependency> Level::determineDependencies() {
+	std::unordered_set<ResourceDependency> Level::determineDependencies() {
 		auto dependencies{ LunarMagicInsertable::determineDependencies() };
-		dependencies.insert(Dependency(mwl_file));
+		dependencies.insert(ResourceDependency(mwl_file));
 		return dependencies;
 	}
 

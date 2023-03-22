@@ -327,9 +327,10 @@ namespace stardust {
 		for (auto& [_, tool] : generic_tool_configurations) {
 			tool.executable.trySet(config_file, level, tool.working_directory, user_variables);
 			tool.options.trySet(config_file, level, user_variables);
+			tool.takes_user_input.trySet(config_file, level);
 			tool.static_dependencies.trySet(config_file, level, tool.working_directory, user_variables);
 			tool.dependency_report_file.trySet(config_file, level, tool.working_directory, user_variables);
-			tool.dont_pass_rom.trySet(config_file, level);
+			tool.pass_rom.trySet(config_file, level);
 		}
 	}
 

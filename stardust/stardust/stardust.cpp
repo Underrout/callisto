@@ -27,7 +27,6 @@
 #include "configuration/configuration_level.h"
 #include "configuration/config_exception.h"
 #include "configuration/configuration_manager.h"
-#include "dependency/dependency.h"
 
 #include "builders/rebuilder.h"
 
@@ -68,6 +67,10 @@ int main(int argc, const char* argv[]) {
 		return 1;
 	}
 	catch (const std::runtime_error& e) {
+		spdlog::error(e.what());
+		return 1;
+	}
+	catch (const json::exception& e) {
 		spdlog::error(e.what());
 		return 1;
 	}

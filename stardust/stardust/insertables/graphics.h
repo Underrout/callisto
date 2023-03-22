@@ -10,6 +10,8 @@
 #include "../insertion_exception.h"
 #include "../not_found_exception.h"
 
+#include "../configuration/configuration.h"
+
 namespace fs = std::filesystem; 
 
 namespace stardust {
@@ -23,11 +25,11 @@ namespace stardust {
 		void createTemporaryGraphicsFolder() const;
 		void deleteTemporaryGraphicsFolder() const;
 
-		std::unordered_set<Dependency> determineDependencies() override;
+		std::unordered_set<ResourceDependency> determineDependencies() override;
 
 	public:
 		void insert() override;
 
-		Graphics(const fs::path &lunar_magic_path, const fs::path &temporary_rom_path, const fs::path &output_rom_path);
+		Graphics(const Configuration& config);
 	};
 }

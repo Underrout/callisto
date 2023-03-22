@@ -46,7 +46,7 @@ namespace stardust {
 		}
 	}
 
-	std::unordered_set<Dependency> Pixi::determineDependencies() {
+	std::unordered_set<ResourceDependency> Pixi::determineDependencies() {
 		if (!dependency_report_file_path.has_value()) {
 			throw DependencyException("No dependency report file specified for PIXI");
 		}
@@ -59,9 +59,9 @@ namespace stardust {
 			));
 		}
 
-		std::unordered_set<Dependency> dependencies{};
+		std::unordered_set<ResourceDependency> dependencies{};
 		std::transform(static_dependencies.begin(), static_dependencies.end(), std::inserter(dependencies, dependencies.begin()),
-			[](const auto& entry) { return Dependency(entry); });
+			[](const auto& entry) { return ResourceDependency(entry); });
 		const auto reported{ Insertable::extractDependenciesFromReport(dependency_report_file_path.value()) };
 
 		dependencies.insert(reported.begin(), reported.end());
@@ -86,7 +86,7 @@ namespace stardust {
 				}
 
 				if (sprite_idx != nullptr) {
-					dependencies.insert(Dependency(config_file_path));
+					dependencies.insert(ResourceDependency(config_file_path));
 				}
 			}
 		}
@@ -94,10 +94,12 @@ namespace stardust {
 		return dependencies;
 	}
 
-	Pixi::Pixi(const fs::path& pixi_folder_path, const fs::path& temporary_rom_path, const std::string& pixi_options,
-		const std::vector<fs::path>& static_dependencies, const std::optional<fs::path>& dependency_report_file_path)
-		: RomInsertable(temporary_rom_path), pixi_folder_path(pixi_folder_path), pixi_options(pixi_options),
-		static_dependencies(static_dependencies), dependency_report_file_path(dependency_report_file_path)
+	Pixi::Pixi(const Configuration& config)
+		: RomInsertable(config), 
+		pixi_folder_path(registerConfigurationDependency(config.pixi_working_dir).getOrThrow()), 
+		pixi_options(registerConfigurationDependency(config.pixi_options).getOrDefault("")),
+		static_dependencies(config.pixi_static_dependencies.getOrDefault({})),
+		dependency_report_file_path(config.pixi_dependency_report_file.getOrDefault({}))
 	{
 		// delete potential previous dependency report
 		if (dependency_report_file_path.has_value()) {

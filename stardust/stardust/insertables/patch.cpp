@@ -1,9 +1,10 @@
 #include "patch.h"
 
 namespace stardust {
-	Patch::Patch(const fs::path& project_root_path, const fs::path& temporary_rom_path, const fs::path& patch_path,
+	Patch::Patch(const Configuration& config, const fs::path& patch_path,
 		const std::vector<fs::path>& additional_include_paths)
-		: RomInsertable(temporary_rom_path), project_relative_path(fs::relative(patch_path, project_root_path)),
+		: RomInsertable(config), 
+		project_relative_path(fs::relative(patch_path, registerConfigurationDependency(config.project_root).getOrThrow())),
 		patch_path(patch_path) 
 	{
 		if (!fs::exists(patch_path)) {
@@ -128,7 +129,7 @@ namespace stardust {
 		return written_blocks;
 	}
 
-	std::unordered_set<Dependency> Patch::determineDependencies() {
+	std::unordered_set<ResourceDependency> Patch::determineDependencies() {
 		const auto dependencies{ Insertable::extractDependenciesFromReport(
 			patch_path.parent_path() / ".dependencies"
 		) };

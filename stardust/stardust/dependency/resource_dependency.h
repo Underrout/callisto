@@ -18,30 +18,32 @@ namespace fs = std::filesystem;
 using json = nlohmann::json;
 
 namespace stardust {
-	class Dependency {
+	class ResourceDependency {
 	public:
 		const fs::path dependent_path;
 		const std::optional<fs::file_time_type> last_write_time;
 
-		Dependency(const fs::path& dependent_path)
+		ResourceDependency(const fs::path& dependent_path)
 			: dependent_path(dependent_path),
 			last_write_time(fs::exists(dependent_path) ? std::make_optional(fs::last_write_time(dependent_path)) : std::nullopt)
 		{
-			spdlog::debug(fmt::format("Dependency created on '{}' -> {}", 
+			spdlog::debug(fmt::format("Resource dependency created on '{}' -> {}", 
 				dependent_path.string(), 
 				fs::exists(dependent_path) ? "exists" : "missing"
 			));
 		}
 
-		Dependency(const json& j) : dependent_path(j["path"].get<std::string>()), last_write_time(
+		ResourceDependency(const json& j) : dependent_path(j["path"].get<std::string>()), last_write_time(
 			std::chrono::time_point<fs::_File_time_clock>(
 				std::chrono::milliseconds(j["timestamp"].get<long>()))
 			) {}
 
 		json toJson() const {
-			auto j{ json({ "path", dependent_path.string() }) };
+			json j;
+			j["path"] = dependent_path.string();
 			if (last_write_time.has_value()) {
-				j["timestamp"] = last_write_time.value().time_since_epoch().count();
+				// auto a{ last_write_time.value().time_since_epoch().count() };
+				j["timestamp"] = static_cast<json::number_unsigned_t>(last_write_time.value().time_since_epoch().count());
 			}
 			else {
 				j["timestamp"] = nullptr;
@@ -49,7 +51,7 @@ namespace stardust {
 			return j;
 		}
 
-		bool operator==(const Dependency& other) const {
+		bool operator==(const ResourceDependency& other) const {
 			return dependent_path == other.dependent_path && last_write_time == other.last_write_time;
 		}
 	};
@@ -57,8 +59,8 @@ namespace stardust {
 
 namespace std {
 	template<>
-	struct hash<stardust::Dependency> {
-		size_t operator()(const stardust::Dependency& dependency) const {
+	struct hash<stardust::ResourceDependency> {
+		size_t operator()(const stardust::ResourceDependency& dependency) const {
 			return hash<fs::path>{}(dependency.dependent_path);
 		}
 	};
