@@ -96,8 +96,8 @@ namespace stardust {
 
 	Pixi::Pixi(const Configuration& config)
 		: RomInsertable(config), 
-		pixi_folder_path(registerConfigurationDependency(config.pixi_working_dir).getOrThrow()), 
-		pixi_options(registerConfigurationDependency(config.pixi_options).getOrDefault("")),
+		pixi_folder_path(registerConfigurationDependency(config.pixi_working_dir, Policy::REINSERT).getOrThrow()), 
+		pixi_options(registerConfigurationDependency(config.pixi_options, Policy::REINSERT).getOrDefault("")),
 		static_dependencies(config.pixi_static_dependencies.getOrDefault({})),
 		dependency_report_file_path(config.pixi_dependency_report_file.getOrDefault({}))
 	{

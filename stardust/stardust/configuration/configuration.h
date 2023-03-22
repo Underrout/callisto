@@ -91,7 +91,7 @@ namespace stardust {
 
 		PathConfigVariable pixi_working_dir{ {"tools", "PIXI", "directory"} };
 		StringConfigVariable pixi_options{ {"tools", "PIXI", "options"} };
-		ExtendablePathVectorConfigVariable pixi_static_dependencies{ {"tools", "PIXI", "static_dependencies"} };
+		StaticResourceDependencyConfigVariable pixi_static_dependencies{ {"tools", "PIXI", "static_dependencies"} };
 		PathConfigVariable pixi_dependency_report_file{ {"tools", "PIXI", "dependency_report_file"} };
 
 		PathConfigVariable initial_patch{ {"resources", "initial_patch"} };

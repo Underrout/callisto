@@ -14,6 +14,7 @@
 
 #include "../insertable.h"
 #include "../not_found_exception.h"
+#include "policy.h"
 
 namespace fs = std::filesystem;
 using json = nlohmann::json;
@@ -36,11 +37,6 @@ namespace stardust {
 		}
 
 	public:
-		enum class Policy {
-			REINSERT,
-			REBUILD
-		};
-
 		const std::string config_keys;
 		const std::variant<std::monostate, std::string, bool> value;
 		const Policy policy;

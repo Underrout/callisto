@@ -12,9 +12,9 @@ namespace stardust {
 		dependency_report_file_path(tool_config.dependency_report_file.getOrDefault({}))
 	{
 		registerConfigurationDependency(tool_config.executable);
-		registerConfigurationDependency(tool_config.options, ConfigurationDependency::Policy::REINSERT);
-		registerConfigurationDependency(tool_config.working_directory, ConfigurationDependency::Policy::REINSERT);
-		registerConfigurationDependency(tool_config.pass_rom, ConfigurationDependency::Policy::REINSERT);
+		registerConfigurationDependency(tool_config.options, Policy::REINSERT);
+		registerConfigurationDependency(tool_config.working_directory, Policy::REINSERT);
+		registerConfigurationDependency(tool_config.pass_rom, Policy::REINSERT);
 
 		if (!fs::exists(tool_exe_path)) {
 			throw ToolNotFoundException(fmt::format(

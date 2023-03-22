@@ -2,6 +2,7 @@
 
 namespace stardust {
 	enum class Symbol {
+		INITIAL_PATCH,
 		GRAPHICS,
 		EX_GRAPHICS,
 		MAP16,

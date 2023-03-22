@@ -12,6 +12,7 @@
 #include "rom_insertable.h"
 
 #include "../configuration/configuration.h"
+#include "../dependency/policy.h"
 
 namespace bp = boost::process;
 namespace fs = std::filesystem;

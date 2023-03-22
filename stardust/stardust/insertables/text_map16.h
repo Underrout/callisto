@@ -14,6 +14,7 @@
 #include "../human_map16/human_map16_exception.h"
 
 #include "../configuration/configuration.h"
+#include "../dependency/policy.h"
 
 namespace fs = std::filesystem;
 

@@ -5,6 +5,7 @@
 #include "builder.h"
 #include "../configuration/configuration.h"
 #include "interval.h"
+#include "../insertables/initial_patch.h"
 
 namespace stardust {
 	class Rebuilder : public Builder {

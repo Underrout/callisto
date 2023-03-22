@@ -16,6 +16,7 @@
 #include "configuration_level.h"
 #include "config_exception.h"
 #include "../path_util.h"
+#include "../dependency/resource_dependency.h"
 
 namespace fs = std::filesystem;
 
@@ -252,6 +253,14 @@ namespace stardust {
 			const std::map<std::string, std::string>& user_variables);
 
 		std::vector<fs::path> getOrThrow() const override;
+
+		using ConfigVariable::ConfigVariable;
+	};
+
+	class StaticResourceDependencyConfigVariable : public ConfigVariable<toml::array, std::vector<ResourceDependency>> {
+	public:
+		bool trySet(const toml::value& table, ConfigurationLevel level, const PathConfigVariable& relative_to,
+			const std::map<std::string, std::string>& user_variables);
 
 		using ConfigVariable::ConfigVariable;
 	};

@@ -8,7 +8,7 @@ namespace stardust {
 		project_exgraphics_folder_path(config.project_rom.getOrThrow().parent_path() / EXGRAPHICS_FOLDER_NAME),
 		temporary_exgraphics_folder_path(config.temporary_rom.getOrThrow().parent_path() / EXGRAPHICS_FOLDER_NAME)
 	{
-		registerConfigurationDependency(config.project_rom, ConfigurationDependency::Policy::REINSERT);
+		registerConfigurationDependency(config.project_rom, Policy::REINSERT);
 
 		if (!fs::exists(project_exgraphics_folder_path)) {
 			throw ResourceNotFoundException(fmt::format(

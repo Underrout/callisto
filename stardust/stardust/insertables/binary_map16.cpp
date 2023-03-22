@@ -3,9 +3,9 @@
 namespace stardust {
 	BinaryMap16::BinaryMap16(const Configuration& config)
 		: LunarMagicInsertable(config), 
-		map16_file_path(registerConfigurationDependency(config.map16, ConfigurationDependency::Policy::REINSERT).getOrThrow())
+		map16_file_path(registerConfigurationDependency(config.map16, Policy::REINSERT).getOrThrow())
 	{
-		registerConfigurationDependency(config.use_text_map16_format, ConfigurationDependency::Policy::REINSERT);
+		registerConfigurationDependency(config.use_text_map16_format, Policy::REINSERT);
 
 		if (!fs::exists(map16_file_path)) {
 			throw ResourceNotFoundException(fmt::format(

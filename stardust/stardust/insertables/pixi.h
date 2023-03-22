@@ -12,6 +12,7 @@
 #include "../dependency/dependency_exception.h"
 
 #include "../configuration/configuration.h"
+#include "../dependency/policy.h"
 
 namespace fs = std::filesystem;
 
@@ -20,7 +21,7 @@ namespace stardust {
 	protected:
 		const fs::path pixi_folder_path;
 		const std::string pixi_options;
-		const std::vector<fs::path> static_dependencies;
+		const std::vector<ResourceDependency> static_dependencies;
 		const std::optional<fs::path> dependency_report_file_path;
 		
 		std::unordered_set<ResourceDependency> determineDependencies() override;

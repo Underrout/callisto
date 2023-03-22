@@ -6,6 +6,17 @@ namespace stardust {
 
 		auto insertables{ buildOrderToInsertables(config) };
 
+		if (config.initial_patch.isSet()) {
+			InitialPatch initial_patch{ config };
+			const auto initial_patch_resource_dependencies{ initial_patch.insertWithDependencies() };
+			const auto initial_patch_config_dependencies{ initial_patch.getConfigurationDependencies() };
+			dependencies.push_back({ Descriptor(Symbol::INITIAL_PATCH), 
+				{ initial_patch_resource_dependencies, initial_patch_config_dependencies } });
+		}
+		else {
+			fs::copy_file(config.clean_rom.getOrThrow(), config.temporary_rom.getOrThrow(), fs::copy_options::overwrite_existing);
+		}
+
 		for (auto& [descriptor, insertable] : insertables) {
 			const auto resource_dependencies{ insertable->insertWithDependencies() };
 			const auto config_dependencies{ insertable->getConfigurationDependencies() };
@@ -14,6 +25,12 @@ namespace stardust {
 		}
 
 		checkPatchConflicts(insertables);
+
+		const auto insertion_report{ getJsonDependencies(dependencies) };
+
+		std::ofstream build_report{ PathUtil::getStardustCache(config.project_root.getOrThrow()) / "build_report.json" };
+		build_report << std::setw(4) << insertion_report;
+		build_report.close();
 	}
 
 	json Rebuilder::getJsonDependencies(const DependencyVector& dependencies) {

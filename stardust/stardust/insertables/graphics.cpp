@@ -8,7 +8,7 @@ namespace stardust {
 		project_graphics_folder_path(config.project_rom.getOrThrow().parent_path() / GRAPHICS_FOLDER_NAME),
 		temporary_graphics_folder_path(temporary_rom_path.parent_path() / GRAPHICS_FOLDER_NAME)
 	{
-		registerConfigurationDependency(config.project_rom);
+		registerConfigurationDependency(config.project_rom, Policy::REINSERT);
 
 		if (!fs::exists(project_graphics_folder_path)) {
 			throw ResourceNotFoundException(fmt::format(

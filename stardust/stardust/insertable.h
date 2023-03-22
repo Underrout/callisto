@@ -3,9 +3,10 @@
 #include <string>
 #include <unordered_set>
 
-#include "dependency/resource_dependency.h"
 #include "dependency/configuration_dependency.h"
 #include "configuration/config_variable.h"
+#include "dependency/policy.h"
+#include "dependency/resource_dependency.h"
 
 namespace stardust {
 	class Insertable {
@@ -39,8 +40,7 @@ namespace stardust {
 			return dependencies;
 		}
 
-		const StringConfigVariable& registerConfigurationDependency(const StringConfigVariable& config_variable,
-			ConfigurationDependency::Policy policy = ConfigurationDependency::Policy::REBUILD) {
+		const StringConfigVariable& registerConfigurationDependency(const StringConfigVariable& config_variable, Policy policy = Policy::REBUILD) {
 			if (config_variable.isSet()) {
 				std::variant<std::monostate, std::string, bool> variant;
 				if (config_variable.isSet()) {
@@ -58,8 +58,7 @@ namespace stardust {
 			return config_variable;
 		}
 
-		const PathConfigVariable& registerConfigurationDependency(const PathConfigVariable& config_variable,
-			ConfigurationDependency::Policy policy = ConfigurationDependency::Policy::REBUILD) {
+		const PathConfigVariable& registerConfigurationDependency(const PathConfigVariable& config_variable, Policy policy = Policy::REBUILD) {
 			if (config_variable.isSet()) {
 				std::variant<std::monostate, std::string, bool> variant;
 				if (config_variable.isSet()) {
@@ -77,8 +76,7 @@ namespace stardust {
 			return config_variable;
 		}
 
-		const BoolConfigVariable& registerConfigurationDependency(const BoolConfigVariable& config_variable,
-			ConfigurationDependency::Policy policy = ConfigurationDependency::Policy::REBUILD) {
+		const BoolConfigVariable& registerConfigurationDependency(const BoolConfigVariable& config_variable, Policy policy = Policy::REBUILD) {
 			if (config_variable.isSet()) {
 				std::variant<std::monostate, std::string, bool> variant;
 				if (config_variable.isSet()) {

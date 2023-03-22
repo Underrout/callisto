@@ -3,7 +3,7 @@
 namespace stardust {
 	SharedPalettes::SharedPalettes(const Configuration& config)
 		: LunarMagicInsertable(config), 
-		shared_palettes_path(registerConfigurationDependency(config.shared_palettes).getOrThrow())
+		shared_palettes_path(registerConfigurationDependency(config.shared_palettes, Policy::REINSERT).getOrThrow())
 	{
 		if (!fs::exists(shared_palettes_path)) {
 			throw ResourceNotFoundException(fmt::format(

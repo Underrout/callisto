@@ -13,6 +13,8 @@
 #include "../dependency/dependency_exception.h"
 #include "../configuration/tool_configuration.h"
 #include "../configuration/configuration.h"
+#include "../dependency/policy.h"
+#include "../dependency/resource_dependency.h"
 
 namespace fs = std::filesystem;
 namespace bp = boost::process;
@@ -27,7 +29,7 @@ namespace stardust {
 		const fs::path working_directory;
 		bool take_user_input;
 		bool pass_rom;
-		const std::vector<fs::path> static_dependencies;
+		const std::vector<ResourceDependency> static_dependencies;
 		const std::optional<fs::path> dependency_report_file_path;
 
 		std::unordered_set<ResourceDependency> determineDependencies() override;

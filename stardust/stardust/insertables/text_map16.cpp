@@ -4,8 +4,8 @@ namespace stardust {
 	TextMap16::TextMap16(const Configuration& config)
 		: LunarMagicInsertable(config), map16_folder_path(config.map16.getOrThrow())
 	{
-		registerConfigurationDependency(config.map16, ConfigurationDependency::Policy::REINSERT);
-		registerConfigurationDependency(config.use_text_map16_format, ConfigurationDependency::Policy::REINSERT);
+		registerConfigurationDependency(config.map16, Policy::REINSERT);
+		registerConfigurationDependency(config.use_text_map16_format, Policy::REINSERT);
 
 		if (!fs::exists(map16_folder_path)) {
 			throw ResourceNotFoundException(fmt::format(

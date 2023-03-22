@@ -11,8 +11,8 @@
 #include <fmt/format.h>
 #include <nlohmann/json.hpp>
 
-#include "../insertable.h"
 #include "../not_found_exception.h"
+#include "../dependency/policy.h"
 
 namespace fs = std::filesystem;
 using json = nlohmann::json;
@@ -22,9 +22,12 @@ namespace stardust {
 	public:
 		const fs::path dependent_path;
 		const std::optional<fs::file_time_type> last_write_time;
+		const Policy policy;
 
-		ResourceDependency(const fs::path& dependent_path)
-			: dependent_path(dependent_path),
+		ResourceDependency(const fs::path& dependent_path) : ResourceDependency(dependent_path, Policy::REINSERT) {}
+
+		ResourceDependency(const fs::path& dependent_path, Policy policy)
+			: dependent_path(dependent_path), policy(policy),
 			last_write_time(fs::exists(dependent_path) ? std::make_optional(fs::last_write_time(dependent_path)) : std::nullopt)
 		{
 			spdlog::debug(fmt::format("Resource dependency created on '{}' -> {}", 
@@ -33,7 +36,7 @@ namespace stardust {
 			));
 		}
 
-		ResourceDependency(const json& j) : dependent_path(j["path"].get<std::string>()), last_write_time(
+		ResourceDependency(const json& j) : dependent_path(j["path"].get<std::string>()), policy(j["policy"]), last_write_time(
 			std::chrono::time_point<fs::_File_time_clock>(
 				std::chrono::milliseconds(j["timestamp"].get<long>()))
 			) {}
@@ -41,6 +44,7 @@ namespace stardust {
 		json toJson() const {
 			json j;
 			j["path"] = dependent_path.string();
+			j["policy"] = policy;
 			if (last_write_time.has_value()) {
 				// auto a{ last_write_time.value().time_since_epoch().count() };
 				j["timestamp"] = static_cast<json::number_unsigned_t>(last_write_time.value().time_since_epoch().count());

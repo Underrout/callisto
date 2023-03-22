@@ -15,6 +15,7 @@
 #include "../not_found_exception.h"
 
 #include "../configuration/configuration.h"
+#include "../dependency/policy.h"
 
 namespace fs = std::filesystem;
 
