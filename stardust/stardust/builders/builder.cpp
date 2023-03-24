@@ -90,4 +90,10 @@ namespace stardust {
 			throw ConfigException("Unknown build order symbol");
 		}
 	}
+
+	void Builder::writeBuildReport(const fs::path& project_root, const json& j) {
+		std::ofstream build_report{ PathUtil::getStardustCache(project_root) / "build_report.json" };
+		build_report << std::setw(4) << j;
+		build_report.close();
+	}
 }

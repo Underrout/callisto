@@ -17,20 +17,32 @@ namespace stardust {
 			fs::copy_file(config.clean_rom.getOrThrow(), config.temporary_rom.getOrThrow(), fs::copy_options::overwrite_existing);
 		}
 
+		std::unordered_map<Descriptor, std::vector<Interval>> written_intervals{};
+		std::vector<char> old_rom;
+
+		const auto check_conflicts_policy{ determineConflictCheckSetting(config) };
+		if (check_conflicts_policy != Conflicts::NONE) {
+			old_rom = getRom(config.temporary_rom.getOrThrow());
+		}
+
 		for (auto& [descriptor, insertable] : insertables) {
 			const auto resource_dependencies{ insertable->insertWithDependencies() };
 			const auto config_dependencies{ insertable->getConfigurationDependencies() };
 
 			dependencies.push_back({ descriptor, { resource_dependencies, config_dependencies } });
+
+			if (check_conflicts_policy != Conflicts::NONE) {
+				auto new_rom{ getRom(config.temporary_rom.getOrThrow()) };
+				written_intervals.insert({ descriptor, getDifferences(old_rom, new_rom, check_conflicts_policy) });
+				old_rom.swap(new_rom);
+			}
 		}
 
-		checkPatchConflicts(insertables);
+		checkConflicts(written_intervals, config.project_root.getOrThrow());
 
 		const auto insertion_report{ getJsonDependencies(dependencies) };
 
-		std::ofstream build_report{ PathUtil::getStardustCache(config.project_root.getOrThrow()) / "build_report.json" };
-		build_report << std::setw(4) << insertion_report;
-		build_report.close();
+		writeBuildReport(config.project_root.getOrThrow(), insertion_report);
 	}
 
 	json Rebuilder::getJsonDependencies(const DependencyVector& dependencies) {
@@ -57,52 +69,122 @@ namespace stardust {
 		return j;
 	}
 
-	void Rebuilder::checkPatchConflicts(const Insertables& insertables) {
-		std::map<std::string, std::vector<Interval>> written_intervals{};
+	void Rebuilder::checkConflicts(const std::unordered_map<Descriptor, std::vector<Interval>>& written_intervals, const fs::path& project_root) {
 
-		for (const auto& [descriptor, insertable] : insertables) {
-			if (descriptor.symbol == Symbol::PATCH) {
-				const auto patch{ std::dynamic_pointer_cast<Patch>(insertable) };
-				const auto patch_name{ patch->project_relative_path.string() };
+		auto current{ written_intervals.begin() };
+		while (current != written_intervals.end()) {
+			auto next{ std::next(current) };
 
-				std::vector<Interval> intervals{};
-				
-				for (const auto& written_block : patch->getWrittenBlocks()) {
-					if (written_block.snesoffset == 0x80FFDC && written_block.numbytes == 4) {
-						// discard writes to checksum/inverse checksum
-						continue;
-					}
+			const auto our_descriptor{ current->first };
+			const auto our_intervals{ current->second };
 
-					const auto our_interval{ Interval(
-							written_block.snesoffset,
-							written_block.snesoffset + written_block.numbytes
-					) };
-					intervals.push_back(our_interval);
+			while (next != written_intervals.end()) {
+				const auto other_descriptor{ next->first };
+				const auto other_intervals{ next->second };
 
-					for (const auto& [other_patch_name, intervals] : written_intervals) {
-						if (patch_name == other_patch_name) {
-							// don't check patch against itself if applied multiple times
-							continue;
-						}
+				for (const auto& our_interval : our_intervals) {
+					for (const auto& other_interval : other_intervals) {
+						if (our_interval.overlaps(other_interval)) {
+							const auto our_overlap{ our_interval.overlap(other_interval) };
 
-						for (const auto& other_interval : intervals) {
-							if (our_interval.overlaps(other_interval)) {
-								const auto overlap{ our_interval.overlap(other_interval) };
-								const auto start{ fmt::format("{:06X}", overlap.lower) };
+							const auto other_overlap{ other_interval.overlap(our_interval) };
 
-								const auto byte_or_bytes{ overlap.length() == 1 ? "byte" : "bytes" };
-
-								spdlog::warn(fmt::format(
-									"WARNING: Patches '{}' and '{}' both wrote {} {} to address {}",
-									other_patch_name, patch_name, overlap.length(), byte_or_bytes, start
-								));
+							if (our_overlap != other_overlap) {
+								const auto byte_or_bytes{ our_overlap.length() == 1 ? "byte" : "bytes" };
+								spdlog::warn(
+									"${:06X} (PC: 0x{:06X}) - {} {}: Written to by '{}' and '{}'",
+									our_overlap.snes_lower,
+									our_overlap.pc_lower,
+									our_overlap.length(),
+									byte_or_bytes,
+									our_descriptor.toString(project_root),
+									other_descriptor.toString(project_root)
+								);
 							}
 						}
 					}
 				}
-
-				written_intervals.insert({ patch_name, intervals });
+				++next;
 			}
+			++current;
+		}
+	}
+
+	std::vector<char> Rebuilder::getRom(const fs::path& rom_path) {
+		std::ifstream rom_file(rom_path, std::ios::in | std::ios::binary);
+		std::vector<char> rom_bytes((std::istreambuf_iterator<char>(rom_file)), (std::istreambuf_iterator<char>()));
+		rom_file.close();
+
+		int rom_size{ static_cast<int>(rom_bytes.size()) };
+		const auto header_size{ rom_size & 0x7FFF };
+
+		std::vector<char> unheadered(rom_bytes.begin() + header_size, rom_bytes.end());
+
+		return unheadered;
+	}
+
+	std::vector<Interval> Rebuilder::getDifferences(const std::vector<char> old_rom, const std::vector<char> new_rom, Conflicts conflict_policy) {
+		if (conflict_policy == Conflicts::NONE) {
+			return {};
+		}
+		int smaller_size{ static_cast<int>(std::min(old_rom.size(), new_rom.size())) };
+
+		if (conflict_policy == Conflicts::HIJACKS) {
+			smaller_size = std::min(smaller_size, 0x78000);
+		}
+
+		std::vector<Interval> differences{};
+		bool parsing_diff{ false };
+		int diff_start{ 0 };
+		std::vector<char> diff{};
+		for (size_t i{ 0 }; i != smaller_size; ++i) {
+			if (i == 0x07FDC) {
+				if (parsing_diff) {
+					parsing_diff = false;
+					differences.push_back(Interval(diff_start, i, diff));
+					diff.clear();
+				}
+				i += 4;
+			}
+
+			if (old_rom.at(i) != new_rom.at(i)) {
+				if (!parsing_diff) {
+					parsing_diff = true;
+					diff_start = i;
+				}
+				diff.push_back(new_rom.at(i));
+			}
+			else {
+				if (parsing_diff) {
+					parsing_diff = false;
+					differences.push_back(Interval(diff_start, i, diff));
+					diff.clear();
+				}
+			}
+		}
+		if (parsing_diff) {
+			differences.push_back(Interval(diff_start, smaller_size, diff));
+		}
+
+		return differences;
+	}
+
+	Rebuilder::Conflicts Rebuilder::determineConflictCheckSetting(const Configuration& config) {
+		const auto setting{ config.check_conflicts.getOrDefault("hijacks") };
+		if (setting == "all") {
+			return Conflicts::ALL;
+		}
+		else if (setting == "hijacks") {
+			return Conflicts::HIJACKS;
+		}
+		else if (setting == "none") {
+			return Conflicts::NONE;
+		}
+		else {
+			throw StardustException(fmt::format(
+				"Unknown settings.check_conflicts setting '{}'",
+				setting
+			));
 		}
 	}
 }

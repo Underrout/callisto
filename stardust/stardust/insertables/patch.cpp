@@ -97,14 +97,6 @@ namespace stardust {
 			out_rom.write(rom_bytes.data(), rom_bytes.size());
 			out_rom.close();
 			spdlog::info(fmt::format("Successfully applied patch {}!", project_relative_path.string()));
-
-			std::vector<writtenblockdata> blocks{};
-			int num_blocks;
-			const auto asar_blocks{ asar_getwrittenblocks(&num_blocks) };
-			for (int i{ 0 }; i != num_blocks; ++i) {
-				blocks.push_back(asar_blocks[i]);
-			}
-			written_blocks = blocks;
 		}
 		else {
 			int error_count;
@@ -123,10 +115,6 @@ namespace stardust {
 				error_string.str()
 			));
 		}
-	}
-
-	const std::vector<writtenblockdata>& Patch::getWrittenBlocks() const {
-		return written_blocks;
 	}
 
 	std::unordered_set<ResourceDependency> Patch::determineDependencies() {

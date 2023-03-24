@@ -17,6 +17,8 @@
 #include "../configuration/configuration.h"
 #include "../dependency/policy.h"
 
+#include "../builders/interval.h"
+
 namespace fs = std::filesystem;
 
 namespace stardust {
@@ -26,7 +28,6 @@ namespace stardust {
 
 		const fs::path patch_path;
 		std::vector<const char*> additional_include_paths;
-		std::vector<writtenblockdata> written_blocks;
 
 		std::unordered_set<ResourceDependency> determineDependencies() override;
 
@@ -37,7 +38,5 @@ namespace stardust {
 			const fs::path& patch_path, const std::vector<fs::path>& additional_include_paths = {});
 
 		void insert() override;
-
-		const std::vector<writtenblockdata>& getWrittenBlocks() const;
 	};
 }

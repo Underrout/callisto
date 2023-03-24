@@ -33,6 +33,8 @@ namespace stardust {
 		static Insertables buildOrderToInsertables(const Configuration& config);
 		static std::shared_ptr<Insertable> descriptorToInsertable(const Descriptor& descriptor, const Configuration& config);
 
+		static void writeBuildReport(const fs::path& project_root, const json& j);
+
 	public:
 
 		virtual void build(const Configuration& config) = 0;

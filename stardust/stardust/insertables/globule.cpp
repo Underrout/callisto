@@ -9,7 +9,7 @@ namespace stardust {
 		RomInsertable(config), 
 		project_relative_path(fs::relative(globule_path, registerConfigurationDependency(config.project_root).getOrThrow())),
 		globule_path(globule_path), imprint_directory(imprint_directory), globule_call_file(globule_call_file),
-		globule_header_file(globule_header_file)
+		globule_header_file(registerConfigurationDependency(config.globule_header, Policy::REINSERT).getOrThrow())
 	{
 		if (!fs::exists(globule_path)) {
 			throw ResourceNotFoundException(fmt::format(
@@ -204,9 +204,12 @@ namespace stardust {
 
 	std::unordered_set<ResourceDependency> Globule::determineDependencies() {
 		if (globule_path.extension() == ".asm") {
-			const auto dependencies{ Insertable::extractDependenciesFromReport(
+			auto dependencies{ Insertable::extractDependenciesFromReport(
 				globule_path.parent_path() / ".dependencies"
 			) };
+			if (globule_header_file.has_value()) {
+				dependencies.insert(ResourceDependency(globule_header_file.value(), Policy::REINSERT));
+			}
 			return dependencies;
 		}
 		return {};

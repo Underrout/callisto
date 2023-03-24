@@ -300,6 +300,8 @@ namespace stardust {
 		temporary_rom.trySet(config_file, level, root, user_variables);
 		bps_package.trySet(config_file, level, root, user_variables);
 
+		check_conflicts.trySet(config_file, level, user_variables);
+
 		flips_path.trySet(config_file, level, root, user_variables);
 		
 		lunar_magic_path.trySet(config_file, level, root, user_variables);
