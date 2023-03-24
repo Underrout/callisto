@@ -39,7 +39,9 @@ namespace stardust {
 			}
 		}
 
-		reportConflicts(write_map);
+		reportConflicts(write_map, config.conflict_log_file.isSet() ?
+			std::make_optional(config.conflict_log_file.getOrThrow()) : 
+			std::nullopt);
 
 		const auto insertion_report{ getJsonDependencies(dependencies) };
 
@@ -70,7 +72,14 @@ namespace stardust {
 		return j;
 	}
 
-	void Rebuilder::reportConflicts(const WriteMap& write_map) {
+	void Rebuilder::reportConflicts(const WriteMap& write_map, const std::optional<fs::path>& log_file) {
+		std::ofstream log;
+		int conflicts{ 0 };
+		const auto log_to_file{ log_file.has_value() };
+		if (log_to_file) {
+			log.open(log_file.value());
+		}
+
 		auto current{ write_map.begin() };
 		while (current != write_map.end()) {
 			auto& pc_offset{ current->first };
@@ -90,21 +99,40 @@ namespace stardust {
 					}
 					++conflict_size;
 					++current;
-					writes = current->second;
-				} while (current != write_map.end() && writers == getWriters(writes) && !writesAreIdentical(writes));
-				outputConflict(written_bytes, pc_offset, conflict_size);
+				} while (current != write_map.end() && writers == getWriters(current->second) && !writesAreIdentical(current->second));
+				const auto conflict_string{ getConflictString(
+					written_bytes, pc_offset, conflict_size, !log_to_file) };
+				++conflicts;
+				if (log_to_file) {
+					log << conflict_string;
+				}
+				else {
+					spdlog::warn(conflict_string);
+				}
 			}
 			else {
 				++current;
 			}
 		}
+
+		if (log_to_file) {
+			if (conflicts == 0) {
+				spdlog::info("No conflicts logged to {}", log_file.value().string());
+			}
+			else {
+				spdlog::warn("{} conflict(s) logged to {}", conflicts, log_file.value().string());
+			}
+		}
+		else if (conflicts == 0) {
+			spdlog::info("No conflicts found");
+		}
 	}
 
-	void Rebuilder::outputConflict(const ConflictVector& conflict_vector, int pc_start_offset, int conflict_size) {
+	std::string Rebuilder::getConflictString(const ConflictVector& conflict_vector, int pc_start_offset, int conflict_size, bool limit_lines) {
 		std::ostringstream output{};
 		const auto byte_or_bytes{ conflict_size == 1 ? "byte" : "bytes" };
 		output << fmt::format(
-			"\nConflict - 0x{:X} {} at SNES: ${:06X} (unheadered), PC: 0x{:06X} (headered):\n",
+			"Conflict - 0x{:X} {} at SNES: ${:06X} (unheadered), PC: 0x{:06X} (headered):\n",
 			conflict_size, byte_or_bytes,
 			pcToSnes(pc_start_offset), pc_start_offset + 0x200  // idk if the + 0x200 is controversial
 		);
@@ -113,7 +141,7 @@ namespace stardust {
 			output << '\t' << writer << ':';
 			int i{ 0 };
 			while (i != written_bytes.size()) {
-				if (i == 0x100) {
+				if (limit_lines && i == 0x100) {
 					output << "...";
 					break;
 				}
@@ -125,12 +153,12 @@ namespace stardust {
 			output << std::endl;
 		}
 
-		spdlog::warn(output.str());
+		return output.str();
 	}
 
 	bool Rebuilder::writesAreIdentical(const Writes& writes) {
-		auto first{ writes.at(0).second };
-		return std::all_of(writes.begin(), writes.end(), [&](const auto& entry) {
+		auto first{ writes.at(1).second };
+		return std::all_of(writes.begin() + 1, writes.end(), [&](const auto& entry) {
 			return entry.second == first;
 		});
 	}
@@ -181,6 +209,9 @@ namespace stardust {
 			}
 
 			if (i >= old_rom.size() || old_rom.at(i) != new_rom.at(i)) {
+				if (write_map.find(i) == write_map.end() && i < old_rom.size()) {
+					write_map[i].push_back({ "Original bytes", old_rom.at(i)});
+				}
 				write_map[i].push_back({ descriptor_string, new_rom.at(i) });
 			}
 		}

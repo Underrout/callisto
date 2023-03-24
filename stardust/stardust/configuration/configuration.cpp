@@ -301,6 +301,7 @@ namespace stardust {
 		bps_package.trySet(config_file, level, root, user_variables);
 
 		check_conflicts.trySet(config_file, level, user_variables);
+		conflict_log_file.trySet(config_file, level, root, user_variables);
 
 		flips_path.trySet(config_file, level, root, user_variables);
 		

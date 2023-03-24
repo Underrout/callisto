@@ -23,8 +23,9 @@ namespace stardust {
 		};
 
 		static json getJsonDependencies(const DependencyVector& dependencies);
-		static void reportConflicts(const WriteMap& write_map);
-		static void outputConflict(const ConflictVector& conflict_vector, int pc_start_offset, int conflict_size);
+		static void reportConflicts(const WriteMap& write_map, const std::optional<fs::path>& log_file);
+		static std::string getConflictString(const ConflictVector& conflict_vector, 
+			int pc_start_offset, int conflict_size, bool limit_lines = true);
 		static bool writesAreIdentical(const Writes& writes);
 		static int pcToSnes(int address);
 		static std::vector<std::string> getWriters(const Writes& writes);

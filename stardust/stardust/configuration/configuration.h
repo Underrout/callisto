@@ -80,6 +80,7 @@ namespace stardust {
 		PathConfigVariable log_file{ {"settings", "log_file"} };
 		PathConfigVariable clean_rom{ {"settings", "clean_rom"} };
 		StringConfigVariable check_conflicts{ {"settings", "check_conflicts"} };
+		PathConfigVariable conflict_log_file { {"settings", "conflict_log_file"} };
 
 		PathConfigVariable project_rom{ {"output", "project_rom"} };
 		PathConfigVariable temporary_rom{ {"output", "temporary_rom"} };
