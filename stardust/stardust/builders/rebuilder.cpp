@@ -45,7 +45,7 @@ namespace stardust {
 
 		const auto insertion_report{ getJsonDependencies(dependencies) };
 
-		writeBuildReport(config.project_root.getOrThrow(), insertion_report);
+		writeBuildReport(config.project_root.getOrThrow(), createBuildReport( config, insertion_report));
 	}
 
 	json Rebuilder::getJsonDependencies(const DependencyVector& dependencies) {

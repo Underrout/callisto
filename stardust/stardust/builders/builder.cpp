@@ -91,9 +91,17 @@ namespace stardust {
 		}
 	}
 
+	json Builder::createBuildReport(const Configuration& config, const json& dependency_report) {
+		json report{};
+		report["dependencies"] = dependency_report;
+		report["configuration"] = config.config_name.getOrThrow();
+		report["file_format_version"] = BUILD_REPORT_VERSION;
+		return report;
+	}
+
 	void Builder::writeBuildReport(const fs::path& project_root, const json& j) {
 		std::ofstream build_report{ PathUtil::getStardustCache(project_root) / "build_report.json" };
-		build_report << std::setw(4) << j;
+		build_report << std::setw(4) << j << std::endl;
 		build_report.close();
 	}
 }

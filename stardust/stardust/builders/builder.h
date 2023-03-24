@@ -2,6 +2,8 @@
 
 #include <memory>
 
+#include <nlohmann/json.hpp>
+
 #include "../configuration/configuration.h"
 
 #include "../insertables/exgraphics.h"
@@ -23,9 +25,13 @@
 #include "../insertable.h"
 #include "../descriptor.h"
 
+using json = nlohmann::json;
+
 namespace stardust {
 	class Builder {
 	protected:
+		static constexpr auto BUILD_REPORT_VERSION{ 1 };
+
 		using Insertables = std::vector<std::pair<Descriptor, std::shared_ptr<Insertable>>>;
 		using DependencyVector = std::vector<std::pair<Descriptor, std::pair<std::unordered_set<ResourceDependency>,
 			std::unordered_set<ConfigurationDependency>>>>;
@@ -33,6 +39,7 @@ namespace stardust {
 		static Insertables buildOrderToInsertables(const Configuration& config);
 		static std::shared_ptr<Insertable> descriptorToInsertable(const Descriptor& descriptor, const Configuration& config);
 
+		static json createBuildReport(const Configuration& config, const json& dependency_report);
 		static void writeBuildReport(const fs::path& project_root, const json& j);
 
 	public:
