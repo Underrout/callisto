@@ -17,7 +17,7 @@ namespace stardust {
 			fs::copy_file(config.clean_rom.getOrThrow(), config.temporary_rom.getOrThrow(), fs::copy_options::overwrite_existing);
 		}
 
-		std::unordered_map<Descriptor, std::vector<Interval>> written_intervals{};
+		WriteMap write_map{};
 		std::vector<char> old_rom;
 
 		const auto check_conflicts_policy{ determineConflictCheckSetting(config) };
@@ -33,12 +33,13 @@ namespace stardust {
 
 			if (check_conflicts_policy != Conflicts::NONE) {
 				auto new_rom{ getRom(config.temporary_rom.getOrThrow()) };
-				written_intervals.insert({ descriptor, getDifferences(old_rom, new_rom, check_conflicts_policy) });
+				updateWrites(old_rom, new_rom, check_conflicts_policy, write_map,
+					descriptor.toString(config.project_root.getOrThrow()));
 				old_rom.swap(new_rom);
 			}
 		}
 
-		checkConflicts(written_intervals, config.project_root.getOrThrow());
+		reportConflicts(write_map);
 
 		const auto insertion_report{ getJsonDependencies(dependencies) };
 
@@ -69,45 +70,83 @@ namespace stardust {
 		return j;
 	}
 
-	void Rebuilder::checkConflicts(const std::unordered_map<Descriptor, std::vector<Interval>>& written_intervals, const fs::path& project_root) {
+	void Rebuilder::reportConflicts(const WriteMap& write_map) {
+		auto current{ write_map.begin() };
+		while (current != write_map.end()) {
+			auto& pc_offset{ current->first };
+			auto writes{ current->second };
 
-		auto current{ written_intervals.begin() };
-		while (current != written_intervals.end()) {
-			auto next{ std::next(current) };
-
-			const auto our_descriptor{ current->first };
-			const auto our_intervals{ current->second };
-
-			while (next != written_intervals.end()) {
-				const auto other_descriptor{ next->first };
-				const auto other_intervals{ next->second };
-
-				for (const auto& our_interval : our_intervals) {
-					for (const auto& other_interval : other_intervals) {
-						if (our_interval.overlaps(other_interval)) {
-							const auto our_overlap{ our_interval.overlap(other_interval) };
-
-							const auto other_overlap{ other_interval.overlap(our_interval) };
-
-							if (our_overlap != other_overlap) {
-								const auto byte_or_bytes{ our_overlap.length() == 1 ? "byte" : "bytes" };
-								spdlog::warn(
-									"${:06X} (PC: 0x{:06X}) - {} {}: Written to by '{}' and '{}'",
-									our_overlap.snes_lower,
-									our_overlap.pc_lower,
-									our_overlap.length(),
-									byte_or_bytes,
-									our_descriptor.toString(project_root),
-									other_descriptor.toString(project_root)
-								);
-							}
-						}
-					}
+			if (!writesAreIdentical(writes)) {
+				auto writers{ getWriters(writes) };
+				ConflictVector written_bytes{};
+				for (const auto& writer : writers) {
+					written_bytes.push_back({ writer, {} });
 				}
-				++next;
+				int conflict_size{ 0 };
+				do {
+					for (int i{ 0 }; i != writers.size(); ++i) {
+						const auto written_byte{ writes.at(i).second };
+						written_bytes.at(i).second.push_back(written_byte);
+					}
+					++conflict_size;
+					++current;
+					writes = current->second;
+				} while (current != write_map.end() && writers == getWriters(writes) && !writesAreIdentical(writes));
+				outputConflict(written_bytes, pc_offset, conflict_size);
 			}
-			++current;
+			else {
+				++current;
+			}
 		}
+	}
+
+	void Rebuilder::outputConflict(const ConflictVector& conflict_vector, int pc_start_offset, int conflict_size) {
+		std::ostringstream output{};
+		const auto byte_or_bytes{ conflict_size == 1 ? "byte" : "bytes" };
+		output << fmt::format(
+			"\nConflict - 0x{:X} {} at SNES: ${:06X} (unheadered), PC: 0x{:06X} (headered):\n",
+			conflict_size, byte_or_bytes,
+			pcToSnes(pc_start_offset), pc_start_offset + 0x200  // idk if the + 0x200 is controversial
+		);
+
+		for (const auto& [writer, written_bytes] : conflict_vector) {
+			output << '\t' << writer << ':';
+			int i{ 0 };
+			while (i != written_bytes.size()) {
+				if (i == 0x100) {
+					output << "...";
+					break;
+				}
+				if (i % 0x10 == 0) {
+					output << std::endl << "\t\t";
+				}
+				output << fmt::format("{:02X} ", written_bytes.at(i++));
+			}
+			output << std::endl;
+		}
+
+		spdlog::warn(output.str());
+	}
+
+	bool Rebuilder::writesAreIdentical(const Writes& writes) {
+		auto first{ writes.at(0).second };
+		return std::all_of(writes.begin(), writes.end(), [&](const auto& entry) {
+			return entry.second == first;
+		});
+	}
+
+	// just assuming lorom here, hope nobody gets mad (read: someone will be mad, but it's ok because I saw it coming)
+	int Rebuilder::pcToSnes(int address) {
+		int snes{ ((address << 1) & 0x7F0000) | (address & 0x7FFF) | 0x8000 };
+		return snes | 0x800000;
+	}
+
+	std::vector<std::string> Rebuilder::getWriters(const Writes& writes) {
+		std::vector<std::string> writers{};
+		for (const auto& [writer, _] : writes) {
+			writers.push_back(writer);
+		}
+		return writers;
 	}
 
 	std::vector<char> Rebuilder::getRom(const fs::path& rom_path) {
@@ -123,50 +162,28 @@ namespace stardust {
 		return unheadered;
 	}
 
-	std::vector<Interval> Rebuilder::getDifferences(const std::vector<char> old_rom, const std::vector<char> new_rom, Conflicts conflict_policy) {
+	void Rebuilder::updateWrites(const std::vector<char>& old_rom, const std::vector<char>& new_rom, 
+		Conflicts conflict_policy, WriteMap& write_map, const std::string& descriptor_string) {
 		if (conflict_policy == Conflicts::NONE) {
-			return {};
+			return;
 		}
-		int smaller_size{ static_cast<int>(std::min(old_rom.size(), new_rom.size())) };
+		int size{ static_cast<int>(std::max(old_rom.size(), new_rom.size())) };
 
 		if (conflict_policy == Conflicts::HIJACKS) {
-			smaller_size = std::min(smaller_size, 0x78000);
+			size = std::min(size, 0x78000);
 		}
 
-		std::vector<Interval> differences{};
-		bool parsing_diff{ false };
-		int diff_start{ 0 };
-		std::vector<char> diff{};
-		for (size_t i{ 0 }; i != smaller_size; ++i) {
+		for (int i{ 0 }; i != size; ++i) {
 			if (i == 0x07FDC) {
-				if (parsing_diff) {
-					parsing_diff = false;
-					differences.push_back(Interval(diff_start, i, diff));
-					diff.clear();
-				}
-				i += 4;
+				// skip checksum and inverse checksum
+				i += 3;
+				continue;
 			}
 
-			if (old_rom.at(i) != new_rom.at(i)) {
-				if (!parsing_diff) {
-					parsing_diff = true;
-					diff_start = i;
-				}
-				diff.push_back(new_rom.at(i));
-			}
-			else {
-				if (parsing_diff) {
-					parsing_diff = false;
-					differences.push_back(Interval(diff_start, i, diff));
-					diff.clear();
-				}
+			if (i >= old_rom.size() || old_rom.at(i) != new_rom.at(i)) {
+				write_map[i].push_back({ descriptor_string, new_rom.at(i) });
 			}
 		}
-		if (parsing_diff) {
-			differences.push_back(Interval(diff_start, smaller_size, diff));
-		}
-
-		return differences;
 	}
 
 	Rebuilder::Conflicts Rebuilder::determineConflictCheckSetting(const Configuration& config) {

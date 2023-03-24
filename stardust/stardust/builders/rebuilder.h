@@ -1,17 +1,21 @@
 #pragma once
 
 #include <chrono>
+#include <sstream>
 
 #include <spdlog/spdlog.h>
 
 #include "builder.h"
 #include "../configuration/configuration.h"
-#include "interval.h"
 #include "../insertables/initial_patch.h"
 
 namespace stardust {
 	class Rebuilder : public Builder {
 	protected:
+		using Writes = std::vector<std::pair<std::string, unsigned char>>;
+		using WriteMap = std::map<int, Writes>;
+		using ConflictVector = std::vector<std::pair<std::string, std::vector<unsigned char>>>;
+
 		enum class Conflicts {
 			NONE,
 			HIJACKS,
@@ -19,9 +23,14 @@ namespace stardust {
 		};
 
 		static json getJsonDependencies(const DependencyVector& dependencies);
-		static void checkConflicts(const std::unordered_map<Descriptor, std::vector<Interval>>& written_intervals, const fs::path& project_root);
+		static void reportConflicts(const WriteMap& write_map);
+		static void outputConflict(const ConflictVector& conflict_vector, int pc_start_offset, int conflict_size);
+		static bool writesAreIdentical(const Writes& writes);
+		static int pcToSnes(int address);
+		static std::vector<std::string> getWriters(const Writes& writes);
 		static std::vector<char> getRom(const fs::path& rom_path);
-		static std::vector<Interval> getDifferences(const std::vector<char> old_rom, const std::vector<char> new_rom, Conflicts conflict_policy);
+		static void updateWrites(const std::vector<char>& old_rom, const std::vector<char>& new_rom, 
+			Conflicts conflict_policy, WriteMap& write_map, const std::string& descriptor_string);
 		static Conflicts determineConflictCheckSetting(const Configuration& config);
 
 	public:
