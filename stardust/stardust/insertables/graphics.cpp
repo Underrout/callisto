@@ -63,7 +63,10 @@ namespace stardust {
 
 	std::unordered_set<ResourceDependency> Graphics::determineDependencies() {
 		auto dependencies{ LunarMagicInsertable::determineDependencies() };
-		dependencies.insert(ResourceDependency(project_graphics_folder_path));
+		const auto folder_dependencies{
+			getResourceDependenciesFor(project_graphics_folder_path, Policy::REINSERT)
+		};
+		dependencies.insert(folder_dependencies.begin(), folder_dependencies.end());
 		return dependencies;
 	}
 

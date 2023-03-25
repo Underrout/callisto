@@ -57,7 +57,10 @@ namespace stardust {
 
 	std::unordered_set<ResourceDependency> TextMap16::determineDependencies() {
 		auto dependencies{ LunarMagicInsertable::determineDependencies() };
-		dependencies.insert(map16_folder_path);
+		const auto folder_dependencies{
+			getResourceDependenciesFor(map16_folder_path, Policy::REINSERT)
+		};
+		dependencies.insert(folder_dependencies.begin(), folder_dependencies.end());
 		return dependencies;
 	}
 

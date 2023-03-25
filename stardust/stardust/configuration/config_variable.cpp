@@ -209,8 +209,16 @@ namespace stardust {
 
 				const auto formatted{ formatUserVariables(path, user_variables) };
 				const auto full_path{ PathUtil::normalize(formatted, relative_to.getOrThrow()) };
+
 				const auto dependency{ ResourceDependency(full_path, policy) };
 				converted.push_back(dependency);
+
+				if (fs::is_directory(full_path)) {
+					for (const auto& entry : fs::recursive_directory_iterator(full_path)) {
+						const auto dependency{ ResourceDependency(entry.path(), policy)};
+						converted.push_back(dependency);
+					}
+				}
 			}
 
 			values.insert({ level, converted });

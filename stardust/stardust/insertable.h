@@ -94,6 +94,18 @@ namespace stardust {
 			return config_variable;
 		}
 
+		static std::vector<ResourceDependency> getResourceDependenciesFor(const fs::path& folder_or_file, Policy policy) {
+			std::vector<ResourceDependency> dependencies{ ResourceDependency(folder_or_file, policy) };
+
+			if (fs::is_directory(folder_or_file)) {
+				for (const auto& entry : fs::recursive_directory_iterator(folder_or_file)) {
+					dependencies.push_back(ResourceDependency(entry.path(), policy));
+				}
+
+			}
+			return dependencies;
+		}
+
 	public:
 		virtual void insert() = 0;
 
