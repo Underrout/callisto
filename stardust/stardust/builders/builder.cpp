@@ -96,12 +96,25 @@ namespace stardust {
 		report["dependencies"] = dependency_report;
 		report["configuration"] = config.config_name.getOrThrow();
 		report["file_format_version"] = BUILD_REPORT_VERSION;
+		report["build_order"] = std::vector<std::string>();
+
+		for (const auto& descriptor : config.build_order) {
+			report["build_order"].push_back(descriptor.toJson());
+		}
+
 		return report;
 	}
 
 	void Builder::writeBuildReport(const fs::path& project_root, const json& j) {
-		std::ofstream build_report{ PathUtil::getStardustCache(project_root) / "build_report.json" };
+		const auto path{ PathUtil::getStardustCache(project_root) / ".cache" };
+		fs::create_directories(path);
+		std::ofstream build_report{ path / "build_report.json" };
 		build_report << std::setw(4) << j << std::endl;
 		build_report.close();
+	}
+
+	void Builder::cacheGlobules(const fs::path& project_root) {
+		fs::copy(PathUtil::getStardustCache(project_root) / "globules",
+			PathUtil::getStardustCache(project_root) / ".cache" / "inserted_globules", fs::copy_options::overwrite_existing);
 	}
 }

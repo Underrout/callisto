@@ -42,6 +42,8 @@ namespace stardust {
 		static json createBuildReport(const Configuration& config, const json& dependency_report);
 		static void writeBuildReport(const fs::path& project_root, const json& j);
 
+		static void cacheGlobules(const fs::path& project_root);
+
 	public:
 
 		virtual void build(const Configuration& config) = 0;
