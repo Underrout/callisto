@@ -65,31 +65,6 @@ namespace stardust {
 		const auto reported{ Insertable::extractDependenciesFromReport(dependency_report_file_path.value()) };
 
 		dependencies.insert(reported.begin(), reported.end());
-		
-		// little hacky, basically just checks if for any .asm file there exists a .cfg or .json file with the same name and location, 
-		// if so, they're added as dependencies, should work well in practice but may include superflous files in some edge cases
-		for (const auto& dependency : reported) {
-			if (dependency.dependent_path.extension() == ".asm") {
-				const auto cfg{ fs::path(dependency.dependent_path).replace_extension(".cfg") };
-				const auto json{ fs::path(dependency.dependent_path).replace_extension(".json") };
-
-				pixi_sprite_t sprite_idx{ nullptr };
-				fs::path config_file_path;
-				if (fs::exists(cfg)) {
-					sprite_idx = pixi_parse_cfg_sprite(cfg.string().c_str());
-					config_file_path = cfg;
-				}
-				// if both exist... do what? idk, give json priority for now
-				if (fs::exists(json)) {
-					sprite_idx = pixi_parse_json_sprite(json.string().c_str());
-					config_file_path = json;
-				}
-
-				if (sprite_idx != nullptr) {
-					dependencies.insert(ResourceDependency(config_file_path));
-				}
-			}
-		}
 
 		return dependencies;
 	}
