@@ -31,6 +31,9 @@ namespace stardust {
 	}
 
 	void Patch::insert() {
+		const auto prev_folder{ fs::current_path() };
+		fs::current_path(patch_path.parent_path());
+
 		spdlog::info(fmt::format("Applying patch {}", project_relative_path.string()));
 
 		// delete potential previous dependency report
@@ -86,6 +89,8 @@ namespace stardust {
 
 		asar_reset();
 		const bool succeeded{ asar_patch_ex(&params) };
+
+		fs::current_path(prev_folder);
 
 		if (succeeded) {
 			int warning_count;

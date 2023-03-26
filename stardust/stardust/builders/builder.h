@@ -44,6 +44,8 @@ namespace stardust {
 
 		static void cacheGlobules(const fs::path& project_root);
 
+		static void moveTempToOutput(const Configuration& config);
+
 	public:
 
 		virtual void build(const Configuration& config) = 0;

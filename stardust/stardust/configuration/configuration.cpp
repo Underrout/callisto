@@ -33,12 +33,90 @@ namespace stardust {
 		}
 	}
 
+	void Configuration::verifyGlobuleExclusivity() {
+		if (globules.isSet()) {
+			std::unordered_set<std::string> seen_file_names{};
+			for (const auto& globule : globules.getOrThrow()) {
+				const auto file_name{ globule.filename().string() };
+				if (seen_file_names.count(file_name) != 0) {
+					throw ConfigException(fmt::format(
+						"Multiple globules called {} exist, but globule names must be unique",
+						file_name
+					));
+				}
+				else {
+					seen_file_names.insert(file_name);
+				}
+			}
+		}
+	}
+
+	void Configuration::verifyPatchUniqueness() {
+		if (patches.isSet()) {
+			std::unordered_set<fs::path> seen_files{};
+			for (const auto& patch : patches.getOrThrow()) {
+				if (seen_files.count(patch) != 0) {
+					throw ConfigException(fmt::format(
+						"Patch '{}' present multiple times in patches list",
+						fs::relative(patch, project_root.getOrThrow()).string()
+					));
+				}
+				else {
+					seen_files.insert(patch);
+				}
+			}
+		}
+	}
+
 	void Configuration::finalizeBuildOrder() {
+		verifyGlobuleExclusivity();
 		verifyPatchGlobuleExclusivity();
+		verifyPatchUniqueness();
 
 		for (const auto& symbol : _build_order.getOrDefault({})) {
 			const auto descriptors{ symbolToDescriptor(symbol) };
 			build_order.insert(build_order.end(), descriptors.begin(), descriptors.end());
+		}
+	}
+
+	bool Configuration::trySet(StringConfigVariable& variable, const toml::value& table, 
+		ConfigurationLevel level, const std::map<std::string, std::string>& user_variable_map){
+		bool res{ variable.trySet(table, level, user_variable_map) };
+
+		if (res) {
+			key_val_map[variable.name] = variable.getOrThrow();
+		}
+
+		return res;
+	}
+
+	bool Configuration::trySet(PathConfigVariable& variable, const toml::value& table, ConfigurationLevel level, 
+		const PathConfigVariable& relative_to, const std::map<std::string, std::string>& user_variable_map) {
+		bool res{ variable.trySet(table, level, relative_to, user_variable_map) };
+
+		if (res) {
+			key_val_map[variable.name] = variable.getOrThrow().string();
+		}
+
+		return res;
+	}
+
+	bool Configuration::trySet(BoolConfigVariable& variable, const toml::value& table, ConfigurationLevel level) {
+		bool res{ variable.trySet(table, level) };
+
+		if (res) {
+			key_val_map[variable.name] = variable.getOrThrow();
+		}
+
+		return res;
+	}
+
+	std::variant<std::monostate, std::string, bool> Configuration::getByKey(const std::string& key) const {
+		if (key_val_map.find(key) != key_val_map.end()) {
+			return key_val_map.at(key);
+		}
+		else {
+			return std::monostate();
 		}
 	}
 
@@ -182,6 +260,9 @@ namespace stardust {
 			for (const auto& config : config_file_map.at(config_level)) {
 				project_root.trySet(config, config_level, stardust_root_directory,
 					user_variable_map.at(config_level));
+				if (project_root.isSet()) {
+					key_val_map[project_root.name] = project_root.getOrThrow().string();
+				}
 			}
 		}
 	}
@@ -224,7 +305,7 @@ namespace stardust {
 					try {
 						const auto& pixi_table{ toml::find(tools_table, "PIXI") };
 
-						pixi_working_dir.trySet(config, config_level, project_root,
+						trySet(pixi_working_dir, config, config_level, project_root,
 							user_variable_map.at(config_level));
 					}
 					catch (const std::out_of_range&) {
@@ -234,7 +315,7 @@ namespace stardust {
 					const auto& generic_tools_table{ toml::find<toml::table>(tools_table, "generic") };
 
 					for (const auto& [key, value] : generic_tools_table) {
-						generic_tool_configurations.at(key).working_directory.trySet(
+						trySet(generic_tool_configurations.at(key).working_directory,
 							config, config_level, project_root, user_variable_map.at(config_level)
 						);
 					}
@@ -288,52 +369,52 @@ namespace stardust {
 
 		const auto& root{ project_root };
 
-		config_name.trySet(config_file, level, user_variables);
+		trySet(config_name, config_file, level, user_variables);
 
-		rom_size.trySet(config_file, level);
+		rom_size.trySet(config_file, level, user_variables);
 
-		use_text_map16_format.trySet(config_file, level);
+		trySet(use_text_map16_format, config_file, level);
 
-		clean_rom.trySet(config_file, level, root, user_variables);
+		trySet(clean_rom, config_file, level, root, user_variables);
 		
-		project_rom.trySet(config_file, level, root, user_variables);
-		temporary_rom.trySet(config_file, level, root, user_variables);
-		bps_package.trySet(config_file, level, root, user_variables);
+		trySet(project_rom, config_file, level, root, user_variables);
+		trySet(temporary_rom, config_file, level, root, user_variables);
+		trySet(bps_package, config_file, level, root, user_variables);
 
-		check_conflicts.trySet(config_file, level, user_variables);
-		conflict_log_file.trySet(config_file, level, root, user_variables);
+		trySet(check_conflicts, config_file, level, user_variables);
+		trySet(conflict_log_file, config_file, level, root, user_variables);
 
-		flips_path.trySet(config_file, level, root, user_variables);
+		trySet(flips_path, config_file, level, root, user_variables);
 		
-		lunar_magic_path.trySet(config_file, level, root, user_variables);
-		lunar_magic_level_import_flags.trySet(config_file, level, user_variables);
+		trySet(lunar_magic_path, config_file, level, root, user_variables);
+		trySet(lunar_magic_level_import_flags, config_file, level, user_variables);
 
-		pixi_options.trySet(config_file, level, user_variables);
+		trySet(pixi_options, config_file, level, user_variables);
 		pixi_static_dependencies.trySet(config_file, level, pixi_working_dir, user_variables);
 		pixi_dependency_report_file.trySet(config_file, level, pixi_working_dir, user_variables);
 
-		initial_patch.trySet(config_file, level, root, user_variables);
-		levels.trySet(config_file, level, root, user_variables);
-		shared_palettes.trySet(config_file, level, root, user_variables);
-		map16.trySet(config_file, level, root, user_variables);
-		overworld.trySet(config_file, level, root, user_variables);
-		titlescreen.trySet(config_file, level, root, user_variables);
-		title_moves.trySet(config_file, level, root, user_variables);
-		credits.trySet(config_file, level, root, user_variables);
-		global_exanimation.trySet(config_file, level, root, user_variables);
+		trySet(initial_patch, config_file, level, root, user_variables);
+		trySet(levels, config_file, level, root, user_variables);
+		trySet(shared_palettes, config_file, level, root, user_variables);
+		trySet(map16, config_file, level, root, user_variables);
+		trySet(overworld, config_file, level, root, user_variables);
+		trySet(titlescreen, config_file, level, root, user_variables);
+		trySet(title_moves, config_file, level, root, user_variables);
+		trySet(credits, config_file, level, root, user_variables);
+		trySet(global_exanimation, config_file, level, root, user_variables);
 
 		patches.trySet(config_file, level, root, user_variables);
 		globules.trySet(config_file, level, root, user_variables);
 
-		globule_header.trySet(config_file, level, root, user_variables);
+		trySet(globule_header, config_file, level, root, user_variables);
 
 		for (auto& [_, tool] : generic_tool_configurations) {
-			tool.executable.trySet(config_file, level, tool.working_directory, user_variables);
-			tool.options.trySet(config_file, level, user_variables);
-			tool.takes_user_input.trySet(config_file, level);
+			trySet(tool.executable, config_file, level, tool.working_directory, user_variables);
+			trySet(tool.options, config_file, level, user_variables);
+			trySet(tool.takes_user_input, config_file, level);
 			tool.static_dependencies.trySet(config_file, level, tool.working_directory, user_variables);
 			tool.dependency_report_file.trySet(config_file, level, tool.working_directory, user_variables);
-			tool.pass_rom.trySet(config_file, level);
+			trySet(tool.pass_rom, config_file, level);
 		}
 	}
 

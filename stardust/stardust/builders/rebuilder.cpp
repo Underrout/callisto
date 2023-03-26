@@ -4,7 +4,7 @@ namespace stardust {
 	void Rebuilder::build(const Configuration& config) {
 		DependencyVector dependencies{};
 
-		auto insertables{ buildOrderToInsertables(config) };
+		fs::copy_file(config.clean_rom.getOrThrow(), config.temporary_rom.getOrThrow(), fs::copy_options::overwrite_existing);
 
 		if (config.initial_patch.isSet()) {
 			InitialPatch initial_patch{ config };
@@ -13,9 +13,8 @@ namespace stardust {
 			dependencies.push_back({ Descriptor(Symbol::INITIAL_PATCH), 
 				{ initial_patch_resource_dependencies, initial_patch_config_dependencies } });
 		}
-		else {
-			fs::copy_file(config.clean_rom.getOrThrow(), config.temporary_rom.getOrThrow(), fs::copy_options::overwrite_existing);
-		}
+
+		expandRom(config);
 
 		WriteMap write_map{};
 		std::vector<char> old_rom;
@@ -25,6 +24,7 @@ namespace stardust {
 			old_rom = getRom(config.temporary_rom.getOrThrow());
 		}
 
+		auto insertables{ buildOrderToInsertables(config) };
 		for (auto& [descriptor, insertable] : insertables) {
 			const auto resource_dependencies{ insertable->insertWithDependencies() };
 			const auto config_dependencies{ insertable->getConfigurationDependencies() };
@@ -45,15 +45,25 @@ namespace stardust {
 
 		const auto insertion_report{ getJsonDependencies(dependencies) };
 
-		writeBuildReport(config.project_root.getOrThrow(), createBuildReport( config, insertion_report));
+		writeBuildReport(config.project_root.getOrThrow(), createBuildReport(config, insertion_report));
 
 		cacheGlobules(config.project_root.getOrThrow());
+
+		moveTempToOutput(config);
 	}
 
 	json Rebuilder::getJsonDependencies(const DependencyVector& dependencies) {
 		json j;
 
-		for (const auto& [descriptor, pair] : dependencies) {
+		std::unordered_set<Descriptor> seen{};
+
+		for (const auto& [descriptor, pair] : boost::adaptors::reverse(dependencies)) {
+			if (seen.count(descriptor) != 0) {
+				continue;
+			}
+
+			seen.insert(descriptor);
+
 			auto block{ json({
 				{"descriptor", descriptor.toJson()},
 				{"resource_dependencies", std::vector<json>()},
@@ -70,6 +80,8 @@ namespace stardust {
 
 			j.push_back(block);
 		}
+
+		std::reverse(j.begin(), j.end());
 
 		return j;
 	}
@@ -235,6 +247,18 @@ namespace stardust {
 				"Unknown settings.check_conflicts setting '{}'",
 				setting
 			));
+		}
+	}
+
+	void Rebuilder::expandRom(const Configuration& config) {
+		if (config.rom_size.isSet()) {
+			
+			const auto exit_code{ bp::system(
+				config.lunar_magic_path.getOrThrow().string(),
+				"-ExpandROM",
+				config.temporary_rom.getOrThrow().string(),
+				config.rom_size.getOrThrow()
+			) };
 		}
 	}
 }

@@ -25,11 +25,15 @@ namespace stardust {
 			return symbol == other.symbol && name == other.name;
 		}
 
+		bool operator!=(const Descriptor& other) const {
+			return !(*this == other);
+		}
+
 		Descriptor(Symbol symbol, const std::optional<std::string>& name = {})
 			: symbol(symbol), name(name) {}
 
 		Descriptor(const json& j)
-			: symbol(j["symbol"]), name(j["name"]) {}
+			: symbol(j["symbol"]), name(j["name"].is_null() ? std::nullopt : std::make_optional(j["name"])) {}
 
 		json toJson() const {
 			auto j{ json({

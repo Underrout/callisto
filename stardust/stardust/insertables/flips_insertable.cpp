@@ -24,9 +24,9 @@ namespace stardust {
 
 	std::unordered_set<ResourceDependency> FlipsInsertable::determineDependencies() {
 		auto dependencies{ LunarMagicInsertable::determineDependencies() };
-		dependencies.insert(ResourceDependency(flips_path));
+		dependencies.insert(ResourceDependency(flips_path, Policy::REBUILD));
 		dependencies.insert(ResourceDependency(bps_patch_path));
-		dependencies.insert(ResourceDependency(clean_rom_path));
+		dependencies.insert(ResourceDependency(clean_rom_path, Policy::REBUILD));
 		return dependencies;
 	}
 

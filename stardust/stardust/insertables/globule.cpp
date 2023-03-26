@@ -41,6 +41,9 @@ namespace stardust {
 	// TODO this whole thing is pretty much the same as the Patch.insert() method, probably merge 
 	//      them into a single static method or something later
 	void Globule::insert() {
+		const auto prev_folder{ fs::current_path() };
+		fs::current_path(globule_path.parent_path());
+
 		std::string patch_path{ (boost::filesystem::temp_directory_path() / boost::filesystem::unique_path().string()).string() };
 		std::ofstream temp_patch{ patch_path };
 
@@ -136,6 +139,8 @@ namespace stardust {
 			spdlog::info(fmt::format("Successfully applied globule {}!", project_relative_path.string()));
 
 			emitImprintFile();
+
+			fs::current_path(prev_folder);
 		}
 		else {
 			int error_count;
@@ -148,6 +153,7 @@ namespace stardust {
 
 				error_string << errors[i].fullerrdata;
 			}
+			fs::current_path(prev_folder);
 			throw InsertionException(fmt::format(
 				"Failed to apply globule {} with the following error(s):\n{}",
 				project_relative_path.string(),
@@ -166,7 +172,7 @@ namespace stardust {
 	void Globule::emitImprintFile() const {
 		fs::create_directories(imprint_directory);
 
-		std::ofstream imprint{ imprint_directory / globule_path.filename() };
+		std::ofstream imprint{ imprint_directory / (globule_path.stem().string() + ".asm")};
 
 		imprint << fmt::format("incsrc \"{}\"", globule_call_file.string()) << std::endl << std::endl;
 
@@ -174,6 +180,13 @@ namespace stardust {
 		const auto labels{ asar_getalllabels(&label_number) };
 
 		const auto globule_name{ globulePathToName(globule_path) };
+
+		if (label_number == 0) {
+			throw InsertionException(fmt::format(
+				"Globule {} contains no labels, this will cause a freespace leak, please ensure your globule contains at least one label",
+				globule_name
+			));
+		}
 
 		for (int i{ 0 }; i != label_number; ++i) {
 			const auto& label{ labels[i] };

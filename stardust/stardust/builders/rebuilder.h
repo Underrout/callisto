@@ -3,6 +3,7 @@
 #include <chrono>
 #include <sstream>
 
+#include <boost/range/adaptor/reversed.hpp>
 #include <spdlog/spdlog.h>
 
 #include "builder.h"
@@ -33,6 +34,7 @@ namespace stardust {
 		static void updateWrites(const std::vector<char>& old_rom, const std::vector<char>& new_rom, 
 			Conflicts conflict_policy, WriteMap& write_map, const std::string& descriptor_string);
 		static Conflicts determineConflictCheckSetting(const Configuration& config);
+		static void expandRom(const Configuration& config);
 
 	public:
 		void build(const Configuration& config) override;

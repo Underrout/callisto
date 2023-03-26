@@ -53,9 +53,7 @@ namespace stardust {
 			));
 		}
 
-		std::unordered_set<ResourceDependency> dependencies{};
-		std::transform(static_dependencies.begin(), static_dependencies.end(), std::inserter(dependencies, dependencies.begin()),
-			[](const auto& entry) { return ResourceDependency(entry); });
+		std::unordered_set<ResourceDependency> dependencies{ static_dependencies.begin(), static_dependencies.end() };
 		const auto reported{ Insertable::extractDependenciesFromReport(dependency_report_file_path.value()) };
 
 		dependencies.insert(reported.begin(), reported.end());

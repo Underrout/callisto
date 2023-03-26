@@ -29,6 +29,7 @@
 #include "configuration/configuration_manager.h"
 
 #include "builders/rebuilder.h"
+#include "builders/quick_builder.h"
 
 using namespace stardust;
 
@@ -42,8 +43,17 @@ int main(int argc, const char* argv[]) {
 
 		const auto config{ config_manager.getConfiguration({}) };
 
-		Rebuilder rebuilder{};
-		rebuilder.build(config);
+		const auto report{ PathUtil::getStardustCache(config.project_root.getOrThrow()) / ".cache" / "build_report.json" };
+
+		if (fs::exists(report)) {
+			std::ifstream file{ report };
+			QuickBuilder quick_builder{ json::parse(file) };
+			quick_builder.build(config);
+		}
+		else {
+			Rebuilder rebuilder{};
+			rebuilder.build(config);
+		}
 
 		return 0;
 	}

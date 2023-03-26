@@ -20,13 +20,20 @@ namespace stardust {
 				clean_rom_path.string()
 			));
 		}
+
+		if (!fs::exists(initial_patch_path)) {
+			throw ResourceNotFoundException(fmt::format(
+				"Initial patch not found at {}",
+				initial_patch_path.string()
+			));
+		}
 	}
 
 	std::unordered_set<ResourceDependency> InitialPatch::determineDependencies() {
 		return {
-			ResourceDependency(flips_path),
-			ResourceDependency(initial_patch_path),
-			ResourceDependency(clean_rom_path)
+			ResourceDependency(flips_path, Policy::REBUILD),
+			ResourceDependency(initial_patch_path, Policy::REBUILD),
+			ResourceDependency(clean_rom_path, Policy::REBUILD)
 		};
 	}
 

@@ -13,6 +13,6 @@ namespace stardust {
 	}
 
 	std::unordered_set<ResourceDependency> LunarMagicInsertable::determineDependencies() {
-		return { ResourceDependency(lunar_magic_path) };
+		return { ResourceDependency(lunar_magic_path, Policy::REBUILD) };
 	}
 }

@@ -97,6 +97,7 @@ namespace stardust {
 		report["configuration"] = config.config_name.getOrThrow();
 		report["file_format_version"] = BUILD_REPORT_VERSION;
 		report["build_order"] = std::vector<std::string>();
+		report["rom_size"] = config.rom_size.isSet() ? config.rom_size.getOrThrow() : nullptr;
 
 		for (const auto& descriptor : config.build_order) {
 			report["build_order"].push_back(descriptor.toJson());
@@ -114,7 +115,29 @@ namespace stardust {
 	}
 
 	void Builder::cacheGlobules(const fs::path& project_root) {
-		fs::copy(PathUtil::getStardustCache(project_root) / "globules",
-			PathUtil::getStardustCache(project_root) / ".cache" / "inserted_globules", fs::copy_options::overwrite_existing);
+		const auto source{ PathUtil::getStardustCache(project_root) / "globules" };
+		const auto target{ PathUtil::getStardustCache(project_root) / ".cache" / "inserted_globules" };
+		fs::create_directories(target);
+		if (fs::exists(source)) {
+			fs::remove_all(target);
+			fs::copy(source, target, fs::copy_options::overwrite_existing);
+			fs::remove_all(source);
+		}
+	}
+
+	void Builder::moveTempToOutput(const Configuration& config) {
+		for (const auto& entry : fs::directory_iterator(config.temporary_rom.getOrThrow().parent_path())) {
+			if (fs::is_regular_file(entry)) {
+				const auto file_name{ entry.path().stem().string() };
+				const auto temporary_rom_name{ config.temporary_rom.getOrThrow().stem().string() };
+				if (file_name.substr(0, temporary_rom_name.size()) == temporary_rom_name) {
+					const auto source{ entry.path() };
+					const auto target{ config.project_rom.getOrThrow().parent_path() / 
+						(config.project_rom.getOrThrow().stem().string() + entry.path().extension().string())};
+					fs::copy_file(source, target, fs::copy_options::overwrite_existing);
+					fs::remove(source);
+				}
+			}
+		}
 	}
 }

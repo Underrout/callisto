@@ -4,6 +4,7 @@
 #include <array>
 #include <map>
 #include <unordered_set>
+#include <variant>
 
 #include <boost/range.hpp>
 #include <toml.hpp>
@@ -32,6 +33,8 @@ namespace stardust {
 			"Patches", "PIXI", "Levels"
 		};
 
+		std::map<std::string, std::variant<std::monostate, std::string, bool>> key_val_map{};
+
 		StringVectorConfigVariable _build_order{ {"orders", "build_order"} };
 
 		using ParsedConfigFileMap = std::map<ConfigurationLevel, std::vector<toml::value>>;
@@ -59,7 +62,15 @@ namespace stardust {
 		bool isValidPatchSymbol(const fs::path& patch_path) const;
 		bool isValidGlobuleSymbol(const fs::path& globule_path) const;
 		void verifyPatchGlobuleExclusivity();
+		void verifyGlobuleExclusivity();
+		void verifyPatchUniqueness();
 		void finalizeBuildOrder();
+
+		bool trySet(StringConfigVariable& variable, const toml::value& table, 
+			ConfigurationLevel level, const std::map<std::string, std::string>& user_variable_map);
+		bool trySet(PathConfigVariable& variable, const toml::value& table, ConfigurationLevel level, const PathConfigVariable& relative_to,
+			const std::map<std::string, std::string>& user_variable_map);
+		bool trySet(BoolConfigVariable& variable, const toml::value& table, ConfigurationLevel level);
 
 		std::unordered_set<fs::path> getExplicitGlobules() const;
 		std::unordered_set<fs::path> getExplicitPatches() const;
@@ -73,9 +84,11 @@ namespace stardust {
 		Configuration(const ConfigFileMap& config_file_map, const VariableFileMap& variable_file_map, 
 			const fs::path& stardust_root_directory);
 
+		std::variant<std::monostate, std::string, bool> getByKey(const std::string& key) const;
+
 		StringConfigVariable config_name{ {"settings", "config_name"} };
 		PathConfigVariable project_root{ {"settings", "project_root"} };
-		IntegerConfigVariable rom_size{ {"settings", "rom_size"} };
+		StringConfigVariable rom_size{ {"settings", "rom_size"} };
 		BoolConfigVariable use_text_map16_format{ {"settings", "use_text_map16_format"} };
 		PathConfigVariable log_file{ {"settings", "log_file"} };
 		PathConfigVariable clean_rom{ {"settings", "clean_rom"} };

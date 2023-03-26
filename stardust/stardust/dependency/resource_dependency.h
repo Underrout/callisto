@@ -21,14 +21,15 @@ namespace stardust {
 	class ResourceDependency {
 	public:
 		const fs::path dependent_path;
-		const std::optional<fs::file_time_type> last_write_time;
+		const std::optional<uint64_t> last_write_time;
 		const Policy policy;
 
 		ResourceDependency(const fs::path& dependent_path) : ResourceDependency(dependent_path, Policy::REINSERT) {}
 
 		ResourceDependency(const fs::path& dependent_path, Policy policy)
 			: dependent_path(dependent_path), policy(policy),
-			last_write_time(fs::exists(dependent_path) ? std::make_optional(fs::last_write_time(dependent_path)) : std::nullopt)
+			last_write_time(fs::exists(dependent_path) ? 
+				std::make_optional(fs::last_write_time(dependent_path).time_since_epoch().count()) : std::nullopt)
 		{
 			spdlog::debug(fmt::format("Resource dependency created on '{}' -> {}", 
 				dependent_path.string(), 
@@ -36,18 +37,15 @@ namespace stardust {
 			));
 		}
 
-		ResourceDependency(const json& j) : dependent_path(j["path"].get<std::string>()), policy(j["policy"]), last_write_time(
-			std::chrono::time_point<fs::_File_time_clock>(
-				std::chrono::milliseconds(j["timestamp"].get<long>()))
-			) {}
+		ResourceDependency(const json& j) : dependent_path(j["path"].get<std::string>()), policy(j["policy"]), 
+			last_write_time(j["timestamp"].is_null() ? std::nullopt : std::make_optional(j["timestamp"].get<uint64_t>())) {}
 
 		json toJson() const {
 			json j;
 			j["path"] = dependent_path.string();
 			j["policy"] = policy;
 			if (last_write_time.has_value()) {
-				// auto a{ last_write_time.value().time_since_epoch().count() };
-				j["timestamp"] = static_cast<json::number_unsigned_t>(last_write_time.value().time_since_epoch().count());
+				j["timestamp"] = last_write_time.value();
 			}
 			else {
 				j["timestamp"] = nullptr;

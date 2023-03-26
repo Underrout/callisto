@@ -4,14 +4,31 @@
 
 #include "builder.h"
 #include "../configuration/configuration.h"
-#include "interval.h"
 #include "../insertables/initial_patch.h"
+#include "must_rebuild_exception.h"
+#include "../insertables/globule.h"
 
 namespace stardust {
 	class QuickBuilder : public Builder {
+	protected:
+		static constexpr auto MAX_ROM_SIZE = 16 * 1024 * 1024;
+
+		json report;
+
+		void checkBuildReportFormat() const;
+		void checkBuildOrderChange(const Configuration& config) const;
+		void checkRebuildRomSize(const Configuration& config) const;
+		void checkRebuildConfigDependencies(const json& dependencies, const Configuration& config) const;
+		void checkRebuildResourceDependencies(const json& dependencies, const fs::path& project_root, size_t starting_index = 0) const;
+		std::optional<ConfigurationDependency> checkReinsertConfigDependencies(const json& config_dependencies, const Configuration& config) const;
+		std::optional<ResourceDependency> checkReinsertResourceDependencies(const json& resource_dependencies) const;
+
+		static void cleanGlobule(const fs::path& globule_source_path, const fs::path& temporary_rom_path, const fs::path& project_root);
+		static void copyGlobule(const fs::path& globule_source_path, const fs::path& project_root);
+
 	public:
 		void build(const Configuration& config) override;
 
-		QuickBuilder(const json& j);
+		QuickBuilder(const json& j) : report(j) {};
 	};
 }
