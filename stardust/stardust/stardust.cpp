@@ -43,7 +43,7 @@ int main(int argc, const char* argv[]) {
 
 		const auto config{ config_manager.getConfiguration({}) };
 
-		const auto report{ PathUtil::getStardustCache(config.project_root.getOrThrow()) / ".cache" / "build_report.json" };
+		const auto report{ PathUtil::getBuildReportPath(config.project_root.getOrThrow()) };
 
 		if (fs::exists(report)) {
 			std::ifstream file{ report };

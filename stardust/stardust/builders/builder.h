@@ -32,6 +32,14 @@ namespace stardust {
 	protected:
 		static constexpr auto BUILD_REPORT_VERSION{ 1 };
 
+		static constexpr auto DEFINE_PREFIX{ "STARDUST" };
+		static constexpr auto VERSION_DEFINE_NAME{ "VERSION" };
+		static constexpr auto MAJOR_VERSION_DEFINE_NAME{ "MAJOR" };
+		static constexpr auto MINOR_VERSION_DEFINE_NAME{ "MINOR" };
+		static constexpr auto PATCH_VERSION_DEFINE_NAME{ "PATCH" };
+		static constexpr auto ASSEMBLING_DEFINE_NAME{ "ASSEMBLING" };
+		static constexpr auto PROFILE_DEFINE_NAME{ "PROFILE" };
+
 		using Insertables = std::vector<std::pair<Descriptor, std::shared_ptr<Insertable>>>;
 		using DependencyVector = std::vector<std::pair<Descriptor, std::pair<std::unordered_set<ResourceDependency>,
 			std::unordered_set<ConfigurationDependency>>>>;
@@ -43,11 +51,16 @@ namespace stardust {
 		static void writeBuildReport(const fs::path& project_root, const json& j);
 
 		static void cacheGlobules(const fs::path& project_root);
-
 		static void moveTempToOutput(const Configuration& config);
 
-	public:
+		static void init(const Configuration& config);
+		static void ensureCacheStructure(const Configuration& config);
+		static void generateAssemblyLevelInformation(const Configuration& config);
+		static void generateGlobuleCallFile(const Configuration& config);
 
+		static void writeIfDifferent(const std::string& str, const fs::path& out_file);
+
+	public:
 		virtual void build(const Configuration& config) = 0;
 	};
 }

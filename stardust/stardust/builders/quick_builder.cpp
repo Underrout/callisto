@@ -2,6 +2,8 @@
 
 namespace stardust {
 	void QuickBuilder::build(const Configuration& config) {
+		init(config);
+
 		if (!fs::exists(config.project_rom.getOrThrow())) {
 			throw MustRebuildException(fmt::format("No ROM found at {}, must rebuild", config.project_rom.getOrThrow().string()));
 		}
@@ -188,8 +190,8 @@ namespace stardust {
 	}
 
 	void QuickBuilder::cleanGlobule(const fs::path& globule_source_path, const fs::path& temporary_rom_path, const fs::path& project_root) {
-		const auto imprint_file{ PathUtil::getStardustCache(
-			project_root) / ".cache" / "inserted_globules" / (globule_source_path.stem().string() + ".asm")
+		const auto imprint_file{ PathUtil::getInsertedGlobulesDirectoryPath(project_root) / 
+			(globule_source_path.stem().string() + ".asm")
 		};
 
 		if (!fs::exists(imprint_file)) {
@@ -272,9 +274,7 @@ namespace stardust {
 
 	void QuickBuilder::copyGlobule(const fs::path& globule_source_path, const fs::path& project_root) {
 		const auto imprint_name{ (globule_source_path.stem().string() + ".asm") };
-		const auto imprint_file{ PathUtil::getStardustCache(
-			project_root) / ".cache" / "inserted_globules" / imprint_name
-		};
+		const auto imprint_file{ PathUtil::getInsertedGlobulesDirectoryPath(project_root) / imprint_name };
 
 		if (!fs::exists(imprint_file)) {
 			throw MustRebuildException(fmt::format(
@@ -283,8 +283,7 @@ namespace stardust {
 			));
 		}
 
-		const auto target{ PathUtil::getStardustCache(project_root) / "globules" / imprint_name };
-		fs::create_directories(PathUtil::getStardustCache(project_root) / "globules");
+		const auto target{ PathUtil::getGlobuleImprintDirectoryPath(project_root) / imprint_name };
 		fs::copy_file(imprint_file, target, fs::copy_options::overwrite_existing);
 	}
 }

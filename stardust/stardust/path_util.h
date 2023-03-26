@@ -7,7 +7,13 @@ namespace fs = std::filesystem;
 namespace stardust {
 	class PathUtil {
 	private:
-		static constexpr auto CACHE_DIRECTORY_NAME{ ".stardust" };
+		static constexpr auto STARDUST_DIRECTORY_NAME{ ".stardust" };
+		static constexpr auto CACHE_DIRECTORY_NAME{ ".cache" };
+		static constexpr auto GLOBULES_IMPRINT_DIRECTORY_NAME{ "globules" };
+		static constexpr auto INSERTED_GLOBULES_DIRECTORY_NAME{ "inserted_globules" };
+		static constexpr auto BUILD_REPORT_FILE_NAME{ "build_report.json" };
+		static constexpr auto GLOBULE_CALL_FILE{ "call.asm" };
+		static constexpr auto ASSEMBLY_INFO_FILE{ "info.asm" };
 
 	public:
 		static fs::path normalize(const fs::path& path, const fs::path& relative_to) {
@@ -18,8 +24,32 @@ namespace stardust {
 			return fs::absolute(fs::weakly_canonical(relative_to / path));
 		}
 
-		static fs::path getStardustCache(const fs::path& project_root) {
-			return project_root / CACHE_DIRECTORY_NAME;
+		static fs::path getStardustDirectoryPath(const fs::path& project_root) {
+			return project_root / STARDUST_DIRECTORY_NAME;
+		}
+
+		static fs::path getStardustCachePath(const fs::path& project_root) {
+			return getStardustDirectoryPath(project_root) / CACHE_DIRECTORY_NAME;
+		}
+
+		static fs::path getBuildReportPath(const fs::path& project_root) {
+			return getStardustCachePath(project_root) / BUILD_REPORT_FILE_NAME;
+		}
+
+		static fs::path getGlobuleImprintDirectoryPath(const fs::path& project_root) {
+			return getStardustDirectoryPath(project_root) / GLOBULES_IMPRINT_DIRECTORY_NAME;
+		}
+
+		static fs::path getInsertedGlobulesDirectoryPath(const fs::path& project_root) {
+			return getStardustCachePath(project_root) / INSERTED_GLOBULES_DIRECTORY_NAME;
+		}
+
+		static fs::path getGlobuleCallFilePath(const fs::path& project_root) {
+			return getStardustCachePath(project_root) / GLOBULE_CALL_FILE;
+		}
+
+		static fs::path getAssemblyInfoFilePath(const fs::path& project_root) {
+			return getStardustDirectoryPath(project_root) / ASSEMBLY_INFO_FILE;
 		}
 	};
 }

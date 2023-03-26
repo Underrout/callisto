@@ -51,7 +51,7 @@ namespace stardust {
 			return std::make_shared<Pixi>(config);
 		}
 		else if (symbol == Symbol::PATCH) {
-			std::vector<fs::path> include_paths{ PathUtil::getStardustCache(config.project_root.getOrThrow()) };
+			std::vector<fs::path> include_paths{ PathUtil::getStardustDirectoryPath(config.project_root.getOrThrow()) };
 
 			return std::make_shared<Patch>(
 				config,
@@ -60,14 +60,14 @@ namespace stardust {
 			);
 		} 
 		else if (symbol == Symbol::GLOBULE) {
-			const auto stardust_cache{ PathUtil::getStardustCache(config.project_root.getOrThrow()) };
-			std::vector<fs::path> include_paths{ stardust_cache };
+			const auto stardust_directory{ PathUtil::getStardustDirectoryPath(config.project_root.getOrThrow()) };
+			std::vector<fs::path> include_paths{ stardust_directory };
 
 			return std::make_shared<Globule>(
 				config,
 				name.value(),
-				stardust_cache / "globules",
-				stardust_cache / "call.asm",
+				PathUtil::getGlobuleImprintDirectoryPath(config.project_root.getOrThrow()),
+				PathUtil::getGlobuleCallFilePath(config.project_root.getOrThrow()),
 				config.globules.getOrDefault({}),
 				include_paths
 			);
@@ -107,16 +107,14 @@ namespace stardust {
 	}
 
 	void Builder::writeBuildReport(const fs::path& project_root, const json& j) {
-		const auto path{ PathUtil::getStardustCache(project_root) / ".cache" };
-		fs::create_directories(path);
-		std::ofstream build_report{ path / "build_report.json" };
+		std::ofstream build_report{ PathUtil::getBuildReportPath(project_root) };
 		build_report << std::setw(4) << j << std::endl;
 		build_report.close();
 	}
 
 	void Builder::cacheGlobules(const fs::path& project_root) {
-		const auto source{ PathUtil::getStardustCache(project_root) / "globules" };
-		const auto target{ PathUtil::getStardustCache(project_root) / ".cache" / "inserted_globules" };
+		const auto source{ PathUtil::getGlobuleImprintDirectoryPath(project_root) };
+		const auto target{ PathUtil::getInsertedGlobulesDirectoryPath(project_root) };
 		fs::create_directories(target);
 		if (fs::exists(source)) {
 			fs::remove_all(target);
@@ -138,6 +136,65 @@ namespace stardust {
 					fs::remove(source);
 				}
 			}
+		}
+	}
+	
+	void Builder::init(const Configuration& config) {
+		ensureCacheStructure(config);
+		generateAssemblyLevelInformation(config);
+		generateGlobuleCallFile(config);
+	}
+
+	void Builder::ensureCacheStructure(const Configuration& config) {
+		const auto project_root{ config.project_root.getOrThrow() };
+		fs::create_directories(PathUtil::getGlobuleImprintDirectoryPath(project_root));
+		fs::create_directories(PathUtil::getInsertedGlobulesDirectoryPath(project_root));
+	}
+
+	void Builder::generateAssemblyLevelInformation(const Configuration& config) {
+		const auto info_string{ fmt::format(
+			"includeonce\n\n"
+			"; Asar compatible file containing information about stardust, can be imported using incsrc as needed\n\n"
+			"; Define containing the name of the active profile\n"
+			"!{}_{} = \"{}\"\n\n"
+			"; Marker define to determine that stardust is assembling a file\n"
+			"!{}_{} = 1\n\n"
+			"; Define containing stardust's version number as a string\n"
+			"!{}_{} = \"{}.{}.{}\"\n\n"
+			"; Defines containing stardust's version number as individual numbers\n"
+			"!{}_{}_{} = {}\n"
+			"!{}_{}_{} = {}\n"
+			"!{}_{}_{} = {}\n",
+			DEFINE_PREFIX, PROFILE_DEFINE_NAME, config.config_name.getOrThrow(),
+			DEFINE_PREFIX, ASSEMBLING_DEFINE_NAME,
+			DEFINE_PREFIX, VERSION_DEFINE_NAME, STARDUST_VERSION_MAJOR, STARDUST_VERSION_MINOR, STARDUST_VERSION_PATCH,
+			DEFINE_PREFIX, VERSION_DEFINE_NAME, MAJOR_VERSION_DEFINE_NAME, STARDUST_VERSION_MAJOR,
+			DEFINE_PREFIX, VERSION_DEFINE_NAME, MINOR_VERSION_DEFINE_NAME, STARDUST_VERSION_MINOR,
+			DEFINE_PREFIX, VERSION_DEFINE_NAME, PATCH_VERSION_DEFINE_NAME, STARDUST_VERSION_PATCH
+		) };
+
+		writeIfDifferent(info_string, PathUtil::getAssemblyInfoFilePath(config.project_root.getOrThrow()));
+	}
+
+	void Builder::generateGlobuleCallFile(const Configuration& config) {
+		std::string call{ "includeonce\n\nmacro call(globule_label)\n\tPHB\n\t"
+			"LDA.b #<globule_label>>>16\n\tPHA\n\tPLB\n\tJSL <globule_label>\n\tPLB\nendmacro\n" };
+
+		writeIfDifferent(call, PathUtil::getGlobuleCallFilePath(config.project_root.getOrThrow()));
+	}
+
+	void Builder::writeIfDifferent(const std::string& str, const fs::path& out_file) {
+		std::ifstream in_file{ out_file };
+
+		std::string content((std::istreambuf_iterator<char>(in_file)),
+			(std::istreambuf_iterator<char>()));
+
+		in_file.close();
+
+		if (content != str) {
+			std::ofstream out{ out_file };
+			out << str;
+			out.close();
 		}
 	}
 }

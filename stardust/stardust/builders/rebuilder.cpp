@@ -2,6 +2,8 @@
 
 namespace stardust {
 	void Rebuilder::build(const Configuration& config) {
+		init(config);
+
 		DependencyVector dependencies{};
 
 		fs::copy_file(config.clean_rom.getOrThrow(), config.temporary_rom.getOrThrow(), fs::copy_options::overwrite_existing);
