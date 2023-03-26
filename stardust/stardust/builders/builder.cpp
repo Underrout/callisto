@@ -98,7 +98,12 @@ namespace stardust {
 		report["configuration"] = config.config_name.getOrThrow();
 		report["file_format_version"] = BUILD_REPORT_VERSION;
 		report["build_order"] = std::vector<std::string>();
-		report["rom_size"] = config.rom_size.isSet() ? config.rom_size.getOrThrow() : nullptr;
+		if (config.rom_size.isSet()) {
+			report["rom_size"] = config.rom_size.getOrThrow();
+		}
+		else {
+			report["rom_size"] = nullptr;
+		}
 
 		for (const auto& descriptor : config.build_order) {
 			report["build_order"].push_back(descriptor.toJson());
@@ -152,6 +157,7 @@ namespace stardust {
 
 	void Builder::ensureCacheStructure(const Configuration& config) {
 		const auto project_root{ config.project_root.getOrThrow() };
+		fs::remove_all(PathUtil::getGlobuleImprintDirectoryPath(project_root));
 		fs::create_directories(PathUtil::getGlobuleImprintDirectoryPath(project_root));
 		fs::create_directories(PathUtil::getInsertedGlobulesDirectoryPath(project_root));
 	}
