@@ -90,6 +90,12 @@ namespace stardust {
 		asar_reset();
 		const bool succeeded{ asar_patch_ex(&params) };
 
+		int print_count;
+		const auto prints{ asar_getprints(&print_count) };
+		for (int i = 0; i != print_count; ++i) {
+			spdlog::info(prints[i]);
+		}
+
 		fs::current_path(prev_folder);
 
 		if (succeeded) {
