@@ -2,6 +2,8 @@
 
 namespace stardust {
 	void Rebuilder::build(const Configuration& config) {
+		spdlog::info("Build started");
+
 		init(config);
 
 		DependencyVector dependencies{};
@@ -254,7 +256,7 @@ namespace stardust {
 
 	void Rebuilder::expandRom(const Configuration& config) {
 		if (config.rom_size.isSet()) {
-			
+			spdlog::info("Expanding ROM to {}", config.rom_size.getOrThrow());
 			const auto exit_code{ bp::system(
 				config.lunar_magic_path.getOrThrow().string(),
 				"-ExpandROM",

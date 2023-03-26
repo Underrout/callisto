@@ -92,6 +92,7 @@ namespace stardust {
 	}
 
 	json Builder::createBuildReport(const Configuration& config, const json& dependency_report) {
+		spdlog::info("Creating build report");
 		json report{};
 		report["dependencies"] = dependency_report;
 		report["configuration"] = config.config_name.getOrThrow();
@@ -107,12 +108,14 @@ namespace stardust {
 	}
 
 	void Builder::writeBuildReport(const fs::path& project_root, const json& j) {
+		spdlog::info("Writing build report");
 		std::ofstream build_report{ PathUtil::getBuildReportPath(project_root) };
 		build_report << std::setw(4) << j << std::endl;
 		build_report.close();
 	}
 
 	void Builder::cacheGlobules(const fs::path& project_root) {
+		spdlog::info("Caching globules");
 		const auto source{ PathUtil::getGlobuleImprintDirectoryPath(project_root) };
 		const auto target{ PathUtil::getInsertedGlobulesDirectoryPath(project_root) };
 		fs::create_directories(target);
@@ -124,6 +127,7 @@ namespace stardust {
 	}
 
 	void Builder::moveTempToOutput(const Configuration& config) {
+		spdlog::info("Moving temporary files to final output");
 		for (const auto& entry : fs::directory_iterator(config.temporary_rom.getOrThrow().parent_path())) {
 			if (fs::is_regular_file(entry)) {
 				const auto file_name{ entry.path().stem().string() };
@@ -140,6 +144,7 @@ namespace stardust {
 	}
 	
 	void Builder::init(const Configuration& config) {
+		spdlog::info("Initializing stardust directory");
 		ensureCacheStructure(config);
 		generateAssemblyLevelInformation(config);
 		generateGlobuleCallFile(config);

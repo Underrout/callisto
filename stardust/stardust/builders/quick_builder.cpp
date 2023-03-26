@@ -2,6 +2,8 @@
 
 namespace stardust {
 	void QuickBuilder::build(const Configuration& config) {
+		spdlog::info("Quick Build started");
+
 		init(config);
 
 		if (!fs::exists(config.project_rom.getOrThrow())) {
