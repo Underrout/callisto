@@ -1,11 +1,11 @@
 #include "flips_insertable.h"
 
 namespace stardust {
-	FlipsInsertable::FlipsInsertable(const fs::path& flips_path, const fs::path& clean_rom_path,
-		const fs::path& lunar_magic_path, const fs::path& temporary_rom_path,
-		const fs::path& bps_patch_path)
-		: LunarMagicInsertable(lunar_magic_path, temporary_rom_path), flips_path(flips_path), 
-		clean_rom_path(clean_rom_path), bps_patch_path(bps_patch_path)
+	FlipsInsertable::FlipsInsertable(const Configuration& config, const PathConfigVariable& bps_patch_path)
+		: LunarMagicInsertable(config), 
+		flips_path(registerConfigurationDependency(config.flips_path).getOrThrow()), 
+		clean_rom_path(registerConfigurationDependency(config.clean_rom).getOrThrow()), 
+		bps_patch_path(registerConfigurationDependency(bps_patch_path).getOrThrow())
 	{
 		if (!fs::exists(flips_path)) {
 			throw ToolNotFoundException(fmt::format(
@@ -20,6 +20,14 @@ namespace stardust {
 				clean_rom_path.string()
 			));
 		}
+	}
+
+	std::unordered_set<ResourceDependency> FlipsInsertable::determineDependencies() {
+		auto dependencies{ LunarMagicInsertable::determineDependencies() };
+		dependencies.insert(ResourceDependency(flips_path, Policy::REBUILD));
+		dependencies.insert(ResourceDependency(bps_patch_path));
+		dependencies.insert(ResourceDependency(clean_rom_path, Policy::REBUILD));
+		return dependencies;
 	}
 
 	void FlipsInsertable::checkPatchExists() const {
@@ -58,9 +66,9 @@ namespace stardust {
 	}
 
 	fs::path FlipsInsertable::getTemporaryPatchedRomPath() const {
-		return temporary_rom_path.stem().string()
+		return temporary_rom_path.parent_path() / (temporary_rom_path.stem().string()
 			+ getTemporaryPatchedRomPostfix()
-			+ temporary_rom_path.extension().string();
+			+ temporary_rom_path.extension().string());
 	}
 
 	fs::path FlipsInsertable::createTemporaryPatchedRom() const {

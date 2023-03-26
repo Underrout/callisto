@@ -15,14 +15,18 @@
 
 #include "configuration_level.h"
 #include "config_exception.h"
+#include "../path_util.h"
+#include "../dependency/resource_dependency.h"
 
 namespace fs = std::filesystem;
 
 namespace stardust {
 	template<typename T, typename V>
 	class ConfigVariable {
-	protected:
+	public:
 		const std::string name;
+	
+	protected:
 		const std::vector<std::string> keys;
 		std::unordered_map<ConfigurationLevel, V> values{};
 
@@ -249,6 +253,14 @@ namespace stardust {
 			const std::map<std::string, std::string>& user_variables);
 
 		std::vector<fs::path> getOrThrow() const override;
+
+		using ConfigVariable::ConfigVariable;
+	};
+
+	class StaticResourceDependencyConfigVariable : public ConfigVariable<toml::array, std::vector<ResourceDependency>> {
+	public:
+		bool trySet(const toml::value& table, ConfigurationLevel level, const PathConfigVariable& relative_to,
+			const std::map<std::string, std::string>& user_variables);
 
 		using ConfigVariable::ConfigVariable;
 	};

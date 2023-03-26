@@ -8,9 +8,8 @@ namespace stardust {
 
 		if (toml_value.has_value()) {
 			checkNotSet(level, toml_value.value());
-			const auto formatted{ formatUserVariables(toml_value.value(), user_variables) };
-			const auto joined_path{ fs::path(formatted).is_absolute() ? formatted : relative_to.getOrThrow() / formatted };
-			const auto full_path{ fs::absolute(fs::weakly_canonical(joined_path)) };
+			const auto formatted{ formatUserVariables(toml_value.value(), user_variables) };;
+			const auto full_path{ PathUtil::normalize(formatted, relative_to.getOrThrow()) };
 			spdlog::debug(fmt::format(
 				"Setting {} = {}",
 				name,
@@ -30,8 +29,7 @@ namespace stardust {
 		if (toml_value.has_value()) {
 			checkNotSet(level, toml_value.value());
 			const auto formatted{ formatUserVariables(toml_value.value(), user_variables) };
-			const auto joined_path{ fs::path(formatted).is_absolute() ? formatted : relative_to / formatted };
-			const auto full_path{ fs::absolute(fs::weakly_canonical(joined_path)) };
+			const auto full_path{ PathUtil::normalize(formatted, relative_to) };
 			spdlog::debug(fmt::format(
 				"Setting {} = {}",
 				name,
@@ -91,8 +89,7 @@ namespace stardust {
 
 			for (const auto& entry : toml::get<toml::array>(toml_array.value())) {
 				const auto formatted{ formatUserVariables(entry, user_variables) };
-				const auto joined_path{ fs::path(formatted).is_absolute() ? formatted : relative_to.getOrThrow() / formatted };
-				const auto full_path{ fs::absolute(fs::weakly_canonical(joined_path)) };
+				const auto full_path{ PathUtil::normalize(formatted, relative_to.getOrThrow()) };
 				converted.push_back(full_path);
 				as_strings.push_back(full_path.string());
 			}
@@ -168,6 +165,63 @@ namespace stardust {
 				as_boolean
 			));
 			values.insert({ level, as_boolean });
+			return true;
+		}
+		return false;
+	}
+
+	bool StaticResourceDependencyConfigVariable::trySet(const toml::value& table, ConfigurationLevel level,
+		const PathConfigVariable& relative_to, const std::map<std::string, std::string>& user_variables) {
+		const auto toml_array{ getTomlValue(table) };
+
+		if (toml_array.has_value()) {
+			checkNotSet(level, toml_array.value());
+
+			std::vector<ResourceDependency> converted{};
+
+			for (const auto& entry : toml::get<toml::array>(toml_array.value())) {
+				const auto path{ toml::find<toml::string>(entry, "path") };
+				Policy policy;
+
+				if (entry.contains("policy")) {
+					const auto policy_value{ toml::find(entry, "policy") };
+					const auto as_string{ toml::get<std::string>(policy_value) };
+					if (as_string == "rebuild") {
+						policy = Policy::REBUILD;
+					}
+					else if (as_string == "reinsert") {
+						policy = Policy::REINSERT;
+					}
+					else {
+						throw TomlException(
+							policy_value,
+							"Unknown policy type",
+							{
+								"Only 'rebuild' or 'reinsert' are allowed as policies"
+							},
+							fmt::format("'{}' is not allowed here", as_string)
+						);
+					}
+				}
+				else {
+					policy = Policy::REINSERT;
+				}
+
+				const auto formatted{ formatUserVariables(path, user_variables) };
+				const auto full_path{ PathUtil::normalize(formatted, relative_to.getOrThrow()) };
+
+				const auto dependency{ ResourceDependency(full_path, policy) };
+				converted.push_back(dependency);
+
+				if (fs::is_directory(full_path)) {
+					for (const auto& entry : fs::recursive_directory_iterator(full_path)) {
+						const auto dependency{ ResourceDependency(entry.path(), policy)};
+						converted.push_back(dependency);
+					}
+				}
+			}
+
+			values.insert({ level, converted });
 			return true;
 		}
 		return false;

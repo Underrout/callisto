@@ -1,9 +1,8 @@
 #include "title_moves.h"
 
 namespace stardust {
-	TitleMoves::TitleMoves(const fs::path& lunar_magic_path,
-		const fs::path& temporary_rom_path, const fs::path& title_moves_path)
-		: LunarMagicInsertable(lunar_magic_path, temporary_rom_path), title_moves_path(title_moves_path)
+	TitleMoves::TitleMoves(const Configuration& config)
+		: LunarMagicInsertable(config), title_moves_path(registerConfigurationDependency(config.title_moves).getOrThrow())
 	{
 		if (!fs::exists(title_moves_path)) {
 			throw ResourceNotFoundException(fmt::format(
@@ -11,6 +10,12 @@ namespace stardust {
 				title_moves_path.string()
 			));
 		}
+	}
+
+	std::unordered_set<ResourceDependency> TitleMoves::determineDependencies() {
+		auto dependencies{ LunarMagicInsertable::determineDependencies() };
+		dependencies.insert(title_moves_path);
+		return dependencies;
 	}
 
 	void TitleMoves::insert() {

@@ -13,6 +13,9 @@
 #include "../insertion_exception.h"
 #include "rom_insertable.h"
 
+#include "../configuration/configuration.h"
+#include "../dependency/policy.h"
+
 namespace bp = boost::process;
 namespace fs = std::filesystem;
 
@@ -35,9 +38,9 @@ namespace stardust {
 
 		void checkPatchExists() const;
 
-		FlipsInsertable(const fs::path& flips_path, const fs::path& clean_rom_path,
-			const fs::path& lunar_magic_path, const fs::path& temporary_rom_path,
-			const fs::path& bps_patch_path);
+		FlipsInsertable(const Configuration& config, const PathConfigVariable& bps_patch_path);
+
+		std::unordered_set<ResourceDependency> determineDependencies() override;
 
 	public:
 		void insert() override;

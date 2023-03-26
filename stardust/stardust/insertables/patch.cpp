@@ -1,9 +1,10 @@
 #include "patch.h"
 
 namespace stardust {
-	Patch::Patch(const fs::path& project_root_path, const fs::path& temporary_rom_path, const fs::path& patch_path,
+	Patch::Patch(const Configuration& config, const fs::path& patch_path,
 		const std::vector<fs::path>& additional_include_paths)
-		: RomInsertable(temporary_rom_path), project_relative_path(fs::relative(patch_path, project_root_path)),
+		: RomInsertable(config), 
+		project_relative_path(fs::relative(patch_path, registerConfigurationDependency(config.project_root).getOrThrow())),
 		patch_path(patch_path) 
 	{
 		if (!fs::exists(patch_path)) {
@@ -30,7 +31,13 @@ namespace stardust {
 	}
 
 	void Patch::insert() {
+		const auto prev_folder{ fs::current_path() };
+		fs::current_path(patch_path.parent_path());
+
 		spdlog::info(fmt::format("Applying patch {}", project_relative_path.string()));
+
+		// delete potential previous dependency report
+		fs::remove(patch_path.parent_path() / ".dependencies");
 
 		std::ifstream rom_file(temporary_rom_path, std::ios::in | std::ios::binary);
 		std::vector<char> rom_bytes((std::istreambuf_iterator<char>(rom_file)), (std::istreambuf_iterator<char>()));
@@ -83,6 +90,14 @@ namespace stardust {
 		asar_reset();
 		const bool succeeded{ asar_patch_ex(&params) };
 
+		int print_count;
+		const auto prints{ asar_getprints(&print_count) };
+		for (int i = 0; i != print_count; ++i) {
+			spdlog::info(prints[i]);
+		}
+
+		fs::current_path(prev_folder);
+
 		if (succeeded) {
 			int warning_count;
 			const auto warnings{ asar_getwarnings(&warning_count) };
@@ -111,5 +126,12 @@ namespace stardust {
 				error_string.str()
 			));
 		}
+	}
+
+	std::unordered_set<ResourceDependency> Patch::determineDependencies() {
+		const auto dependencies{ Insertable::extractDependenciesFromReport(
+			patch_path.parent_path() / ".dependencies"
+		) };
+		return dependencies;
 	}
 }

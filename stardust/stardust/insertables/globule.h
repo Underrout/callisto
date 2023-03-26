@@ -17,13 +17,14 @@
 #include "../insertion_exception.h"
 #include "../not_found_exception.h"
 
-
+#include "../configuration/configuration.h"
+#include "../dependency/policy.h"
 
 namespace fs = std::filesystem;
 
 namespace stardust {
 	class Globule : public RomInsertable {
-	private:
+	protected:
 		static constexpr auto MAX_ROM_SIZE = 16 * 1024 * 1024;
 
 		const fs::path globule_path;
@@ -31,18 +32,22 @@ namespace stardust {
 		std::vector<const char*> additional_include_paths;
 		const fs::path imprint_directory;
 		const fs::path globule_call_file;
-		const std::unordered_set<std::string> other_globule_names;
+		std::unordered_set<std::string> other_globule_names;
 		const std::optional<fs::path> globule_header_file;
 
 		void emitImprintFile() const;
 
-	public:
+		std::unordered_set<ResourceDependency> determineDependencies() override;
 
-		Globule(const fs::path& project_root_path, const fs::path& temporary_rom_path,
+		void fixAsarMemoryLeak() const;
+
+	public:
+		static std::string globulePathToName(const fs::path& path);
+
+		Globule(const Configuration& config,
 			const fs::path& globule_path, const fs::path& imprint_directory,
 			const fs::path& globule_call_file, 
-			const std::unordered_set<std::string>& other_globule_names,
-			const std::optional<fs::path> globule_header_file,
+			const std::vector<fs::path>& other_globule_paths,
 			const std::vector<fs::path>& additional_include_paths = {});
 
 		void insert() override;

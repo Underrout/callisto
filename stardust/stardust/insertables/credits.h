@@ -24,10 +24,8 @@ namespace stardust {
 		}
 
 	public:
-		Credits(const fs::path& flips_path, const fs::path& clean_rom_path,
-			const fs::path& lunar_magic_path, const fs::path& temporary_rom_path,
-			const fs::path& credits_bps_patch)
-			: FlipsInsertable(flips_path, clean_rom_path, lunar_magic_path, temporary_rom_path, credits_bps_patch)
+		Credits(const Configuration& config) 
+			: FlipsInsertable(config, config.credits)
 		{
 			checkPatchExists();
 		}

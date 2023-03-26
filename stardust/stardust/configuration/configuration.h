@@ -3,6 +3,8 @@
 #include <filesystem>
 #include <array>
 #include <map>
+#include <unordered_set>
+#include <variant>
 
 #include <boost/range.hpp>
 #include <toml.hpp>
@@ -12,6 +14,8 @@
 #include "emulator_configuration.h"
 #include "config_variable.h"
 #include "config_exception.h"
+#include "../path_util.h"
+#include "../descriptor.h"
 
 namespace fs = std::filesystem;
 
@@ -20,13 +24,18 @@ namespace stardust {
 	public:
 		using ConfigFileMap = std::map<ConfigurationLevel, std::vector<fs::path>>;
 		using VariableFileMap = std::map<ConfigurationLevel, fs::path>;
+		using BuildOrder = std::vector<Descriptor>;
 
 	private:
 		static constexpr std::array VALID_STATIC_BUILD_ORDER_SYMBOLS{
-			"Globules", "Graphics", "ExGraphics", "Map16", "TitleMoves", "SharedPalettes",
-			"Overworld", "Titlescreen", "Credits", "GlobalExAnimation", 
-			"Patches", "PIXI", "Levels", "AddMusicK"
+			"Globules", "Graphics", "ExGraphics", "Map16", "TitleScreenMovement", "SharedPalettes",
+			"Overworld", "TitleScreen", "Credits", "GlobalExAnimation", 
+			"Patches", "PIXI", "Levels"
 		};
+
+		std::map<std::string, std::variant<std::monostate, std::string, bool>> key_val_map{};
+
+		StringVectorConfigVariable _build_order{ {"orders", "build_order"} };
 
 		using ParsedConfigFileMap = std::map<ConfigurationLevel, std::vector<toml::value>>;
 		using UserVariableMap = std::map<ConfigurationLevel, std::map<std::string, std::string>>;
@@ -52,6 +61,21 @@ namespace stardust {
 		bool isValidStaticBuildOrderSymbol(const std::string& symbol) const;
 		bool isValidPatchSymbol(const fs::path& patch_path) const;
 		bool isValidGlobuleSymbol(const fs::path& globule_path) const;
+		void verifyPatchGlobuleExclusivity();
+		void verifyGlobuleExclusivity();
+		void verifyPatchUniqueness();
+		void finalizeBuildOrder();
+
+		bool trySet(StringConfigVariable& variable, const toml::value& table, 
+			ConfigurationLevel level, const std::map<std::string, std::string>& user_variable_map);
+		bool trySet(PathConfigVariable& variable, const toml::value& table, ConfigurationLevel level, const PathConfigVariable& relative_to,
+			const std::map<std::string, std::string>& user_variable_map);
+		bool trySet(BoolConfigVariable& variable, const toml::value& table, ConfigurationLevel level);
+
+		std::unordered_set<fs::path> getExplicitGlobules() const;
+		std::unordered_set<fs::path> getExplicitPatches() const;
+
+		std::vector<Descriptor> symbolToDescriptor(const std::string &symbol) const;
 
 	public:
 		static std::map<std::string, std::string> parseUserVariables(const toml::value& table,
@@ -60,10 +84,16 @@ namespace stardust {
 		Configuration(const ConfigFileMap& config_file_map, const VariableFileMap& variable_file_map, 
 			const fs::path& stardust_root_directory);
 
+		std::variant<std::monostate, std::string, bool> getByKey(const std::string& key) const;
+
 		StringConfigVariable config_name{ {"settings", "config_name"} };
 		PathConfigVariable project_root{ {"settings", "project_root"} };
-		IntegerConfigVariable rom_size{ {"settings", "rom_size"} };
+		StringConfigVariable rom_size{ {"settings", "rom_size"} };
+		BoolConfigVariable use_text_map16_format{ {"settings", "use_text_map16_format"} };
 		PathConfigVariable log_file{ {"settings", "log_file"} };
+		PathConfigVariable clean_rom{ {"settings", "clean_rom"} };
+		StringConfigVariable check_conflicts{ {"settings", "check_conflicts"} };
+		PathConfigVariable conflict_log_file { {"settings", "conflict_log_file"} };
 
 		PathConfigVariable project_rom{ {"output", "project_rom"} };
 		PathConfigVariable temporary_rom{ {"output", "temporary_rom"} };
@@ -75,16 +105,9 @@ namespace stardust {
 		StringConfigVariable lunar_magic_level_import_flags{ {"tools", "LunarMagic", "level_import_flags"} };
 
 		PathConfigVariable pixi_working_dir{ {"tools", "PIXI", "directory"} };
-		PathConfigVariable pixi_list_file{ {"tools", "PIXI", "list_file"} };
 		StringConfigVariable pixi_options{ {"tools", "PIXI", "options"} };
-		ExtendablePathVectorConfigVariable pixi_static_dependencies{ {"tools", "PIXI", "static_dependencies"} };
+		StaticResourceDependencyConfigVariable pixi_static_dependencies{ {"tools", "PIXI", "static_dependencies"} };
 		PathConfigVariable pixi_dependency_report_file{ {"tools", "PIXI", "dependency_report_file"} };
-
-		PathConfigVariable amk_working_dir{ {"tools", "AddMusicK", "directory"} };
-		PathConfigVariable amk_path{ {"tools", "AddMusicK", "executable"} };
-		StringConfigVariable amk_options{ {"tools", "AddMusicK", "options"} };
-		ExtendablePathVectorConfigVariable amk_static_dependencies{ {"tools", "AddMusicK", "static_dependencies"} };
-		PathConfigVariable amk_dependency_report_file{ {"tools", "AddMusicK", "dependency_report_file"} };
 
 		PathConfigVariable initial_patch{ {"resources", "initial_patch"} };
 		PathConfigVariable levels{ {"resources", "levels"} };
@@ -92,6 +115,7 @@ namespace stardust {
 		PathConfigVariable map16{ {"resources", "map16"} };
 		PathConfigVariable overworld{ {"resources", "overworld"} };
 		PathConfigVariable titlescreen{ {"resources", "titlescreen"} };
+		PathConfigVariable title_moves{ {"resources", "titlescreen_movement"} };
 		PathConfigVariable credits{ {"resources", "credits"} };
 		PathConfigVariable global_exanimation{ {"resources", "global_exanimation"} };
 
@@ -100,7 +124,7 @@ namespace stardust {
 
 		PathConfigVariable globule_header{ {"resources", "globule_header"} };
 
-		StringVectorConfigVariable build_order{ {"orders", "build_order"} };
+		BuildOrder build_order{};
 
 		std::map<std::string, ToolConfiguration> generic_tool_configurations{};
 

@@ -1,14 +1,15 @@
 #include "globule.h"
 
 namespace stardust {
-	Globule::Globule(const fs::path& project_root_path, const fs::path& temporary_rom_path,
-		const fs::path& globule_path, const fs::path& imprint_directory, const fs::path& globule_call_file,
-		const std::unordered_set<std::string>& other_globule_names,
-		const std::optional<fs::path> globule_header_file,
+	Globule::Globule(const Configuration& config,
+		const fs::path& globule_path, const fs::path& imprint_directory,
+		const fs::path& globule_call_file,
+		const std::vector<fs::path>& other_globule_paths,
 		const std::vector<fs::path>& additional_include_paths) :
-		RomInsertable(temporary_rom_path), project_relative_path(fs::relative(globule_path, project_root_path)),
+		RomInsertable(config), 
+		project_relative_path(fs::relative(globule_path, registerConfigurationDependency(config.project_root).getOrThrow())),
 		globule_path(globule_path), imprint_directory(imprint_directory), globule_call_file(globule_call_file),
-		other_globule_names(other_globule_names), globule_header_file(globule_header_file) 
+		globule_header_file(registerConfigurationDependency(config.globule_header, Policy::REINSERT).getOrThrow())
 	{
 		if (!fs::exists(globule_path)) {
 			throw ResourceNotFoundException(fmt::format(
@@ -31,13 +32,23 @@ namespace stardust {
 		std::strcpy(copy, path.string().c_str());
 		return copy;
 			});
+
+		for (const auto& other_globule_path : other_globule_paths) {
+			other_globule_names.insert(globulePathToName(other_globule_path));
+		}
 	}
 
 	// TODO this whole thing is pretty much the same as the Patch.insert() method, probably merge 
 	//      them into a single static method or something later
 	void Globule::insert() {
+		const auto prev_folder{ fs::current_path() };
+		fs::current_path(globule_path.parent_path());
+
 		std::string patch_path{ (boost::filesystem::temp_directory_path() / boost::filesystem::unique_path().string()).string() };
 		std::ofstream temp_patch{ patch_path };
+
+		// delete potential previous dependency report
+		fs::remove(globule_path.parent_path() / ".dependencies");
 
 		if (globule_path.extension() == ".asm") {
 			spdlog::info(fmt::format("Inserting ASM globule {}", project_relative_path.string()));
@@ -48,7 +59,7 @@ namespace stardust {
 				<< "freecode cleaned" << std::endl << std::endl;
 
 			if (globule_header_file.has_value()) {
-				temp_patch << "incsrc \"" << globule_header_file.value() << '"' << std::endl << std::endl;
+				temp_patch << "incsrc " << globule_header_file.value() << std::endl << std::endl;
 			}
 
 			temp_patch << "incsrc \"" << globule_path.string() << '"' << std::endl;
@@ -114,6 +125,14 @@ namespace stardust {
 		asar_reset();
 		const bool succeeded{ asar_patch_ex(&params) };
 
+		int print_count;
+		const auto prints{ asar_getprints(&print_count) };
+		for (int i = 0; i != print_count; ++i) {
+			spdlog::info(prints[i]);
+		}
+
+		fs::remove(patch_path);
+
 		if (succeeded) {
 			int warning_count;
 			const auto warnings{ asar_getwarnings(&warning_count) };
@@ -126,6 +145,8 @@ namespace stardust {
 			spdlog::info(fmt::format("Successfully applied globule {}!", project_relative_path.string()));
 
 			emitImprintFile();
+
+			fs::current_path(prev_folder);
 		}
 		else {
 			int error_count;
@@ -138,6 +159,7 @@ namespace stardust {
 
 				error_string << errors[i].fullerrdata;
 			}
+			fs::current_path(prev_folder);
 			throw InsertionException(fmt::format(
 				"Failed to apply globule {} with the following error(s):\n{}",
 				project_relative_path.string(),
@@ -146,15 +168,31 @@ namespace stardust {
 		}
 	}
 
+	std::string Globule::globulePathToName(const fs::path& path) {
+		auto prefix{ path.stem().string() };
+		std::replace(prefix.begin(), prefix.end(), ' ', '_');
+
+		return prefix;
+	}
+
 	void Globule::emitImprintFile() const {
 		fs::create_directories(imprint_directory);
 
-		std::ofstream imprint{ imprint_directory / globule_path.filename() };
+		std::ofstream imprint{ imprint_directory / (globule_path.stem().string() + ".asm")};
 
 		imprint << fmt::format("incsrc \"{}\"", globule_call_file.string()) << std::endl << std::endl;
 
 		int label_number{};
 		const auto labels{ asar_getalllabels(&label_number) };
+
+		const auto globule_name{ globulePathToName(globule_path) };
+
+		if (label_number == 0) {
+			throw InsertionException(fmt::format(
+				"Globule {} contains no labels, this will cause a freespace leak, please ensure your globule contains at least one label",
+				globule_name
+			));
+		}
 
 		for (int i{ 0 }; i != label_number; ++i) {
 			const auto& label{ labels[i] };
@@ -168,17 +206,67 @@ namespace stardust {
 			const auto underscore_idx{ name.find('_', 0) };
 			if (other_globule_names.count(name) != 0 || 
 				(underscore_idx != -1 && other_globule_names.count(name.substr(0, underscore_idx)) != 0)) {
-				// label belongs to imported globule, skip it
-				continue;
+				if (name.substr(0, underscore_idx) != globule_name) {
+					// label belongs to imported globule, skip it
+					continue;
+				}
 			}
 
-			auto prefix{ globule_path.stem().string() };
-			std::replace(prefix.begin(), prefix.end(), ' ', '_');
-
-			imprint << fmt::format("{}_{} = ${:06X}", prefix, name, label.location) << std::endl;
-			imprint << fmt::format("!{}_{} = ${:06X}", prefix, name, label.location) << std::endl;
+			imprint << fmt::format("{}_{} = ${:06X}", globule_name, name, label.location) << std::endl;
+			imprint << fmt::format("!{}_{} = ${:06X}", globule_name, name, label.location) << std::endl;
 		}
 
+		// fixAsarMemoryLeak();
+
 		imprint.close();
+	}
+
+	std::unordered_set<ResourceDependency> Globule::determineDependencies() {
+		if (globule_path.extension() == ".asm") {
+			auto dependencies{ Insertable::extractDependenciesFromReport(
+				globule_path.parent_path() / ".dependencies"
+			) };
+			if (globule_header_file.has_value()) {
+				dependencies.insert(ResourceDependency(globule_header_file.value(), Policy::REINSERT));
+			}
+			return dependencies;
+		}
+		return {};
+	}
+
+	void Globule::fixAsarMemoryLeak() const {
+		// apparently labels will leak unless you patch a file 
+		// without labels and then get them again, so I guess we'll do this?
+
+		const memoryfile empty_patch{ "empty.asm", "", 0 };
+		int size;
+
+		const patchparams params{
+			sizeof(patchparams),
+			"empty.asm",
+			nullptr,
+			0,
+			&size,
+			nullptr,
+			0,
+			true,
+			nullptr,
+			0,
+			nullptr,
+			nullptr,
+			nullptr,
+			0,
+			nullptr,
+			0,
+			false,
+			true
+		};
+
+		if (!asar_patch_ex(&params)) {
+			spdlog::warn("Failed to clean up asar labels, stardust might leak memory.");
+			return;
+		}
+		int labels;
+		asar_getalllabels(&labels);
 	}
 }

@@ -10,11 +10,14 @@
 #include "../insertion_exception.h"
 #include "../not_found_exception.h"
 
+#include "../configuration/configuration.h"
+#include "../dependency/policy.h"
+
 namespace fs = std::filesystem;
 
 namespace stardust {
 	class ExGraphics : public LunarMagicInsertable {
-	private:
+	protected:
 		static const char* EXGRAPHICS_FOLDER_NAME;
 
 		const fs::path project_exgraphics_folder_path;
@@ -23,9 +26,11 @@ namespace stardust {
 		void createTemporaryExGraphicsFolder() const;
 		void deleteTemporaryExGraphicsFolder() const;
 
+		std::unordered_set<ResourceDependency> determineDependencies() override;
+
 	public:
 		void insert() override;
 
-		ExGraphics(const fs::path& lunar_magic_path, const fs::path& temporary_rom_path, const fs::path& output_rom_path);
+		ExGraphics(const Configuration& config);
 	};
 }

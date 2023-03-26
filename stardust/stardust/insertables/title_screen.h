@@ -24,10 +24,8 @@ namespace stardust {
 		}
 
 	public:
-		TitleScreen(const fs::path& flips_path, const fs::path& clean_rom_path,
-			const fs::path& lunar_magic_path, const fs::path& temporary_rom_path,
-			const fs::path& title_screen_bps_patch_path)
-			: FlipsInsertable(flips_path, clean_rom_path, lunar_magic_path, temporary_rom_path, title_screen_bps_patch_path) 
+		TitleScreen(const Configuration& config)
+			: FlipsInsertable(config, config.titlescreen) 
 		{
 			checkPatchExists();
 		}

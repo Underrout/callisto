@@ -1,8 +1,9 @@
 #include "shared_palettes.h"
 
 namespace stardust {
-	SharedPalettes::SharedPalettes(const fs::path& lunar_magic_path, const fs::path& temporary_rom_path, const fs::path& shared_palettes_path)
-		: LunarMagicInsertable(lunar_magic_path, temporary_rom_path), shared_palettes_path(shared_palettes_path)
+	SharedPalettes::SharedPalettes(const Configuration& config)
+		: LunarMagicInsertable(config), 
+		shared_palettes_path(registerConfigurationDependency(config.shared_palettes, Policy::REINSERT).getOrThrow())
 	{
 		if (!fs::exists(shared_palettes_path)) {
 			throw ResourceNotFoundException(fmt::format(
@@ -10,6 +11,12 @@ namespace stardust {
 				shared_palettes_path.string()
 			));
 		}
+	}
+
+	std::unordered_set<ResourceDependency> SharedPalettes::determineDependencies() {
+		auto dependencies{ LunarMagicInsertable::determineDependencies() };
+		dependencies.insert(shared_palettes_path);
+		return dependencies;
 	}
 
 	void SharedPalettes::insert() {

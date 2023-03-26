@@ -1,0 +1,21 @@
+#pragma once
+
+namespace stardust {
+	enum class Symbol {
+		INITIAL_PATCH,
+		GRAPHICS,
+		EX_GRAPHICS,
+		MAP16,
+		SHARED_PALETTES,
+		OVERWORLD,
+		TITLE_SCREEN,
+		TITLE_SCREEN_MOVEMENT,
+		CREDITS,
+		GLOBAL_EX_ANIMATION,
+		LEVEL,
+		PATCH,
+		GLOBULE,
+		PIXI,
+		EXTERNAL_TOOL
+	};
+}

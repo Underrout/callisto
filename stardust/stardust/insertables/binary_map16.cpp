@@ -1,15 +1,24 @@
 #include "binary_map16.h"
 
 namespace stardust {
-	BinaryMap16::BinaryMap16(const fs::path& lunar_magic_path, const fs::path& temporary_rom_path, const fs::path& map16_file_path)
-		: LunarMagicInsertable(lunar_magic_path, temporary_rom_path), map16_file_path(map16_file_path)
+	BinaryMap16::BinaryMap16(const Configuration& config)
+		: LunarMagicInsertable(config), 
+		map16_file_path(registerConfigurationDependency(config.map16, Policy::REINSERT).getOrThrow())
 	{
+		registerConfigurationDependency(config.use_text_map16_format, Policy::REINSERT);
+
 		if (!fs::exists(map16_file_path)) {
 			throw ResourceNotFoundException(fmt::format(
 				"Binary Map16 file not found at {}",
 				map16_file_path.string()
 			));
 		}
+	}
+
+	std::unordered_set<ResourceDependency> BinaryMap16::determineDependencies() {
+		auto dependencies{ LunarMagicInsertable::determineDependencies() };
+		dependencies.insert(map16_file_path);
+		return dependencies;
 	}
 
 	void BinaryMap16::insert() {

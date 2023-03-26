@@ -3,11 +3,13 @@
 namespace stardust {
 	const char* Graphics::GRAPHICS_FOLDER_NAME = "Graphics";
 
-	Graphics::Graphics(const fs::path& lunar_magic_path, const fs::path& temporary_rom_path, const fs::path& output_rom_path)
-		: LunarMagicInsertable(lunar_magic_path, temporary_rom_path), 
-		project_graphics_folder_path(output_rom_path.parent_path() / GRAPHICS_FOLDER_NAME),
+	Graphics::Graphics(const Configuration& config)
+		: LunarMagicInsertable(config), 
+		project_graphics_folder_path(config.project_rom.getOrThrow().parent_path() / GRAPHICS_FOLDER_NAME),
 		temporary_graphics_folder_path(temporary_rom_path.parent_path() / GRAPHICS_FOLDER_NAME)
 	{
+		registerConfigurationDependency(config.project_rom, Policy::REINSERT);
+
 		if (!fs::exists(project_graphics_folder_path)) {
 			throw ResourceNotFoundException(fmt::format(
 				"Graphics folder not found at {}",
@@ -57,6 +59,15 @@ namespace stardust {
 				));
 			}
 		}
+	}
+
+	std::unordered_set<ResourceDependency> Graphics::determineDependencies() {
+		auto dependencies{ LunarMagicInsertable::determineDependencies() };
+		const auto folder_dependencies{
+			getResourceDependenciesFor(project_graphics_folder_path, Policy::REINSERT)
+		};
+		dependencies.insert(folder_dependencies.begin(), folder_dependencies.end());
+		return dependencies;
 	}
 
 	void Graphics::insert() {

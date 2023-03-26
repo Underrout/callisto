@@ -4,6 +4,12 @@ namespace stardust {
 	void Pixi::insert() {
 		spdlog::info("Running PIXI");
 
+		if (dependency_report_file_path.has_value()) {
+			// delete potential previous dependency report
+			fs::remove(dependency_report_file_path.value());
+		}
+
+		// TODO this is apparently not portable...
 		std::vector<std::string> args{ boost::program_options::split_winmain(pixi_options) };
 
 		args.push_back(temporary_rom_path.string());
@@ -40,9 +46,39 @@ namespace stardust {
 		}
 	}
 
-	Pixi::Pixi(const fs::path& pixi_folder_path, const fs::path& temporary_rom_path, const std::string& pixi_options)
-		: RomInsertable(temporary_rom_path), pixi_folder_path(pixi_folder_path), pixi_options(pixi_options) 
+	std::unordered_set<ResourceDependency> Pixi::determineDependencies() {
+		if (!dependency_report_file_path.has_value()) {
+			throw DependencyException("No dependency report file specified for PIXI");
+		}
+
+		if (!fs::exists(dependency_report_file_path.value())) {
+			throw DependencyException(fmt::format(
+				"No dependency report file found at {}, are you sure this is the "
+				"correct path and that you have installed quickbuild correctly?",
+				dependency_report_file_path.value().string()
+			));
+		}
+
+		std::unordered_set<ResourceDependency> dependencies{ static_dependencies.begin(), static_dependencies.end() };
+		const auto reported{ Insertable::extractDependenciesFromReport(dependency_report_file_path.value()) };
+
+		dependencies.insert(reported.begin(), reported.end());
+
+		return dependencies;
+	}
+
+	Pixi::Pixi(const Configuration& config)
+		: RomInsertable(config), 
+		pixi_folder_path(registerConfigurationDependency(config.pixi_working_dir, Policy::REINSERT).getOrThrow()), 
+		pixi_options(registerConfigurationDependency(config.pixi_options, Policy::REINSERT).getOrDefault("")),
+		static_dependencies(config.pixi_static_dependencies.getOrDefault({})),
+		dependency_report_file_path(config.pixi_dependency_report_file.getOrDefault({}))
 	{
+		// delete potential previous dependency report
+		if (dependency_report_file_path.has_value()) {
+			fs::remove(dependency_report_file_path.value());
+		}
+
 		if (!fs::exists(pixi_folder_path)) {
 			throw NotFoundException(fmt::format(
 				"PIXI folder {} does not exist",

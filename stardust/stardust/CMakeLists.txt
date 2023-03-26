@@ -4,7 +4,42 @@
 
 # Add source to this project's executable.
 
-add_executable (stardust "stardust.cpp" "stardust.h" "insertable.h" 
+set(VERSION_MAJOR 0)
+set(VERSION_MINOR 1)
+set(VERSION_PATCH 0)
+
+add_definitions(-DSTARDUST_VERSION_MAJOR=${VERSION_MAJOR})
+add_definitions(-DSTARDUST_VERSION_MINOR=${VERSION_MINOR})
+add_definitions(-DSTARDUST_VERSION_PATCH=${VERSION_PATCH})
+
+set(RC_CONTENTS "1 ICON \"stardust.ico\" 
+1 VERSIONINFO 
+      FILEVERSION     ${VERSION_MAJOR}, ${VERSION_MINOR}, ${VERSION_PATCH}, 0
+      PRODUCTVERSION  ${VERSION_MAJOR}, ${VERSION_MINOR}, ${VERSION_PATCH}, 0
+{
+    BLOCK \"StringFileInfo\" 
+    {
+        BLOCK \"040904b0\" // en-US with UTF-8
+        {
+            VALUE \"CompanyName\", \"stardust developers\\0\" 
+            VALUE \"FileDescription\", \"SMW build system\\0\"
+            VALUE \"FileVersion\", \"v${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH}\\0\"
+            VALUE \"InternalName\", \"stardust\\0\" 
+            VALUE \"OriginalFilename\", \"stardust.exe\\0\" 
+            VALUE \"ProductName\", \"stardust\\0\" 
+            VALUE \"ProductVersion\", \"v${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH}\\0\"
+        }
+    }
+    BLOCK \"VarFileInfo\" 
+    {
+        VALUE \"Translation\", 0x409, 1200 // en-US with UTF-8
+    }
+}"
+)
+
+file(WRITE "${CMAKE_CURRENT_SOURCE_DIR}/stardust.rc" "${RC_CONTENTS}")
+
+add_executable (stardust "stardust.rc" "stardust.cpp" "stardust.h" "insertable.h" 
 "stardust_exception.h" "insertion_exception.h" "insertables/graphics.h" 
 "insertables/graphics.cpp" "insertables/exgraphics.h" "insertables/exgraphics.cpp" 
 "not_found_exception.h" "insertables/lunar_magic_insertable.h" "insertables/lunar_magic_insertable.cpp" 
@@ -15,7 +50,11 @@ add_executable (stardust "stardust.cpp" "stardust.h" "insertable.h"
  "insertables/binary_map16.h" "insertables/binary_map16.cpp" "insertables/text_map16.h" "insertables/text_map16.cpp" 
   "insertables/pixi.cpp" "insertables/pixi.h" "insertables/external_tool.h" "insertables/external_tool.cpp" "insertables/patch.h" "insertables/patch.cpp"
 "configuration/config_exception.h" "configuration/config_variable.cpp" "configuration/config_variable.h" "configuration/configuration.h"
-"configuration/configuration_level.h" "configuration/configuration.cpp" "configuration/tool_configuration.h" "configuration/emulator_configuration.h" "insertables/globule.h"  "insertables/globule.cpp" "configuration/configuration_manager.h" "configuration/configuration_manager.cpp")
+"configuration/configuration_level.h" "configuration/configuration.cpp" "configuration/tool_configuration.h" "configuration/emulator_configuration.h" "insertables/globule.h"  "insertables/globule.cpp" "configuration/configuration_manager.h" "configuration/configuration_manager.cpp" 
+"dependency/resource_dependency.h" "dependency/dependency_exception.h" "builders/builder.h" "builders/builder.cpp" "builders/rebuilder.h" "path_util.h" "builders/rebuilder.cpp" "symbol.h"
+"human_map16/arrays.h" "human_map16/data_error.h" "human_map16/filesystem_error.h" "human_map16/from_map16.cpp"
+"human_map16/header_error.h" "human_map16/human_map16_exception.h" "human_map16/human_readable_map16.cpp" "human_map16/human_readable_map16.h"
+"human_map16/tile_error.h" "human_map16/tile_format.h" "human_map16/to_map16.cpp"  "insertables/initial_patch.h" "insertables/initial_patch.cpp" "dependency/policy.h" "builders/quick_builder.h"  "builders/quick_builder.cpp" "builders/must_rebuild_exception.h")
 
 set(CMAKE_CXX_STANDARD 20)
 

@@ -3,11 +3,13 @@
 namespace stardust {
 	const char* ExGraphics::EXGRAPHICS_FOLDER_NAME = "ExGraphics";
 
-	ExGraphics::ExGraphics(const fs::path& lunar_magic_path, const fs::path& temporary_rom_path, const fs::path& output_rom_path)
-		: LunarMagicInsertable(lunar_magic_path, temporary_rom_path),
-		project_exgraphics_folder_path(output_rom_path.parent_path() / EXGRAPHICS_FOLDER_NAME),
-		temporary_exgraphics_folder_path(temporary_rom_path.parent_path() / EXGRAPHICS_FOLDER_NAME)
+	ExGraphics::ExGraphics(const Configuration& config)
+		: LunarMagicInsertable(config),
+		project_exgraphics_folder_path(config.project_rom.getOrThrow().parent_path() / EXGRAPHICS_FOLDER_NAME),
+		temporary_exgraphics_folder_path(config.temporary_rom.getOrThrow().parent_path() / EXGRAPHICS_FOLDER_NAME)
 	{
+		registerConfigurationDependency(config.project_rom, Policy::REINSERT);
+
 		if (!fs::exists(project_exgraphics_folder_path)) {
 			throw ResourceNotFoundException(fmt::format(
 				"ExGraphics folder not found at {}",
@@ -58,6 +60,15 @@ namespace stardust {
 				));
 			}
 		}
+	}
+
+	std::unordered_set<ResourceDependency> ExGraphics::determineDependencies() {
+		auto dependencies{ LunarMagicInsertable::determineDependencies() };
+		const auto folder_dependencies{
+			getResourceDependenciesFor(project_exgraphics_folder_path, Policy::REINSERT)
+		};
+		dependencies.insert(folder_dependencies.begin(), folder_dependencies.end());
+		return dependencies;
 	}
 
 	void ExGraphics::insert() {
