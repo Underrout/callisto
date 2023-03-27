@@ -5,22 +5,6 @@
 
 #include "stardust.h"
 
-#include "insertables/exgraphics.h"
-#include "insertables/graphics.h"
-#include "insertables/shared_palettes.h"
-#include "insertables/overworld.h"
-#include "insertables/title_screen.h"
-#include "insertables/global_exanimation.h"
-#include "insertables/credits.h"
-#include "insertables/title_moves.h"
-#include "insertables/level.h"
-#include "insertables/binary_map16.h"
-#include "insertables/text_map16.h"
-#include "insertables/external_tool.h"
-#include "insertables/patch.h"
-#include "insertables/globule.h"
-#include "insertables/pixi.h"
-
 #include "stardust_exception.h"
 
 #include "configuration/configuration.h"
@@ -28,13 +12,18 @@
 #include "configuration/config_exception.h"
 #include "configuration/configuration_manager.h"
 
+#include "extractables/credits.h"
+#include "extractables/overworld.h"
+#include "extractables/global_exanimation.h"
+#include "extractables/title_screen.h"
+
 #include "builders/rebuilder.h"
 #include "builders/quick_builder.h"
 
 using namespace stardust;
 
 int main(int argc, const char* argv[]) {
-	spdlog::set_level(spdlog::level::info);
+	spdlog::set_level(spdlog::level::debug);
 
 	getch();
 
@@ -42,6 +31,16 @@ int main(int argc, const char* argv[]) {
 		ConfigurationManager config_manager{ fs::current_path() };
 
 		const auto config{ config_manager.getConfiguration({}) };
+
+		extractables::Overworld ow{ config };
+		extractables::Credits credits{ config };
+		extractables::GlobalExAnimation global{ config };
+		extractables::TitleScreen title{ config };
+
+		ow.extract();
+		credits.extract();
+		global.extract();
+		title.extract();
 
 		const auto report{ PathUtil::getBuildReportPath(config.project_root.getOrThrow()) };
 
