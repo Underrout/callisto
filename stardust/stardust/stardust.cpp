@@ -16,6 +16,7 @@
 #include "extractables/overworld.h"
 #include "extractables/global_exanimation.h"
 #include "extractables/title_screen.h"
+#include "extractables/shared_palettes.h"
 
 #include "builders/rebuilder.h"
 #include "builders/quick_builder.h"
@@ -36,11 +37,13 @@ int main(int argc, const char* argv[]) {
 		extractables::Credits credits{ config };
 		extractables::GlobalExAnimation global{ config };
 		extractables::TitleScreen title{ config };
+		extractables::SharedPalettes sh{ config };
 
 		ow.extract();
 		credits.extract();
 		global.extract();
 		title.extract();
+		sh.extract();
 
 		const auto report{ PathUtil::getBuildReportPath(config.project_root.getOrThrow()) };
 

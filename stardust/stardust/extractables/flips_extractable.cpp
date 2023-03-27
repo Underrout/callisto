@@ -23,6 +23,7 @@ namespace stardust {
 
 	void FlipsExtractable::extract() {
 		const auto temp_rom{ getTemporaryResourceRomPath() };
+		spdlog::info("Exporting {}", getResourceName());
 		createTemporaryResourceRom(temp_rom);
 		invokeLunarMagic(temp_rom);
 		createOutputPatch(temp_rom);
@@ -77,6 +78,7 @@ namespace stardust {
 		if (exit_code == 0) {
 			spdlog::debug("Successuflly created patch {} from temporary ROM {}",
 				output_patch_path.string(),  temporary_resource_rom.string());
+			spdlog::info("Successfully exported {}!", getResourceName());
 		}
 		else {
 			throw ExtractionException(fmt::format(
