@@ -80,6 +80,8 @@ namespace stardust {
 			temp_map16.string())
 		};
 
+		deleteTemporaryMap16File();
+
 		if (exit_code == 0) {
 			spdlog::info("Successfully inserted Map16!");
 		}
@@ -90,7 +92,5 @@ namespace stardust {
 				temporary_rom_path.string()
 			));
 		}
-
-		deleteTemporaryMap16File();
 	}
 }

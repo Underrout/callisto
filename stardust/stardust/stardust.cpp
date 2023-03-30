@@ -17,6 +17,10 @@
 #include "extractables/global_exanimation.h"
 #include "extractables/title_screen.h"
 #include "extractables/shared_palettes.h"
+#include "extractables/binary_map16.h"
+#include "extractables/text_map16.h"
+#include "extractables/level.h"
+#include "extractables/levels.h"
 
 #include "builders/rebuilder.h"
 #include "builders/quick_builder.h"
@@ -38,12 +42,25 @@ int main(int argc, const char* argv[]) {
 		extractables::GlobalExAnimation global{ config };
 		extractables::TitleScreen title{ config };
 		extractables::SharedPalettes sh{ config };
+		extractables::Levels levels{ config };
+		extractables::BinaryMap16 biny{ config };
+		extractables::TextMap16 tex{ config };
 
 		ow.extract();
 		credits.extract();
 		global.extract();
 		title.extract();
 		sh.extract();
+		levels.extract();
+
+		if (config.use_text_map16_format.getOrThrow()) {
+		tex.extract();
+
+		}
+		else {
+		biny.extract();
+
+		}
 
 		const auto report{ PathUtil::getBuildReportPath(config.project_root.getOrThrow()) };
 
