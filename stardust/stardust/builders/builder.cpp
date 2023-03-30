@@ -98,7 +98,14 @@ namespace stardust {
 		report["configuration"] = config.config_name.getOrThrow();
 		report["file_format_version"] = BUILD_REPORT_VERSION;
 		report["build_order"] = std::vector<std::string>();
-		report["rom_size"] = config.rom_size.isSet() ? config.rom_size.getOrThrow() : nullptr;
+		if (config.rom_size.isSet()) {
+			report["rom_size"] = config.rom_size.getOrThrow();
+		}
+		else {
+			report["rom_size"] = nullptr;
+		}
+		report["stardust_version"] = fmt::format("{}.{}.{}",
+			STARDUST_VERSION_MAJOR, STARDUST_VERSION_MINOR, STARDUST_VERSION_PATCH);
 
 		for (const auto& descriptor : config.build_order) {
 			report["build_order"].push_back(descriptor.toJson());
