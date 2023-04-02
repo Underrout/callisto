@@ -26,7 +26,7 @@ namespace stardust {
 				temporary_exgraphics_folder_path.string()
 			));
 			try {
-				fs::copy(project_exgraphics_folder_path, temporary_exgraphics_folder_path);
+				fs::copy(project_exgraphics_folder_path, temporary_exgraphics_folder_path, fs::copy_options::overwrite_existing);
 			}
 			catch (const fs::filesystem_error&) {
 				throw InsertionException(fmt::format(

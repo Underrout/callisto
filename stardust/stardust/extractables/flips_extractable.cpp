@@ -39,7 +39,7 @@ namespace stardust {
 	void FlipsExtractable::createTemporaryResourceRom(const fs::path& temporary_resource_rom) const {
 		spdlog::debug("Copying clean ROM from {} to {}", clean_rom_path.string(), temporary_resource_rom.string());
 		try {
-			fs::copy_file(clean_rom_path, temporary_resource_rom);
+			fs::copy_file(clean_rom_path, temporary_resource_rom, fs::copy_options::overwrite_existing);
 		}
 		catch (const fs::filesystem_error& e) {
 			throw ExtractionException(fmt::format(
