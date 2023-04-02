@@ -7,6 +7,7 @@
 #include "../insertables/initial_patch.h"
 #include "must_rebuild_exception.h"
 #include "../insertables/globule.h"
+#include "../saver/saver.h"
 
 namespace stardust {
 	class QuickBuilder : public Builder {

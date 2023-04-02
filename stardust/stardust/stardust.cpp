@@ -25,6 +25,8 @@
 #include "builders/rebuilder.h"
 #include "builders/quick_builder.h"
 
+#include "saver/saver.h"
+
 using namespace stardust;
 
 int main(int argc, const char* argv[]) {
@@ -37,7 +39,9 @@ int main(int argc, const char* argv[]) {
 
 		const auto config{ config_manager.getConfiguration({}) };
 
-		extractables::Overworld ow{ config };
+		Saver::exportResources(config.project_rom.getOrThrow(), config);
+
+		/*extractables::Overworld ow{config};
 		extractables::Credits credits{ config };
 		extractables::GlobalExAnimation global{ config };
 		extractables::TitleScreen title{ config };
@@ -60,7 +64,7 @@ int main(int argc, const char* argv[]) {
 		else {
 		biny.extract();
 
-		}
+		}*/
 
 		const auto report{ PathUtil::getBuildReportPath(config.project_root.getOrThrow()) };
 

@@ -95,7 +95,7 @@ namespace stardust {
 		));
 
 		const patchparams params{
-			sizeof(patchparams),
+			sizeof(struct patchparams),
 			patch_path.c_str(),
 			rom_bytes.data() + header_size,
 			MAX_ROM_SIZE,
@@ -242,7 +242,7 @@ namespace stardust {
 		int size;
 
 		const patchparams params{
-			sizeof(patchparams),
+			sizeof(struct patchparams),
 			"empty.asm",
 			nullptr,
 			0,

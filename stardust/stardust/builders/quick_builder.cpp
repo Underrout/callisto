@@ -86,6 +86,8 @@ namespace stardust {
 
 		cacheGlobules(config.project_root.getOrThrow());
 
+		Saver::writeMarkerToRom(config.temporary_rom.getOrThrow(), config);
+
 		moveTempToOutput(config);
 	}
 

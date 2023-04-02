@@ -23,6 +23,7 @@
 #include "../insertables/pixi.h"
 
 #include "../insertable.h"
+#include "../saver/saver.h"
 #include "../descriptor.h"
 
 using json = nlohmann::json;
