@@ -18,8 +18,7 @@ namespace stardust {
 
 		checkRebuildConfigDependencies(json_dependencies, config);
 
-		fs::copy(config.project_rom.getOrThrow(), config.temporary_rom.getOrThrow(), fs::copy_options::overwrite_existing);
-
+		bool any_work_done{ false };
 		size_t i{ 0 };
 		for (auto& entry : json_dependencies) {
 			checkRebuildResourceDependencies(json_dependencies, config.project_root.getOrThrow(), i++);
@@ -52,6 +51,10 @@ namespace stardust {
 			}
 
 			if (must_reinsert) {
+				if (!any_work_done) {
+					any_work_done = true;
+					fs::copy(config.project_rom.getOrThrow(), config.temporary_rom.getOrThrow(), fs::copy_options::overwrite_existing);
+				}
 				if (descriptor.symbol == Symbol::GLOBULE) {
 					cleanGlobule(
 						descriptor.name.value(),
@@ -82,11 +85,18 @@ namespace stardust {
 			}
 		}
 
-		writeBuildReport(config.project_root.getOrThrow(), createBuildReport(config, report["dependencies"]));
+		if (any_work_done) {
+			writeBuildReport(config.project_root.getOrThrow(), createBuildReport(config, report["dependencies"]));
 
-		cacheGlobules(config.project_root.getOrThrow());
+			cacheGlobules(config.project_root.getOrThrow());
 
-		moveTempToOutput(config);
+			Saver::writeMarkerToRom(config.temporary_rom.getOrThrow(), config);
+
+			moveTempToOutput(config);
+		}
+		else {
+			spdlog::info("Everything already up to date!");
+		}
 	}
 
 	void QuickBuilder::checkBuildReportFormat() const {

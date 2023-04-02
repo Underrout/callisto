@@ -104,6 +104,8 @@ namespace stardust {
 		else {
 			report["rom_size"] = nullptr;
 		}
+		report["stardust_version"] = fmt::format("{}.{}.{}",
+			STARDUST_VERSION_MAJOR, STARDUST_VERSION_MINOR, STARDUST_VERSION_PATCH);
 
 		for (const auto& descriptor : config.build_order) {
 			report["build_order"].push_back(descriptor.toJson());

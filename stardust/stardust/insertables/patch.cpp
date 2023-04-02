@@ -60,7 +60,7 @@ namespace stardust {
 		));
 
 		const patchparams params{
-			sizeof(patchparams),
+			sizeof(struct patchparams),
 			str_patch_path.c_str(),
 			rom_bytes.data() + header_size,
 			MAX_ROM_SIZE,
