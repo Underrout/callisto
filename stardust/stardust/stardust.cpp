@@ -27,6 +27,8 @@
 
 #include "saver/saver.h"
 
+#include "emulators/emulators.h"
+
 using namespace stardust;
 
 int main(int argc, const char* argv[]) {
@@ -40,6 +42,12 @@ int main(int argc, const char* argv[]) {
 		const auto config{ config_manager.getConfiguration({}) };
 
 		Saver::exportResources(config.project_rom.getOrThrow(), config);
+
+		Emulators emulators{ config };
+
+		if (!emulators.getEmulatorNames().empty() && fs::exists(config.project_rom.getOrThrow())) {
+			emulators.launch(emulators.getEmulatorNames().at(0), config.project_rom.getOrThrow());
+		}
 
 		/*extractables::Overworld ow{config};
 		extractables::Credits credits{ config };
