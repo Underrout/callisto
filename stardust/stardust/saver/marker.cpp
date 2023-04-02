@@ -92,9 +92,9 @@ namespace stardust {
 			true
 		};
 
-		fs::current_path(prev_diretcory);
-
 		const bool succeeded{ asar_patch_ex(&params) };
+
+		fs::current_path(prev_diretcory);
 		
 		if (succeeded) {
 			int print_count;
