@@ -25,6 +25,6 @@ namespace stardust {
 		}
 
 	public:
-		LunarMagicExtractable(const Configuration& config);
+		LunarMagicExtractable(const Configuration& config, const fs::path& extracting_rom);
 	};
 }

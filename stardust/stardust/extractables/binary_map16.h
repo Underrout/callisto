@@ -18,7 +18,7 @@ namespace stardust {
 		public:
 			void extract() override;
 
-			BinaryMap16(const Configuration& config);
+			BinaryMap16(const Configuration& config, const fs::path& extracting_rom);
 		};
 	}
 }

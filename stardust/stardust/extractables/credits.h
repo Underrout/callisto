@@ -24,8 +24,8 @@ namespace stardust {
 			}
 
 		public:
-			Credits(const Configuration& config)
-				: FlipsExtractable(config, config.credits.getOrThrow()) {}
+			Credits(const Configuration& config, const fs::path& extracting_rom)
+				: FlipsExtractable(config, config.credits.getOrThrow(), extracting_rom) {}
 		};
 	}
 }

@@ -1,8 +1,8 @@
 #include "flips_extractable.h"
 
 namespace stardust {
-	FlipsExtractable::FlipsExtractable(const Configuration& config, const fs::path& output_patch_path)
-		: LunarMagicExtractable(config), flips_executable(config.flips_path.getOrThrow()),
+	FlipsExtractable::FlipsExtractable(const Configuration& config, const fs::path& output_patch_path, const fs::path& extracting_rom)
+		: LunarMagicExtractable(config, extracting_rom), flips_executable(config.flips_path.getOrThrow()),
 		clean_rom_path(config.clean_rom.getOrThrow()),
 		output_patch_path(output_patch_path) {
 

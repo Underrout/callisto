@@ -2,8 +2,8 @@
 
 namespace stardust {
 	namespace extractables {
-		Levels::Levels(const Configuration& config)
-			: LunarMagicExtractable(config), levels_folder(config.levels.getOrThrow()) {
+		Levels::Levels(const Configuration& config, const fs::path& extracting_rom)
+			: LunarMagicExtractable(config, extracting_rom), levels_folder(config.levels.getOrThrow()) {
 			if (!fs::exists(levels_folder)) {
 				spdlog::debug("Levels folder {} does not existing, creating it now", levels_folder.string());
 				try {

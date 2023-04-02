@@ -2,8 +2,8 @@
 
 namespace stardust {
 	namespace extractables {
-		TextMap16::TextMap16(const Configuration& config)
-			: LunarMagicExtractable(config), map16_folder_path(config.map16.getOrThrow()) {}
+		TextMap16::TextMap16(const Configuration& config, const fs::path& extracting_rom)
+			: LunarMagicExtractable(config, extracting_rom), map16_folder_path(config.map16.getOrThrow()) {}
 
 		fs::path TextMap16::getTemporaryMap16FilePath() const {
 			return extracting_rom.parent_path() / (map16_folder_path.string() + ".map16");

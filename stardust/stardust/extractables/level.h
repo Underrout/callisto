@@ -35,7 +35,7 @@ namespace stardust {
 
 			static void stripSourcePointers(const fs::path& mwl_path);
 
-			Level(const Configuration& config, const fs::path& mwl_file, int level_number);
+			Level(const Configuration& config, const fs::path& mwl_file, int level_number, const fs::path& extracting_rom);
 		};
 	}
 }

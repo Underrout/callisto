@@ -24,7 +24,7 @@ namespace stardust {
 		public:
 			void extract() override;
 
-			Levels(const Configuration& config);
+			Levels(const Configuration& config, const fs::path& extracting_rom);
 		};
 	}
 }

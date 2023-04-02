@@ -24,7 +24,7 @@ namespace stardust {
 		void deleteTemporaryResourceRom(const fs::path& temporary_resource_rom) const;
 
 	public:
-		FlipsExtractable(const Configuration& config, const fs::path& output_patch_path);
+		FlipsExtractable(const Configuration& config, const fs::path& output_patch_path, const fs::path& extracting_rom);
 
 		void extract() override;
 	};

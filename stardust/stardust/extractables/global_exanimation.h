@@ -24,8 +24,8 @@ namespace stardust {
 			}
 
 		public:
-			GlobalExAnimation(const Configuration& config)
-				: FlipsExtractable(config, config.global_exanimation.getOrThrow()) {}
+			GlobalExAnimation(const Configuration& config, const fs::path& extracting_rom)
+				: FlipsExtractable(config, config.global_exanimation.getOrThrow(), extracting_rom) {}
 		};
 	}
 }

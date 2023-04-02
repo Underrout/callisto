@@ -2,8 +2,8 @@
 
 namespace stardust {
 	namespace extractables {
-		SharedPalettes::SharedPalettes(const Configuration& config)
-			: LunarMagicExtractable(config),
+		SharedPalettes::SharedPalettes(const Configuration& config, const fs::path& extracting_rom)
+			: LunarMagicExtractable(config, extracting_rom),
 			shared_palettes_path(config.shared_palettes.getOrThrow()) {}
 
 		void SharedPalettes::extract() {

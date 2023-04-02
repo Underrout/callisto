@@ -26,8 +26,8 @@ namespace stardust {
 			}
 
 		public:
-			Overworld(const Configuration& config)
-				: FlipsExtractable(config, config.overworld.getOrThrow()) {}
+			Overworld(const Configuration& config, const fs::path& extracting_rom)
+				: FlipsExtractable(config, config.overworld.getOrThrow(), extracting_rom) {}
 		};
 	}
 }

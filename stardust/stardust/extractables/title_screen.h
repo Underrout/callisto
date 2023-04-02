@@ -25,7 +25,8 @@ namespace stardust {
 			}
 
 		public:
-			TitleScreen(const Configuration& config) : FlipsExtractable(config, config.titlescreen.getOrThrow()) {}
+			TitleScreen(const Configuration& config, const fs::path& extracting_rom) 
+				: FlipsExtractable(config, config.titlescreen.getOrThrow(), extracting_rom) {}
 		};
 	}
 }

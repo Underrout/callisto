@@ -19,7 +19,7 @@ namespace stardust {
 		public:
 			void extract() override;
 
-			SharedPalettes(const Configuration& config);
+			SharedPalettes(const Configuration& config, const fs::path& extracting_rom);
 		};
 	}
 }

@@ -54,23 +54,25 @@ namespace stardust {
 	}
 
 	std::shared_ptr<Extractable> Saver::extractableTypeToExtractable(const Configuration& config, ExtractableType type) {
+		const auto extracting_rom{ config.project_rom.getOrThrow() };
+
 		switch (type) {
 		case ExtractableType::BINARY_MAP16:
-			return std::make_shared<BinaryMap16>(config);
+			return std::make_shared<BinaryMap16>(config, extracting_rom);
 		case ExtractableType::TEXT_MAP16:
-			return std::make_shared<TextMap16>(config);
+			return std::make_shared<TextMap16>(config, extracting_rom);
 		case ExtractableType::CREDITS:
-			return std::make_shared<Credits>(config);
+			return std::make_shared<Credits>(config, extracting_rom);
 		case ExtractableType::GLOBAL_EX_ANIMATION:
-			return std::make_shared<GlobalExAnimation>(config);
+			return std::make_shared<GlobalExAnimation>(config, extracting_rom);
 		case ExtractableType::OVERWORLD:
-			return std::make_shared<Overworld>(config);
+			return std::make_shared<Overworld>(config, extracting_rom);
 		case ExtractableType::TITLE_SCREEN:
-			return std::make_shared<TitleScreen>(config);
+			return std::make_shared<TitleScreen>(config, extracting_rom);
 		case ExtractableType::LEVELS:
-			return std::make_shared<Levels>(config);
+			return std::make_shared<Levels>(config, extracting_rom);
 		case ExtractableType::SHARED_PALETTES:
-			return std::make_shared<SharedPalettes>(config);
+			return std::make_shared<SharedPalettes>(config, extracting_rom);
 
 		case ExtractableType::GRAPHICS:
 		case ExtractableType::EX_GRAPHICS:

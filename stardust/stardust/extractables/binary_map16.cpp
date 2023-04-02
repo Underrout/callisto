@@ -2,8 +2,8 @@
 
 namespace stardust {
 	namespace extractables {
-		BinaryMap16::BinaryMap16(const Configuration& config) 
-			: LunarMagicExtractable(config), map16_file_path(config.map16.getOrThrow()) {}
+		BinaryMap16::BinaryMap16(const Configuration& config, const fs::path& extracting_rom)
+			: LunarMagicExtractable(config, extracting_rom), map16_file_path(config.map16.getOrThrow()) {}
 
 		void BinaryMap16::extract() {
 			spdlog::info("Exporting Map16");

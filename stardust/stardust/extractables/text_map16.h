@@ -30,7 +30,7 @@ namespace stardust {
 		public:
 			void extract() override;
 
-			TextMap16(const Configuration& config);
+			TextMap16(const Configuration& config, const fs::path& extracting_rom);
 		};
 	}
 }
