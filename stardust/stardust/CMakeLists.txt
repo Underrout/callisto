@@ -159,7 +159,6 @@ target_link_libraries(stardust PRIVATE Boost::system Boost::filesystem Boost::th
 target_link_libraries(stardust PRIVATE fmt::fmt)
 target_link_libraries(stardust PUBLIC pixi_api_static)
 target_link_libraries(stardust PUBLIC platform_folders)
-target_link_libraries(stardust PUBLIC ftxui)
 
 target_include_directories(stardust PUBLIC ${pixi_SOURCE_DIR}/src)
 target_include_directories(stardust PUBLIC ${asar_SOURCE_DIR}/src)

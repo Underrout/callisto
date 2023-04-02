@@ -44,8 +44,7 @@ namespace stardust {
 		const auto prev_folder{ fs::current_path() };
 		fs::current_path(globule_path.parent_path());
 
-		std::string patch_path{ (boost::filesystem::temp_directory_path() / boost::filesystem::unique_path().string()).string() };
-		std::ofstream temp_patch{ patch_path };
+		std::ostringstream temp_patch{};
 
 		// delete potential previous dependency report
 		fs::remove(globule_path.parent_path() / ".dependencies");
@@ -73,7 +72,12 @@ namespace stardust {
 			temp_patch << fmt::format("incbin \"{}\" -> {}", globule_path.string(), label_name ) << std::endl;
 		}
 
-		temp_patch.close();
+		std::string patch_string{ temp_patch.str() };
+
+		memoryfile patch;
+		patch.path = "temp.asm";
+		patch.buffer = patch_string.c_str();
+		patch.length = patch_string.size();
 
 		std::ifstream rom_file(temporary_rom_path, std::ios::in | std::ios::binary);
 		std::vector<char> rom_bytes((std::istreambuf_iterator<char>(rom_file)), (std::istreambuf_iterator<char>()));
@@ -94,9 +98,13 @@ namespace stardust {
 			header_size
 		));
 
+		warnsetting disable_relative_path_warning;
+		disable_relative_path_warning.warnid = "1001";
+		disable_relative_path_warning.enabled = false;
+
 		const patchparams params{
 			sizeof(struct patchparams),
-			patch_path.c_str(),
+			"temp.asm",
 			rom_bytes.data() + header_size,
 			MAX_ROM_SIZE,
 			&unheadered_rom_size,
@@ -107,10 +115,10 @@ namespace stardust {
 			0,
 			nullptr,
 			nullptr,
-			nullptr,
-			0,
-			nullptr,
-			0,
+			&disable_relative_path_warning,
+			1,
+			&patch,
+			1,
 			false,
 			true
 		};
@@ -130,8 +138,6 @@ namespace stardust {
 		for (int i = 0; i != print_count; ++i) {
 			spdlog::info(prints[i]);
 		}
-
-		fs::remove(patch_path);
 
 		if (succeeded) {
 			int warning_count;
