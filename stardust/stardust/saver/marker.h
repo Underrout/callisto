@@ -46,8 +46,6 @@ namespace stardust {
 
 		static std::optional<uint16_t> extractBitField(const fs::path& rom_path);
 
-		static std::vector<ExtractableType> getAllExtractables(bool use_text_map16);
-
 	public:
 		static void insertMarkerString(const fs::path& rom_path, const std::vector<ExtractableType>& extractables);
 		static std::vector<ExtractableType> getNeededExtractions(const fs::path& rom_path, 

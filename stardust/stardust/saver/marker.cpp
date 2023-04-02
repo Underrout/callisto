@@ -118,17 +118,6 @@ namespace stardust {
 		}
 	}
 
-	std::vector<ExtractableType> Marker::getAllExtractables(bool use_text_map16) {
-		std::vector<ExtractableType> all_extractables{};
-		for (size_t i{ 0 }; static_cast<ExtractableType>(i) != ExtractableType::_COUNT; ++i) {
-			const auto extractable_type{ static_cast<ExtractableType>(i) };
-			if (extractable_type != ExtractableType::BINARY_MAP16 || !use_text_map16) {
-				all_extractables.push_back(extractable_type);
-			}
-		}
-		return all_extractables;
-	}
-
 	void Marker::insertMarkerString(const fs::path& rom_path, const std::vector<ExtractableType>& extractables) {
 		std::ifstream rom_file(rom_path, std::ios::in | std::ios::binary);
 		std::vector<char> rom_bytes((std::istreambuf_iterator<char>(rom_file)), (std::istreambuf_iterator<char>()));
@@ -197,7 +186,7 @@ namespace stardust {
 		const std::vector<ExtractableType>& extractables, bool use_text_map16) {
 		const auto bitfield{ extractBitField(rom_path) };
 		if (!bitfield.has_value()) {
-			return getAllExtractables(use_text_map16);
+			return extractables;
 		}
 
 		return determineAddedExtractables(bitfield.value(), extractablesToBitField(extractables));
