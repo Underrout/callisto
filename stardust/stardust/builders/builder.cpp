@@ -95,7 +95,6 @@ namespace stardust {
 		spdlog::info("Creating build report");
 		json report{};
 		report["dependencies"] = dependency_report;
-		report["configuration"] = config.config_name.getOrThrow();
 		report["file_format_version"] = BUILD_REPORT_VERSION;
 		report["build_order"] = std::vector<std::string>();
 		if (config.rom_size.isSet()) {
