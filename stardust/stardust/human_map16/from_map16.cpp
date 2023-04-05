@@ -423,7 +423,7 @@ void HumanReadableMap16::from_map16::convert(const fs::path input_file, const fs
 	try {
 		fs::remove_all(output_path);
 		fs::create_directory(output_path);
-		_wchdir(output_path.c_str());
+		fs::current_path(output_path);
 
 		write_header_file(header, "header.txt");
 

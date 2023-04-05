@@ -972,7 +972,7 @@ void HumanReadableMap16::to_map16::convert(const fs::path input_path, const fs::
 		throw FilesystemError("Input path does not appear to be a directory", input_path);
 	}
 
-	_wchdir(input_path.c_str());
+	fs::current_path(input_path);
 
 	auto header = parse_header_file("header.txt");
 
@@ -1015,7 +1015,7 @@ void HumanReadableMap16::to_map16::convert(const fs::path input_path, const fs::
 	const auto combined = combine(header_vec, offset_size_vec, fg_tiles_vec, bg_tiles_vec, acts_like_vec, tileset_specific_vec,
 		tileset_group_specific_vec, pipe_tiles_vec, diagonal_pipe_tiles_vec);
 
-	_wchdir(original_working_dir.c_str());
+	fs::current_path(original_working_dir);
 
 	std::ofstream map16_file(output_file, std::ios::out | std::ios::binary);
 	map16_file.write(reinterpret_cast<const char *>(combined.data()), combined.size());

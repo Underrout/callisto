@@ -6,6 +6,7 @@
 #include <unordered_set>
 #include <memory>
 #include <filesystem>
+#include <iterator>
 namespace fs = std::filesystem;
 
 #include "tile_format.h"
