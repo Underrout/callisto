@@ -12,8 +12,6 @@
 #include "ftxui/dom/elements.hpp"  // for operator|, Element, separator, text, hbox, size, frame, color, vbox, HEIGHT, LESS_THAN, bold, border, inverted
 #include "ftxui/screen/color.hpp"
 
-#include <conio.h>
-
 #include "stardust.h"
 
 #include "stardust_exception.h"
@@ -45,7 +43,6 @@
 using namespace stardust;
 
 int main(int argc, const char* argv[]) {
-	getchar();
 	TUI tui{ fs::path(argv[0]).parent_path() };
 	tui.run();
 }

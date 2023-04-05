@@ -1,5 +1,11 @@
 #include "pixi.h"
 
+#ifdef _WIN32
+#define SPLIT boost::program_options::split_winmain
+#else
+#define SPLIT boost::program_options::split_unix
+#endif
+
 namespace stardust {
 	void Pixi::insert() {
 		spdlog::info("Running PIXI");
@@ -9,8 +15,7 @@ namespace stardust {
 			fs::remove(dependency_report_file_path.value());
 		}
 
-		// TODO this is apparently not portable...
-		std::vector<std::string> args{ boost::program_options::split_winmain(pixi_options) };
+		std::vector<std::string> args{ SPLIT(pixi_options) };
 
 		args.push_back(temporary_rom_path.string());
 
