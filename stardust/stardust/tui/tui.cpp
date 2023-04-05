@@ -4,6 +4,8 @@ namespace stardust {
 	TUI::TUI(const fs::path& stardust_directory) : config_manager(stardust_directory), stardust_directory(stardust_directory),
 		screen(ScreenInteractive::Fullscreen())
 	{
+		screen.SetCursor(ftxui::Screen::Cursor{ .shape = ftxui::Screen::Cursor::Shape::Hidden });
+
 		spdlog::set_level(spdlog::level::info);
 		spdlog::set_pattern("[%l] %v");
 	}
