@@ -66,8 +66,8 @@ namespace stardust {
 		void showModal(const std::string& new_title, const std::string& new_text);
 
 		std::optional<std::string> getLastConfigName(const fs::path& stardust_directory) const;
-		void setProfile(const std::optional<std::string>& profile_name, const fs::path& stardust_directory);
-		void trySetSelectedProfile();
+		void setConfiguration(const std::optional<std::string>& profile_name, const fs::path& stardust_directory);
+		void trySetConfiguration();
 
 		bool invokeCatchError(std::function<void()> func);
 

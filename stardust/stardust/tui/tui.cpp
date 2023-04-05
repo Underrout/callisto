@@ -86,7 +86,19 @@ namespace stardust {
 
 			Renderer([] { return separator(); }),
 
-			Button("Reload configuration", [&] { trySetSelectedProfile(); }, ButtonOption::Ascii()),
+			Button("Reload configuration", [&] { trySetConfiguration(); }, ButtonOption::Ascii()),
+			Button("Reload profiles", [&] {
+				profile_names = config_manager.getProfileNames();
+				config = nullptr;
+				determineInitialProfile();
+				emulator_menu_component->DetachAllChildren();
+				if (config != nullptr) {
+					emulator_names = emulators.getEmulatorNames();
+					for (const auto& emulator_name : emulator_names) {
+						emulator_menu_component->Add(getRomOnlyButton(emulator_name, [] {}));
+					}
+				}
+			}, ButtonOption::Ascii()),
 
 			Renderer([] { return separator(); }),
 
@@ -101,7 +113,7 @@ namespace stardust {
 		RadioboxOption option{};
 		option.on_change = [&] {
 			if (selected_profile_menu_entry != previously_selected_profile_menu_entry) {
-				trySetSelectedProfile();
+				trySetConfiguration();
 			}
 		};
 		profile_menu_component = Radiobox(&profile_names, &selected_profile_menu_entry, option);
@@ -131,7 +143,7 @@ namespace stardust {
 			const auto found{ std::find(profile_names.begin(), profile_names.end(), last_config_name.value()) };
 			if (found != profile_names.end()) {
 				selected_profile_menu_entry = std::distance(profile_names.begin(), found);
-				invokeCatchError([&] { setProfile(*found, stardust_directory); });
+				invokeCatchError([&] { setConfiguration(*found, stardust_directory); });
 				used_cached = true;
 			}
 		}
@@ -139,10 +151,10 @@ namespace stardust {
 		if (!used_cached) {
 			if (!profile_names.empty()) {
 				selected_profile_menu_entry = 0;
-				invokeCatchError([&] { setProfile(profile_names.at(0), stardust_directory); });
+				invokeCatchError([&] { setConfiguration(profile_names.at(0), stardust_directory); });
 			}
 			else {
-				invokeCatchError([&] { setProfile({}, stardust_directory); });
+				invokeCatchError([&] { setConfiguration({}, stardust_directory); });
 			}
 		}
 		previously_selected_profile_menu_entry = selected_profile_menu_entry;
@@ -181,7 +193,7 @@ namespace stardust {
 		screen.Loop(wrapped);
 	}
 
-	void TUI::setProfile(const std::optional<std::string>& profile_name, const fs::path& stardust_directory) {
+	void TUI::setConfiguration(const std::optional<std::string>& profile_name, const fs::path& stardust_directory) {
 		if (profile_name.has_value()) {
 			fs::create_directories(stardust_directory / ".cache");
 
@@ -199,10 +211,15 @@ namespace stardust {
 		}
 	}
 
-	void TUI::trySetSelectedProfile() {
+	void TUI::trySetConfiguration() {
 		const bool succeeded{ invokeCatchError([&] {
-			setProfile(profile_names.at(selected_profile_menu_entry), stardust_directory); })
-		};
+			if (profile_names.empty()) {
+				setConfiguration({}, stardust_directory);
+			}
+			else {
+				setConfiguration(profile_names.at(selected_profile_menu_entry), stardust_directory);
+			}
+		}) };
 		if (succeeded) {
 			emulators = Emulators(*config);
 			emulator_names = emulators.getEmulatorNames();
