@@ -16,6 +16,7 @@
 
 #include <spdlog/spdlog.h>
 #include <boost/process.hpp>
+#include <fmt/chrono.h>
 
 #include "ftxui/component/component.hpp"
 #include "ftxui/component/component_base.hpp"
@@ -83,11 +84,9 @@ namespace stardust {
 
 		std::optional<std::string> errorToText(std::function<void()> func);
 
-		void runWithLogging(std::function<void()> func);
+		void runWithLogging(const std::string& function_name, std::function<void()> func);
 		bool modalError(std::function<void()> func);
 		void logError(std::function<void()> func);
-
-		void clearConsole();
 
 #if defined(__LINUX__) || defined(__gnu_linux__) || defined(__linux__) || defined(__APPLE__)
 		// Credit for getch: https://stackoverflow.com/a/16361724

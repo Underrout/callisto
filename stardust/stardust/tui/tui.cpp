@@ -243,9 +243,14 @@ namespace stardust {
 		}
 	}
 
-	void TUI::runWithLogging(std::function<void()> func) {
+	void TUI::runWithLogging(const std::string& function_name, std::function<void()> func) {
 		spdlog::set_level(spdlog::level::info);
 		screen.WithRestoredIO([=] {
+			auto now{ std::chrono::system_clock::now() };
+			spdlog::info(
+				"--- {} at {} ---\n",
+				function_name, now
+			);
 			logError(func);
 			std::cout << "Press ESC to return to stardust" << std::endl;
 #ifdef _WIN32
@@ -253,7 +258,7 @@ namespace stardust {
 #elif defined(__LINUX__) || defined(__gnu_linux__) || defined(__linux__) || defined(__APPLE__)
 			while (getch() != 27) {}
 #endif
-			clearConsole();
+			std::cout << std::endl << std::endl;
 		})();
 		spdlog::set_level(spdlog::level::off);
 	}
@@ -275,14 +280,6 @@ namespace stardust {
 		}
 	}
 
-	void TUI::clearConsole() {
-#ifdef _WIN32
-		system("cls");
-#elif defined(__LINUX__) || defined(__gnu_linux__) || defined(__linux__) || defined(__APPLE__)
-		system("clear");
-#endif
-	}
-
 	void TUI::saveButton() {
 		if (config == nullptr) {
 			showModal("Error", "Cannot save ROM, current configuration is not valid");
@@ -302,7 +299,7 @@ namespace stardust {
 			return;
 		}
 
-		runWithLogging( [=] { Saver::exportResources(config->project_rom.getOrThrow(), *config, true); });
+		runWithLogging( "Save", [=] { Saver::exportResources(config->project_rom.getOrThrow(), *config, true); });
 	}
 
 	void TUI::editButton() {
