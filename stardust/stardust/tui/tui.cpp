@@ -6,15 +6,15 @@ namespace stardust {
 	{
 		screen.SetCursor(ftxui::Screen::Cursor{ .shape = ftxui::Screen::Cursor::Shape::Hidden });
 
-		spdlog::set_level(spdlog::level::info);
-		spdlog::set_pattern("[%l] %v");
+		spdlog::set_level(spdlog::level::off);
+		spdlog::set_pattern("[%^%l%$] %v");
 	}
 
 	Component TUI::getConfigOnlyButton(const std::string& button_text, Closure button_func) {
 		auto option{ ButtonOption::Ascii() };
 		option.transform = [&](const EntryState& e) {
 			auto label{ e.label };
-			if (e.active || e.focused) {
+			if (e.focused) {
 				label = "[" + label + "]";
 			}
 			else {
@@ -26,9 +26,6 @@ namespace stardust {
 			auto element{ text(label) };
 			if (config == nullptr) {
 				element |= color(Color::Red);
-			}
-			if (e.focused) {
-				element |= bold;
 			}
 			return element;
 		};
@@ -45,7 +42,7 @@ namespace stardust {
 			}
 
 			auto label{ e.label };
-			if (e.active || e.focused) {
+			if (e.focused) {
 				label = "[" + label + "]";
 			}
 			else {
@@ -67,9 +64,6 @@ namespace stardust {
 			else if (!project_rom_exists) {
 				element |= color(Color::GrayDark);
 			}
-			if (e.focused) {
-				element |= bold;
-			}
 			return element;
 		};
 		return Button(button_text, button_func, option);
@@ -83,7 +77,7 @@ namespace stardust {
 
 			Renderer([] { return separator(); }),
 
-			getRomOnlyButton("Save", [&] { showModal("Saving", "Now"); }),
+			getRomOnlyButton("Save", [=] { saveButton(); }),
 			getRomOnlyButton("Edit", [&] { showModal("Editing", "yup"); }),
 
 			Renderer([] { return separator(); }),
@@ -145,7 +139,7 @@ namespace stardust {
 			const auto found{ std::find(profile_names.begin(), profile_names.end(), last_config_name.value()) };
 			if (found != profile_names.end()) {
 				selected_profile_menu_entry = std::distance(profile_names.begin(), found);
-				invokeCatchError([&] { setConfiguration(*found, stardust_directory); });
+				modalError([&] { setConfiguration(*found, stardust_directory); });
 				used_cached = true;
 			}
 		}
@@ -153,10 +147,10 @@ namespace stardust {
 		if (!used_cached) {
 			if (!profile_names.empty()) {
 				selected_profile_menu_entry = 0;
-				invokeCatchError([&] { setConfiguration(profile_names.at(0), stardust_directory); });
+				modalError([&] { setConfiguration(profile_names.at(0), stardust_directory); });
 			}
 			else {
-				invokeCatchError([&] { setConfiguration({}, stardust_directory); });
+				modalError([&] { setConfiguration({}, stardust_directory); });
 			}
 		}
 		previously_selected_profile_menu_entry = selected_profile_menu_entry;
@@ -184,13 +178,7 @@ namespace stardust {
 
 		full_menu |= Modal(getModal(), &show_modal);
 
-		const auto wrapped{ CatchEvent(full_menu, [&](Event event) {
-			if (event == Event::Escape) {
-				exit(0);
-				return true;
-			}
-			return false;
-		}) };
+		const auto wrapped{ wrapMenuInEventCatcher(full_menu) };
 
 		screen.Loop(wrapped);
 	}
@@ -207,14 +195,14 @@ namespace stardust {
 			auto new_config{ config_manager.getConfiguration(profile_name) };
 			config = new_config;
 		}
-		catch (const std::runtime_error&) {
+		catch (const std::exception&) {
 			config = nullptr;
 			throw;
 		}
 	}
 
 	void TUI::trySetConfiguration() {
-		const bool succeeded{ invokeCatchError([&] {
+		const bool error_occured{ modalError([&] {
 			if (profile_names.empty()) {
 				setConfiguration({}, stardust_directory);
 			}
@@ -222,7 +210,7 @@ namespace stardust {
 				setConfiguration(profile_names.at(selected_profile_menu_entry), stardust_directory);
 			}
 		}) };
-		if (succeeded) {
+		if (!error_occured) {
 			emulators = Emulators(*config);
 			emulator_names = emulators.getEmulatorNames();
 		}
@@ -237,51 +225,110 @@ namespace stardust {
 		previously_selected_profile_menu_entry = selected_profile_menu_entry;
 	}
 
-	bool TUI::invokeCatchError(std::function<void()> func) {
-		bool no_error{ false };
+	std::optional<std::string> TUI::errorToText(std::function<void()> func) {
 		try {
 			func();
-			no_error = true;
+			return {};
 		}
 		catch (const TomlException2& e) {
-			modal_text = toml::format_error(e.what(), e.toml_value, e.comment, e.toml_value2, e.comment2, e.hints);
+			return toml::format_error(e.what(), e.toml_value, e.comment, e.toml_value2, e.comment2, e.hints);
 		}
 		catch (const TomlException& e) {
-			modal_text = toml::format_error(e.what(), e.toml_value, e.comment, e.hints);
+			return toml::format_error(e.what(), e.toml_value, e.comment, e.hints);
 		}
 		catch (const toml::syntax_error& e) {
-			modal_text = e.what();
+			return e.what();
 		}
 		catch (const toml::type_error& e) {
-			modal_text = e.what();
+			return e.what();
 		}
 		catch (const toml::internal_error& e) {
-			modal_text = e.what();
+			return e.what();
 		}
 		catch (const StardustException& e) {
-			modal_text = e.what();
+			return e.what();
 		}
-		catch (const std::runtime_error& e) {
-			modal_text = e.what();
+		catch (const std::exception& e) {
+			return e.what();
 		}
-		catch (const json::exception& e) {
-			modal_text = e.what();
-		}
+	}
 
-		if (no_error) {
-			return true;
-		}
-		else {
+	void TUI::runWithLogging(const std::string& function_name, std::function<void()> func) {
+		spdlog::set_level(spdlog::level::info);
+		screen.WithRestoredIO([=] {
+			logError(func);
+			std::cout << "Press ENTER to return to stardust" << std::endl;
+			std::string temp;
+			std::getline(std::cin, temp);
+			clearConsole();
+		})();
+		spdlog::set_level(spdlog::level::off);
+	}
+
+	bool TUI::modalError(std::function<void()> func) {
+		const auto maybe_error{ errorToText(func) };
+		if (maybe_error.has_value()) {
 			show_modal = true;
 			modal_title = "Error";
-			return false;
+			modal_text = maybe_error.value();
 		}
+		return maybe_error.has_value();
+	}
+
+	void TUI::logError(std::function<void()> func) {
+		const auto maybe_error{ errorToText(func) };
+		if (maybe_error.has_value()) {
+			spdlog::error(maybe_error.value());
+		}
+	}
+
+	void TUI::clearConsole() {
+#ifdef _WIN32
+		system("cls");
+#elif defined(__LINUX__) || defined(__gnu_linux__) || defined(__linux__) || defined(__APPLE__)
+		system("clear");
+#endif
+	}
+
+	void TUI::saveButton() {
+		if (config == nullptr) {
+			showModal("Error", "Cannot save, current configuration is not valid");
+			return;
+		}
+
+		if (!config->project_rom.isSet()) {
+			showModal("Error", fmt::format("{} not set in configuration files", config->project_rom.name));
+			return;
+		}
+
+		if (!fs::exists(config->project_rom.getOrThrow())) {
+			showModal("Error", fmt::format(
+				"No ROM found at\n    {}\nCannot save",
+				config->project_rom.getOrThrow().string())
+			);
+			return;
+		}
+
+		runWithLogging("SAVE", [=] { Saver::exportResources(config->project_rom.getOrThrow(), *config, true); });
+	}
+
+	Component TUI::wrapMenuInEventCatcher(Component full_menu) {
+		return CatchEvent(full_menu, [&](Event event) {
+			if (event == Event::Escape) {
+				exit(0);
+				return true;
+			}
+			else if (event == Event::Character('s')) {
+				saveButton();
+				return true;
+			}
+			return false;
+		});
 	}
 
 	Component TUI::getModal() {
 		auto component = Container::Vertical({
-			Button("OK", [&] { show_modal = false; }, ButtonOption::Ascii()),
-			});
+			Button("OK", [&] { show_modal = false; }, ButtonOption::Ascii()) });
 
 		component |= Renderer([&](Element inner) {
 			return window(text(modal_title), vbox({

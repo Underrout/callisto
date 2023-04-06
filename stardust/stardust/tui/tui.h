@@ -21,6 +21,8 @@
 #include "../emulators/emulators.h"
 #include "../configuration/configuration_manager.h"
 
+#include "../saver/saver.h"
+
 #include "../path_util.h"
 
 using namespace ftxui;
@@ -69,7 +71,17 @@ namespace stardust {
 		void setConfiguration(const std::optional<std::string>& profile_name, const fs::path& stardust_directory);
 		void trySetConfiguration();
 
-		bool invokeCatchError(std::function<void()> func);
+		std::optional<std::string> errorToText(std::function<void()> func);
+
+		void runWithLogging(const std::string& function_name, std::function<void()> func);
+		bool modalError(std::function<void()> func);
+		void logError(std::function<void()> func);
+
+		void clearConsole();
+
+		void saveButton();
+
+		Component wrapMenuInEventCatcher(Component full_menu);
 
 		static Elements split(std::string str) {
 			Elements output;

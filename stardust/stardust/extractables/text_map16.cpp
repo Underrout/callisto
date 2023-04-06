@@ -59,16 +59,19 @@ namespace stardust {
 			);
 
 			exportTemporaryMap16File();
+			const auto current_path{ fs::current_path() };
 
 			try {
 				HumanReadableMap16::from_map16::convert(getTemporaryMap16FilePath(), map16_folder_path);
 			}
 			catch (HumanMap16Exception& e) {
+				fs::current_path(current_path);
 				spdlog::error(e.get_detailed_error_message());
 				deleteTemporaryMap16File();
 				throw ExtractionException("Failed to convert map16 folder to file");
 			}
 
+			fs::current_path(current_path);
 			spdlog::info("Successfully exported Map16 folder!");
 
 			deleteTemporaryMap16File();

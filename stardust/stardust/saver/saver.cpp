@@ -126,21 +126,54 @@ namespace stardust {
 		Marker::insertMarkerString(rom_path, getExtractableTypes(config));
 	}
 
-	void Saver::exportResources(const fs::path& rom_path, const Configuration& config) {
-		const auto need_extraction{ Marker::getNeededExtractions(rom_path, 
-			getExtractableTypes(config), config.use_text_map16_format.getOrDefault(false)) };
-		const auto extractables{ getExtractables(config, need_extraction) };
-
-		for (const auto& extractable : extractables) {
-			extractable->extract();
+	void Saver::exportResources(const fs::path& rom_path, const Configuration& config, bool force) {
+		std::vector<ExtractableType> need_extraction;
+		if (!force) {
+			need_extraction = Marker::getNeededExtractions(rom_path,
+				getExtractableTypes(config), config.use_text_map16_format.getOrDefault(false));
+		}
+		else {
+			need_extraction = getExtractableTypes(config);
 		}
 
-		const auto potential_build_report{ PathUtil::getBuildReportPath(config.project_root.getOrThrow()) };
+		if (!need_extraction.empty()) {
+			if (!force) {
+				spdlog::info("Some resources need to be exported, exporting them now");
+			}
+			else {
+				spdlog::info("Exporting all resources");
+			}
+			const auto extractables{ getExtractables(config, need_extraction) };
 
-		if (fs::exists(potential_build_report)) {
-			updateBuildReport(potential_build_report, need_extraction);
+			for (const auto& extractable : extractables) {
+				extractable->extract();
+			}
+
+			spdlog::info("All resources exported successfully!");
+
+			const auto potential_build_report{ PathUtil::getBuildReportPath(config.project_root.getOrThrow()) };
+
+			if (fs::exists(potential_build_report)) {
+				spdlog::info("Found a build report, updating it now");
+				try {
+					updateBuildReport(potential_build_report, need_extraction);
+					spdlog::info("Successfully updated build report!");
+				}
+				catch (const std::exception& e) {
+					spdlog::warn("Failed to update build report with exception:\n{}", e.what());
+				}
+			}
+			spdlog::info("Writing export marker to ROM");
+			try {
+				Saver::writeMarkerToRom(rom_path, config);
+				spdlog::info("Successfully wrote export marker to ROM!");
+			}
+			catch (const std::exception& e) {
+				spdlog::warn("Failed to write export marker to ROM with exception:\n{}", e.what());
+			}
 		}
-
-		Saver::writeMarkerToRom(rom_path, config);
+		else {
+			spdlog::info("All resources already exported!");
+		}
 	}
 }

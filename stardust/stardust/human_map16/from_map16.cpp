@@ -24,6 +24,8 @@ std::vector<HumanReadableMap16::Byte> HumanReadableMap16::from_map16::read_binar
 
 	vec.insert(vec.begin(), std::istream_iterator<Byte>(f), std::istream_iterator<Byte>());
 
+	f.close();
+
 	return vec;
 }
 
@@ -421,11 +423,12 @@ void HumanReadableMap16::from_map16::convert(const fs::path input_file, const fs
 	}
 
 	try {
+
 		fs::remove_all(output_path);
 		fs::create_directory(output_path);
 		fs::current_path(output_path);
-
 		write_header_file(header, "header.txt");
+
 
 		fs::create_directory("global_pages");
 		fs::create_directory("global_pages\\FG_pages");
@@ -440,7 +443,7 @@ void HumanReadableMap16::from_map16::convert(const fs::path input_file, const fs
 	} catch (const fs::filesystem_error e) {
 		throw FilesystemError("Encountered underlying file system error: " + std::string(e.what()), output_path);
 	}
-
+	return;
 	const auto offset_size_table = get_offset_size_table(bytes, header);
 
 	const auto& full_map16_pair = offset_size_table[0];

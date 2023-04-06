@@ -45,6 +45,6 @@ namespace stardust {
 
 	public:
 		static void writeMarkerToRom(const fs::path& rom_path, const Configuration& config);
-		static void exportResources(const fs::path& rom_path, const Configuration& config);
+		static void exportResources(const fs::path& rom_path, const Configuration& config, bool force = false);
 	};
 }
