@@ -71,9 +71,9 @@ namespace stardust {
 
 	void TUI::setMainMenu() {
 		main_menu_component = Container::Vertical({
-			getConfigOnlyButton("Rebuild", [&] { showModal("Title", "haha, rebuild"); }),
-			getConfigOnlyButton("Quick Build", [&] { showModal("Error", "Can't do that yet"); }),
-			getConfigOnlyButton("Package", [&] { showModal("Package", "The package"); }),
+			getConfigOnlyButton("Rebuild (R)", [&] { showModal("Title", "haha, rebuild"); }),
+			getConfigOnlyButton("Quick Build (Q)", [&] { showModal("Error", "Can't do that yet"); }),
+			getConfigOnlyButton("Package (P)", [&] { showModal("Package", "The package"); }),
 
 			Renderer([] { return separator(); }),
 
@@ -82,7 +82,7 @@ namespace stardust {
 
 			Renderer([] { return separator(); }),
 
-			Button("Reload configuration", [&] { trySetConfiguration(); }, ButtonOption::Ascii()),
+			Button("Reload configuration (C)", [&] { trySetConfiguration(); }, ButtonOption::Ascii()),
 			Button("Reload profiles", [&] {
 				profile_names = config_manager.getProfileNames();
 				config = nullptr;
@@ -362,6 +362,10 @@ namespace stardust {
 				editButton();
 				return true;
 			}
+			else if (event == Event::Character('c')) {
+				trySetConfiguration();
+				return true;
+			}
 
 			char i{ 0 };
 			for (const auto& emulator : emulator_names) {
@@ -372,6 +376,7 @@ namespace stardust {
 				char button_index_char{ '0' + i + 1 };
 				if (event == Event::Character(button_index_char)) {
 					emulatorButton(emulator_names.at(i));
+					return true;
 				}
 				++i;
 			}
