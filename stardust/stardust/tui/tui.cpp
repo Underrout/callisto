@@ -92,6 +92,10 @@ namespace stardust {
 
 			Renderer([] { return separator(); }),
 
+			Button("View console output (V)", screen.WithRestoredIO([=] { waitForEscape(); }), ButtonOption::Ascii()),
+
+			Renderer([] { return separator(); }),
+
 			Button("Exit (ESC)", [] { exit(0); }, ButtonOption::Ascii())
 		}, &selected_main_menu_entry);
 
@@ -175,7 +179,7 @@ namespace stardust {
 		setProfileMenu();
 
 		Component full_menu{ Container::Horizontal({
-			main_menu | size(HEIGHT, EQUAL, 11) | size(WIDTH, EQUAL, 40),
+			main_menu | size(HEIGHT, EQUAL, 13) | size(WIDTH, EQUAL, 40),
 			Container::Vertical({
 				profile_menu, emulator_menu
 			})
@@ -227,6 +231,14 @@ namespace stardust {
 		previously_selected_profile_menu_entry = selected_profile_menu_entry;
 	}
 
+	void TUI::waitForEscape() {
+#ifdef _WIN32
+		while (_getch() != 27) {}
+#elif defined(__LINUX__) || defined(__gnu_linux__) || defined(__linux__) || defined(__APPLE__)
+		while (getch() != 27) {}
+#endif
+	}
+
 	std::optional<std::string> TUI::errorToText(std::function<void()> func) {
 		try {
 			func();
@@ -253,11 +265,7 @@ namespace stardust {
 			);
 			logError(func);
 			std::cout << "Press ESC to return to stardust" << std::endl;
-#ifdef _WIN32
-			while (_getch() != 27) {}
-#elif defined(__LINUX__) || defined(__gnu_linux__) || defined(__linux__) || defined(__APPLE__)
-			while (getch() != 27) {}
-#endif
+			waitForEscape();
 			std::cout << std::endl << std::endl;
 		})();
 		spdlog::set_level(spdlog::level::off);
@@ -362,6 +370,9 @@ namespace stardust {
 			else if (event == Event::Character('c')) {
 				trySetConfiguration();
 				return true;
+			}
+			else if (event == Event::Character('v')) {
+				screen.WithRestoredIO([=] { waitForEscape(); })();
 			}
 
 			char i{ 0 };

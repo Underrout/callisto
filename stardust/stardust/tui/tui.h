@@ -88,6 +88,8 @@ namespace stardust {
 		bool modalError(std::function<void()> func);
 		void logError(std::function<void()> func);
 
+		void waitForEscape();
+
 #if defined(__LINUX__) || defined(__gnu_linux__) || defined(__linux__) || defined(__APPLE__)
 		// Credit for getch: https://stackoverflow.com/a/16361724
 		char getch(void)
