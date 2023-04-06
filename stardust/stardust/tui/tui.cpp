@@ -77,8 +77,8 @@ namespace stardust {
 
 			Renderer([] { return separator(); }),
 
-			getRomOnlyButton("Save (S)", [=] { saveButton(); }),
-			getRomOnlyButton("Edit", [&] { showModal("Editing", "yup"); }),
+			getRomOnlyButton("Save ROM (S)", [=] { saveButton(); }),
+			getRomOnlyButton("Edit ROM (E)", [=] { editButton(); }),
 
 			Renderer([] { return separator(); }),
 
@@ -285,7 +285,7 @@ namespace stardust {
 
 	void TUI::saveButton() {
 		if (config == nullptr) {
-			showModal("Error", "Cannot save, current configuration is not valid");
+			showModal("Error", "Cannot save ROM, current configuration is not valid");
 			return;
 		}
 
@@ -296,13 +296,56 @@ namespace stardust {
 
 		if (!fs::exists(config->project_rom.getOrThrow())) {
 			showModal("Error", fmt::format(
-				"No ROM found at\n    {}\nCannot save",
+				"No ROM found at\n    {}\n\nCannot save ROM",
 				config->project_rom.getOrThrow().string())
 			);
 			return;
 		}
 
 		runWithLogging( [=] { Saver::exportResources(config->project_rom.getOrThrow(), *config, true); });
+	}
+
+	void TUI::editButton() {
+		if (config == nullptr) {
+			showModal("Error", "Cannot edit ROM, current configuration is not valid");
+			return;
+		}
+
+		if (!config->project_rom.isSet()) {
+			showModal("Error", fmt::format("{} not set in configuration files", config->project_rom.name));
+			return;
+		}
+
+		if (!fs::exists(config->project_rom.getOrThrow())) {
+			showModal("Error", fmt::format(
+				"No ROM found at\n    {}\n\nCannot edit ROM",
+				config->project_rom.getOrThrow().string())
+			);
+			return;
+		}
+
+		if (!config->lunar_magic_path.isSet()) {
+			showModal("Error", fmt::format("{} not set in configuration files", config->lunar_magic_path.name));
+			return;
+		}
+
+		if (!fs::exists(config->lunar_magic_path.getOrThrow())) {
+			showModal("Error", fmt::format(
+				"Lunar Magic not found at\n    {}\n\nCannot edit ROM",
+				config->lunar_magic_path.getOrThrow().string())
+			);
+			return;
+		}
+
+		try {
+			bp::spawn(fmt::format(
+				"\"{}\" \"{}\"",
+				config->lunar_magic_path.getOrThrow().string(), config->project_rom.getOrThrow().string()
+			));
+		}
+		catch (const std::exception& e) {
+			showModal("Error", fmt::format("Failed to launch Lunar Magic with exception:\n{}", e.what()));
+		}
 	}
 
 	Component TUI::wrapMenuInEventCatcher(Component full_menu) {
@@ -313,6 +356,10 @@ namespace stardust {
 			}
 			else if (event == Event::Character('s')) {
 				saveButton();
+				return true;
+			}
+			else if (event == Event::Character('e')) {
+				editButton();
 				return true;
 			}
 

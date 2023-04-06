@@ -15,6 +15,7 @@
 #endif
 
 #include <spdlog/spdlog.h>
+#include <boost/process.hpp>
 
 #include "ftxui/component/component.hpp"
 #include "ftxui/component/component_base.hpp"
@@ -35,6 +36,7 @@
 using namespace ftxui;
 
 namespace fs = std::filesystem;
+namespace bp = boost::process;
 
 namespace stardust {
 	class TUI {
@@ -114,6 +116,7 @@ namespace stardust {
 
 		void saveButton();
 		void emulatorButton(const std::string& emulator_name);
+		void editButton();
 
 		Component wrapMenuInEventCatcher(Component full_menu);
 
