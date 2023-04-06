@@ -77,7 +77,7 @@ namespace stardust {
 
 			Renderer([] { return separator(); }),
 
-			getRomOnlyButton("Save", [=] { saveButton(); }),
+			getRomOnlyButton("Save (S)", [=] { saveButton(); }),
 			getRomOnlyButton("Edit", [&] { showModal("Editing", "yup"); }),
 
 			Renderer([] { return separator(); }),
@@ -87,18 +87,12 @@ namespace stardust {
 				profile_names = config_manager.getProfileNames();
 				config = nullptr;
 				determineInitialProfile();
-				emulator_menu_component->DetachAllChildren();
-				if (config != nullptr) {
-					emulator_names = emulators.getEmulatorNames();
-					for (const auto& emulator_name : emulator_names) {
-						emulator_menu_component->Add(getRomOnlyButton(emulator_name, [] {}));
-					}
-				}
+				updateEmulatorMenu();
 			}, ButtonOption::Ascii()),
 
 			Renderer([] { return separator(); }),
 
-			Button("Exit", [] { exit(0); }, ButtonOption::Ascii())
+			Button("Exit (ESC)", [] { exit(0); }, ButtonOption::Ascii())
 		}, &selected_main_menu_entry);
 
 		const auto window_title{ fmt::format("stardust {}.{}.{}", STARDUST_VERSION_MAJOR, STARDUST_VERSION_MINOR, STARDUST_VERSION_PATCH) };
@@ -119,11 +113,22 @@ namespace stardust {
 
 	void TUI::setEmulatorMenu() {
 		emulator_menu_component = Container::Vertical({}, &selected_emulator_menu_entry);
-		for (const auto& emulator_name : emulator_names) {
-			emulator_menu_component->Add(getRomOnlyButton(emulator_name, [] {}));
-		}
+		updateEmulatorMenu();
 		const auto windowed{ Renderer(emulator_menu_component, [=] { return window(text("Emulators"), emulator_menu_component->Render()); }) };
 		emulator_menu = Maybe(windowed, [&] { return !emulator_names.empty(); });
+	}
+
+	void TUI::updateEmulatorMenu() {
+		emulator_menu_component->DetachAllChildren();
+		if (config != nullptr) {
+			emulator_names = emulators.getEmulatorNames();
+			int i{ 1 };
+			for (const auto& emulator_name : emulator_names) {
+				emulator_menu_component->Add(getRomOnlyButton(emulator_name + fmt::format(" ({})", i++), [=] {
+					emulatorButton(emulator_name);
+				}));
+			}
+		}
 	}
 
 	void TUI::showModal(const std::string& new_title, const std::string& new_text) {
@@ -218,10 +223,7 @@ namespace stardust {
 			config = nullptr;
 			emulator_names.clear();
 		}
-		emulator_menu_component->DetachAllChildren();
-		for (const auto& emulator_name : emulator_names) {
-			emulator_menu_component->Add(getRomOnlyButton(emulator_name, [] {}));
-		}
+		updateEmulatorMenu();
 		previously_selected_profile_menu_entry = selected_profile_menu_entry;
 	}
 
@@ -236,30 +238,21 @@ namespace stardust {
 		catch (const TomlException& e) {
 			return toml::format_error(e.what(), e.toml_value, e.comment, e.hints);
 		}
-		catch (const toml::syntax_error& e) {
-			return e.what();
-		}
-		catch (const toml::type_error& e) {
-			return e.what();
-		}
-		catch (const toml::internal_error& e) {
-			return e.what();
-		}
-		catch (const StardustException& e) {
-			return e.what();
-		}
 		catch (const std::exception& e) {
 			return e.what();
 		}
 	}
 
-	void TUI::runWithLogging(const std::string& function_name, std::function<void()> func) {
+	void TUI::runWithLogging(std::function<void()> func) {
 		spdlog::set_level(spdlog::level::info);
 		screen.WithRestoredIO([=] {
 			logError(func);
-			std::cout << "Press ENTER to return to stardust" << std::endl;
-			std::string temp;
-			std::getline(std::cin, temp);
+			std::cout << "Press ESC to return to stardust" << std::endl;
+#ifdef _WIN32
+			while (_getch() != 27) {}
+#elif defined(__LINUX__) || defined(__gnu_linux__) || defined(__linux__) || defined(__APPLE__)
+			while (getch() != 27) {}
+#endif
 			clearConsole();
 		})();
 		spdlog::set_level(spdlog::level::off);
@@ -309,7 +302,7 @@ namespace stardust {
 			return;
 		}
 
-		runWithLogging("SAVE", [=] { Saver::exportResources(config->project_rom.getOrThrow(), *config, true); });
+		runWithLogging( [=] { Saver::exportResources(config->project_rom.getOrThrow(), *config, true); });
 	}
 
 	Component TUI::wrapMenuInEventCatcher(Component full_menu) {
@@ -322,8 +315,49 @@ namespace stardust {
 				saveButton();
 				return true;
 			}
+
+			char i{ 0 };
+			for (const auto& emulator : emulator_names) {
+				if (i == 10) {
+					break;
+				}
+
+				char button_index_char{ '0' + i + 1 };
+				if (event == Event::Character(button_index_char)) {
+					emulatorButton(emulator_names.at(i));
+				}
+				++i;
+			}
+
 			return false;
 		});
+	}
+
+	void TUI::emulatorButton(const std::string& emulator_to_launch) {
+		if (config == nullptr) {
+			showModal("Error", fmt::format("Cannot launch {}, current configuration is not valid", emulator_to_launch));
+			return;
+		}
+
+		if (!config->project_rom.isSet()) {
+			showModal("Error", fmt::format("{} not set in configuration files", config->project_rom.name));
+			return;
+		}
+
+		if (!fs::exists(config->project_rom.getOrThrow())) {
+			showModal("Error", fmt::format(
+				"No ROM found at\n    {}\nCannot save",
+				config->project_rom.getOrThrow().string())
+			);
+			return;
+		}
+
+		try {
+			emulators.launch(emulator_to_launch, config->project_rom.getOrThrow());
+		}
+		catch (const std::exception& e) {
+			showModal("Error", fmt::format("Failed to launch {} with exception:\n{}", emulator_to_launch, e.what()));
+		}
 	}
 
 	Component TUI::getModal() {

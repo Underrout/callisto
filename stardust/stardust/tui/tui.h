@@ -7,6 +7,13 @@
 #include <string>
 #include <sstream>
 
+#ifdef _WIN32
+#include <conio.h>
+#elif defined(__LINUX__) || defined(__gnu_linux__) || defined(__linux__) || defined(__APPLE__)
+#include <unistd.h>
+#include <termios.h>
+#endif
+
 #include <spdlog/spdlog.h>
 
 #include "ftxui/component/component.hpp"
@@ -58,6 +65,7 @@ namespace stardust {
 		std::vector<std::string> emulator_names{};
 		int selected_emulator_menu_entry{ 0 };
 		void setEmulatorMenu();
+		void updateEmulatorMenu();
 		Component emulator_menu_component;
 		Component emulator_menu;
 
@@ -73,13 +81,39 @@ namespace stardust {
 
 		std::optional<std::string> errorToText(std::function<void()> func);
 
-		void runWithLogging(const std::string& function_name, std::function<void()> func);
+		void runWithLogging(std::function<void()> func);
 		bool modalError(std::function<void()> func);
 		void logError(std::function<void()> func);
 
 		void clearConsole();
 
+#if defined(__LINUX__) || defined(__gnu_linux__) || defined(__linux__) || defined(__APPLE__)
+		// Credit for getch: https://stackoverflow.com/a/16361724
+		char getch(void)
+		{
+			char buf = 0;
+			struct termios old = { 0 };
+			fflush(stdout);
+			if (tcgetattr(0, &old) < 0)
+				perror("tcsetattr()");
+			old.c_lflag &= ~ICANON;
+			old.c_lflag &= ~ECHO;
+			old.c_cc[VMIN] = 1;
+			old.c_cc[VTIME] = 0;
+			if (tcsetattr(0, TCSANOW, &old) < 0)
+				perror("tcsetattr ICANON");
+			if (read(0, &buf, 1) < 0)
+				perror("read()");
+			old.c_lflag |= ICANON;
+			old.c_lflag |= ECHO;
+			if (tcsetattr(0, TCSADRAIN, &old) < 0)
+				perror("tcsetattr ~ICANON");
+			return buf;
+		}
+#endif
+
 		void saveButton();
+		void emulatorButton(const std::string& emulator_name);
 
 		Component wrapMenuInEventCatcher(Component full_menu);
 
