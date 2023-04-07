@@ -24,7 +24,7 @@ set(RC_CONTENTS "1 ICON \"stardust.ico\"
         BLOCK \"040904b0\" // en-US with UTF-8
         {
             VALUE \"CompanyName\", \"stardust developers\\0\" 
-            VALUE \"FileDescription\", \"SMW build system\\0\"
+            VALUE \"FileDescription\", \"stardust - SMW build system\\0\"
             VALUE \"FileVersion\", \"v${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH}\\0\"
             VALUE \"InternalName\", \"stardust\\0\" 
             VALUE \"OriginalFilename\", \"stardust.exe\\0\" 

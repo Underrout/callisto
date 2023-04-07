@@ -115,6 +115,7 @@ namespace stardust {
 		}
 #endif
 
+		void packageButton();
 		void saveButton();
 		void emulatorButton(const std::string& emulator_name);
 		void editButton();

@@ -73,7 +73,7 @@ namespace stardust {
 		main_menu_component = Container::Vertical({
 			getConfigOnlyButton("Rebuild (R)", [&] { showModal("Title", "haha, rebuild"); }),
 			getConfigOnlyButton("Quick Build (Q)", [&] { showModal("Error", "Can't do that yet"); }),
-			getConfigOnlyButton("Package (P)", [&] { showModal("Package", "The package"); }),
+			getConfigOnlyButton("Package (P)", [&] { packageButton(); }),
 
 			Renderer([] { return separator(); }),
 
@@ -288,14 +288,90 @@ namespace stardust {
 		}
 	}
 
-	void TUI::saveButton() {
+	void TUI::packageButton() {
 		if (config == nullptr) {
-			showModal("Error", "Cannot save ROM, current configuration is not valid");
+			showModal("Error", "Current configuration is not valid\nCannot package ROM");
 			return;
 		}
 
 		if (!config->project_rom.isSet()) {
-			showModal("Error", fmt::format("{} not set in configuration files", config->project_rom.name));
+			showModal("Error", fmt::format("{} not set in configuration files\nCannot package ROM", config->project_rom.name));
+			return;
+		}
+
+		if (!fs::exists(config->project_rom.getOrThrow())) {
+			showModal("Error", fmt::format(
+				"No ROM found at\n    {}\n\nCannot package ROM",
+				config->project_rom.getOrThrow().string())
+			);
+			return;
+		}
+
+		if (!config->flips_path.isSet()) {
+			showModal("Error", fmt::format("{} not set in configuration files\nCannot package ROM", config->flips_path.name));
+		}
+
+		if (!fs::exists(config->flips_path.getOrThrow())) {
+			showModal("Error", fmt::format(
+				"FLIPS not found at\n    {}\n\nCannot package ROM",
+				config->flips_path.getOrThrow().string())
+			);
+			return;
+		}
+
+		if (!config->clean_rom.isSet()) {
+			showModal("Error", fmt::format("{} not set in configuration files\nCannot package ROM", config->clean_rom.name));
+		}
+
+		if (!fs::exists(config->clean_rom.getOrThrow())) {
+			showModal("Error", fmt::format(
+				"Clean ROM not found at\n    {}\n\nCannot package ROM",
+				config->clean_rom.getOrThrow().string())
+			);
+			return;
+		}
+
+		const auto package_folder{ config->bps_package.getOrThrow().parent_path() };
+		if (!fs::exists(package_folder)) {
+			try {
+				fs::create_directories(package_folder);
+			}
+			catch (const fs::filesystem_error& e) {
+				showModal("Error", fmt::format("Failed to create folder at\n    {}\nwith exception:{}", 
+					package_folder.string(), e.what()
+				));
+			}
+		}
+
+		int exit_code;
+		try {
+			exit_code = bp::system(
+				config->flips_path.getOrThrow().string() , "--create", "--bps-delta", config->clean_rom.getOrThrow().string(),
+				config->project_rom.getOrThrow().string(), config->bps_package.getOrThrow().string(), bp::std_out > bp::null
+			);
+		}
+		catch (const std::exception& e) {
+			showModal("Error", fmt::format(
+				"Failed to package ROM with exception:\n{}", e.what()
+			));
+		}
+
+		if (exit_code == 0) {
+			showModal("Success", fmt::format("Successfully created package of ROM at\n    {}", config->bps_package.getOrThrow().string()));
+		}
+		else {
+			showModal("Error", fmt::format("FLIPS failed to create package of ROM at\n    {}", config->bps_package.getOrThrow().string()));
+		}
+	}
+
+	void TUI::saveButton() {
+		if (config == nullptr) {
+			showModal("Error", "Current configuration is not valid\nCannot save ROM");
+			return;
+		}
+
+		if (!config->project_rom.isSet()) {
+			showModal("Error", fmt::format("{} not set in configuration files\nCannot save ROM", config->project_rom.name));
 			return;
 		}
 
@@ -312,12 +388,12 @@ namespace stardust {
 
 	void TUI::editButton() {
 		if (config == nullptr) {
-			showModal("Error", "Cannot edit ROM, current configuration is not valid");
+			showModal("Error", "Current configuration is not valid\nCannot edit ROM");
 			return;
 		}
 
 		if (!config->project_rom.isSet()) {
-			showModal("Error", fmt::format("{} not set in configuration files", config->project_rom.name));
+			showModal("Error", fmt::format("{} not set in configuration files\nCannot edit ROM", config->project_rom.name));
 			return;
 		}
 
@@ -330,7 +406,7 @@ namespace stardust {
 		}
 
 		if (!config->lunar_magic_path.isSet()) {
-			showModal("Error", fmt::format("{} not set in configuration files", config->lunar_magic_path.name));
+			showModal("Error", fmt::format("{} not set in configuration files\nCannot edit ROM", config->lunar_magic_path.name));
 			return;
 		}
 
@@ -373,6 +449,11 @@ namespace stardust {
 			}
 			else if (event == Event::Character('v')) {
 				screen.WithRestoredIO([=] { waitForEscape(); })();
+				return true;
+			}
+			else if (event == Event::Character('p')) {
+				packageButton();
+				return true;
 			}
 
 			char i{ 0 };
