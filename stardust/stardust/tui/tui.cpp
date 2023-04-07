@@ -71,9 +71,9 @@ namespace stardust {
 
 	void TUI::setMainMenu() {
 		main_menu_component = Container::Vertical({
-			getConfigOnlyButton("Rebuild (R)", [&] { showModal("Title", "haha, rebuild"); }),
-			getConfigOnlyButton("Quick Build (Q)", [&] { showModal("Error", "Can't do that yet"); }),
-			getConfigOnlyButton("Package (P)", [&] { packageButton(); }),
+			getConfigOnlyButton("Rebuild ROM (R)", [&] { showModal("Title", "haha, rebuild"); }),
+			getConfigOnlyButton("Quickbuild ROM (Q)", [&] { showModal("Error", "Can't do that yet"); }),
+			getRomOnlyButton("Package ROM (P)", [=] { packageButton(); }),
 
 			Renderer([] { return separator(); }),
 
@@ -476,7 +476,7 @@ namespace stardust {
 
 	void TUI::emulatorButton(const std::string& emulator_to_launch) {
 		if (config == nullptr) {
-			showModal("Error", fmt::format("Cannot launch {}, current configuration is not valid", emulator_to_launch));
+			showModal("Error", fmt::format("Current configuration is not valid\nCannot launch {}", emulator_to_launch));
 			return;
 		}
 
@@ -486,9 +486,8 @@ namespace stardust {
 		}
 
 		if (!fs::exists(config->project_rom.getOrThrow())) {
-			showModal("Error", fmt::format(
-				"No ROM found at\n    {}\nCannot save",
-				config->project_rom.getOrThrow().string())
+			showModal("Error", fmt::format("No ROM found at\n    {}\n\nCannot open in {}",
+				config->project_rom.getOrThrow().string(), emulator_to_launch)
 			);
 			return;
 		}
