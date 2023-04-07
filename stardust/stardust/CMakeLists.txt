@@ -42,8 +42,9 @@ set(RC_CONTENTS "1 ICON \"stardust.ico\"
 file(WRITE "${CMAKE_CURRENT_SOURCE_DIR}/stardust.rc" "${RC_CONTENTS}")
 
 add_executable (stardust "stardust.rc" "stardust.cpp" "stardust.h" "insertable.h" 
-"stardust_exception.h" "insertion_exception.h" "insertables/graphics.h" 
-"insertables/graphics.cpp" "insertables/exgraphics.h" "insertables/exgraphics.cpp" 
+"stardust_exception.h" "insertion_exception.h"  
+ "insertables/exgraphics.h" "insertables/exgraphics.cpp"
+  "insertables/graphics.h" "insertables/graphics.cpp" 
 "not_found_exception.h" "insertables/lunar_magic_insertable.h" "insertables/lunar_magic_insertable.cpp" 
 "insertables/rom_insertable.h" "insertables/shared_palettes.h" "insertables/shared_palettes.cpp" 
 "insertables/flips_insertable.h" "insertables/flips_insertable.cpp" "insertables/overworld.h" 
@@ -56,7 +57,7 @@ add_executable (stardust "stardust.rc" "stardust.cpp" "stardust.h" "insertable.h
 "dependency/resource_dependency.h" "dependency/dependency_exception.h" "builders/builder.h" "builders/builder.cpp" "builders/rebuilder.h" "path_util.h" "builders/rebuilder.cpp" "symbol.h"
 "human_map16/arrays.h" "human_map16/data_error.h" "human_map16/filesystem_error.h" "human_map16/from_map16.cpp"
 "human_map16/header_error.h" "human_map16/human_map16_exception.h" "human_map16/human_readable_map16.cpp" "human_map16/human_readable_map16.h"
-"human_map16/tile_error.h" "human_map16/tile_format.h" "human_map16/to_map16.cpp"  "insertables/initial_patch.h" "insertables/initial_patch.cpp" "dependency/policy.h" "builders/quick_builder.h"  "builders/quick_builder.cpp" "builders/must_rebuild_exception.h" "saver/extractable_type.h" "extractables/lunar_magic_extractable.h" "extractables/lunar_magic_extractable.cpp" "extractables/flips_extractable.h" "extractables/flips_extractable.cpp" "extractables/extraction_exception.h" "extractables/global_exanimation.h" "extractables/credits.h" "extractables/overworld.h" "extractables/shared_palettes.h" "extractables/shared_palettes.cpp" "extractables/binary_map16.h" "extractables/binary_map16.cpp" "extractables/text_map16.h" "extractables/text_map16.cpp" "extractables/levels.h" "extractables/levels.cpp" "extractables/level.h" "extractables/level.cpp" "saver/extractable_type.h" "saver/saver.h" "saver/marker.cpp" "saver/saver.cpp" "emulators/emulators.h" "emulators/emulators.cpp" "tui/tui.h" "tui/tui.cpp")
+"human_map16/tile_error.h" "human_map16/tile_format.h" "human_map16/to_map16.cpp"  "insertables/initial_patch.h" "insertables/initial_patch.cpp" "dependency/policy.h" "builders/quick_builder.h"  "builders/quick_builder.cpp" "builders/must_rebuild_exception.h" "saver/extractable_type.h" "extractables/lunar_magic_extractable.h" "extractables/lunar_magic_extractable.cpp" "extractables/flips_extractable.h" "extractables/flips_extractable.cpp" "extractables/extraction_exception.h" "extractables/global_exanimation.h" "extractables/credits.h" "extractables/overworld.h" "extractables/shared_palettes.h" "extractables/shared_palettes.cpp" "extractables/binary_map16.h" "extractables/binary_map16.cpp" "extractables/text_map16.h" "extractables/text_map16.cpp" "extractables/levels.h" "extractables/levels.cpp" "extractables/level.h" "extractables/level.cpp" "saver/extractable_type.h" "saver/saver.h" "saver/marker.cpp" "saver/saver.cpp" "emulators/emulators.h" "emulators/emulators.cpp" "tui/tui.h" "tui/tui.cpp" "extractables/exgraphics.cpp" "extractables/exgraphics.h" "extractables/graphics.cpp" "extractables/graphics.h")
 
 include(FetchContent)
 FetchContent_Declare(

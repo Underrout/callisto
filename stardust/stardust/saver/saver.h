@@ -22,6 +22,8 @@
 #include "../extractables/text_map16.h"
 #include "../extractables/title_screen.h"
 #include "../extractables/levels.h"
+#include "../extractables/graphics.h"
+#include "../extractables/exgraphics.h"
 
 #include "../symbol.h"
 

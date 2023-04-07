@@ -50,6 +50,34 @@ namespace stardust {
 			extractables.push_back(ExtractableType::SHARED_PALETTES);
 		}
 
+		if (!config.build_order.empty()) {
+			bool graphics_seen{ false };
+			bool exgraphics_seen{ false };
+			for (const auto& descriptor : config.build_order) {
+				if (graphics_seen && exgraphics_seen) {
+					break;
+				}
+				if (descriptor.symbol == Symbol::GRAPHICS && !graphics_seen) {
+					graphics_seen = true;
+					const auto graphics_folder{ config.project_rom.getOrThrow().parent_path() / "Graphics" };
+					if (!fs::exists(graphics_folder)) {
+						// only extract graphics if there is no graphics folder, otherwise, assume that the graphics in the folder
+						// may be more up to date than the ones in the ROM and shouldn't be overwritten
+						spdlog::info("No Graphics folder found at {}, planning Graphics export", graphics_folder.string());
+						extractables.push_back(ExtractableType::GRAPHICS);
+					}
+				}
+				else if (descriptor.symbol == Symbol::EX_GRAPHICS && !exgraphics_seen) {
+					exgraphics_seen = true;
+					const auto exgraphics_folder{ config.project_rom.getOrThrow().parent_path() / "ExGraphics" };
+					if (!fs::exists(exgraphics_folder)) {
+						spdlog::info("No ExGraphics folder found at {}, planning ExGraphics export", exgraphics_folder.string());
+						extractables.push_back(ExtractableType::EX_GRAPHICS);
+					}
+				}
+			}
+		}
+
 		return extractables;
 	}
 
@@ -73,9 +101,10 @@ namespace stardust {
 			return std::make_shared<Levels>(config, extracting_rom);
 		case ExtractableType::SHARED_PALETTES:
 			return std::make_shared<SharedPalettes>(config, extracting_rom);
-
 		case ExtractableType::GRAPHICS:
+			return std::make_shared<Graphics>(config, extracting_rom);
 		case ExtractableType::EX_GRAPHICS:
+			return std::make_shared<ExGraphics>(config, extracting_rom);
 		default:
 			throw StardustException("Unknown extractable type passed");
 		}
