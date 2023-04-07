@@ -549,7 +549,19 @@ namespace stardust {
 				}))
 				| size(WIDTH, GREATER_THAN, 30);
 			});
-		return component;
+		return CatchEvent(component, [=](const Event& e) {
+			if (e == Event::Character('y')) {
+				show_choice_modal = false; 
+				choice_yes_func();
+				return true;
+			}
+			else if (e == Event::Character('n')) {
+				show_choice_modal = false;
+				choice_no_func();
+				return true;
+			}
+			return false;
+		});
 	}
 
 	void TUI::showChoiceModal(const std::string& new_title, const std::string& new_text, 
