@@ -81,9 +81,7 @@ namespace stardust {
 		return extractables;
 	}
 
-	std::shared_ptr<Extractable> Saver::extractableTypeToExtractable(const Configuration& config, ExtractableType type) {
-		const auto extracting_rom{ config.project_rom.getOrThrow() };
-
+	std::shared_ptr<Extractable> Saver::extractableTypeToExtractable(const Configuration& config, ExtractableType type, const fs::path& extracting_rom) {
 		switch (type) {
 		case ExtractableType::BINARY_MAP16:
 			return std::make_shared<BinaryMap16>(config, extracting_rom);
@@ -111,11 +109,11 @@ namespace stardust {
 	}
 
 	std::vector<std::shared_ptr<Extractable>> Saver::getExtractables(const Configuration& config, 
-		const std::vector<ExtractableType>& extractable_types) {
+		const std::vector<ExtractableType>& extractable_types, const fs::path& extracting_rom) {
 		std::vector<std::shared_ptr<Extractable>> extractables{};
 
 		for (const auto& extractable_type : extractable_types) {
-			extractables.push_back(extractableTypeToExtractable(config, extractable_type));
+			extractables.push_back(extractableTypeToExtractable(config, extractable_type, extracting_rom));
 		}
 
 		return extractables;
@@ -155,7 +153,7 @@ namespace stardust {
 		Marker::insertMarkerString(rom_path, getExtractableTypes(config));
 	}
 
-	void Saver::exportResources(const fs::path& rom_path, const Configuration& config, bool force) {
+	void Saver::exportResources(const fs::path& rom_path, const Configuration& config, bool force, bool mark) {
 		std::vector<ExtractableType> need_extraction;
 		if (!force) {
 			need_extraction = Marker::getNeededExtractions(rom_path,
@@ -172,7 +170,7 @@ namespace stardust {
 			else {
 				spdlog::info("Exporting all resources");
 			}
-			const auto extractables{ getExtractables(config, need_extraction) };
+			const auto extractables{ getExtractables(config, need_extraction, rom_path) };
 
 			for (const auto& extractable : extractables) {
 				extractable->extract();
@@ -180,25 +178,27 @@ namespace stardust {
 
 			spdlog::info("All resources exported successfully!");
 
-			const auto potential_build_report{ PathUtil::getBuildReportPath(config.project_root.getOrThrow()) };
+			if (mark) {
+				const auto potential_build_report{ PathUtil::getBuildReportPath(config.project_root.getOrThrow()) };
 
-			if (fs::exists(potential_build_report)) {
-				spdlog::info("Found a build report, updating it now");
+				if (fs::exists(potential_build_report)) {
+					spdlog::info("Found a build report, updating it now");
+					try {
+						updateBuildReport(potential_build_report, need_extraction);
+						spdlog::info("Successfully updated build report!");
+					}
+					catch (const std::exception& e) {
+						spdlog::warn("Failed to update build report with exception:\n{}", e.what());
+					}
+				}
+				spdlog::info("Writing export marker to ROM");
 				try {
-					updateBuildReport(potential_build_report, need_extraction);
-					spdlog::info("Successfully updated build report!");
+					Saver::writeMarkerToRom(rom_path, config);
+					spdlog::info("Successfully wrote export marker to ROM!");
 				}
 				catch (const std::exception& e) {
-					spdlog::warn("Failed to update build report with exception:\n{}", e.what());
+					spdlog::warn("Failed to write export marker to ROM with exception:\n{}", e.what());
 				}
-			}
-			spdlog::info("Writing export marker to ROM");
-			try {
-				Saver::writeMarkerToRom(rom_path, config);
-				spdlog::info("Successfully wrote export marker to ROM!");
-			}
-			catch (const std::exception& e) {
-				spdlog::warn("Failed to write export marker to ROM with exception:\n{}", e.what());
 			}
 		}
 		else {

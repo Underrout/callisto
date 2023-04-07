@@ -49,7 +49,7 @@ namespace stardust {
 		ScreenInteractive screen;
 
 		Component getConfigOnlyButton(const std::string& button_text, Closure button_func);
-		Component getRomOnlyButton(const std::string& button_text, Closure button_func);
+		Component getRomOnlyButton(const std::string& button_text, Closure button_func, bool is_save_button = false);
 
 		int selected_main_menu_entry{ 0 };
 		void setMainMenu();
@@ -77,6 +77,15 @@ namespace stardust {
 		bool show_modal{ false };
 		Component getModal();
 		void showModal(const std::string& new_title, const std::string& new_text);
+
+		std::string choice_modal_title{};
+		std::string choice_modal_text{};
+		bool show_choice_modal{ false };
+		std::function<void()> choice_yes_func;
+		std::function<void()> choice_no_func;
+		Component getChoiceModal();
+		void showChoiceModal(const std::string& new_title, const std::string& new_text,
+			std::function<void()> yes_function, std::function<void()> no_function);
 
 		std::optional<std::string> getLastConfigName(const fs::path& stardust_directory) const;
 		void setConfiguration(const std::optional<std::string>& profile_name, const fs::path& stardust_directory);

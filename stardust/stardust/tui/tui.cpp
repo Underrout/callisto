@@ -32,7 +32,7 @@ namespace stardust {
 		return Button(button_text, button_func, option);
 	}
 
-	Component TUI::getRomOnlyButton(const std::string& button_text, Closure button_func) {
+	Component TUI::getRomOnlyButton(const std::string& button_text, Closure button_func, bool is_save_button) {
 		auto option{ ButtonOption::Ascii() };
 		option.transform = [=](const EntryState& e) {
 			bool project_rom_set{ config != nullptr && config->project_rom.isSet() };
@@ -55,13 +55,18 @@ namespace stardust {
 				label += " (ROM path not set)";
 			}
 			else if (!project_rom_exists) {
-				label += " (ROM not found)";
+				if (!is_save_button || !config->clean_rom.isSet() || !fs::exists(config->clean_rom.getOrThrow())) {
+					label += " (ROM not found)";
+				}
+				else {
+					label += " (from clean ROM)";
+				}
 			}
 			auto element{ text(label) };
 			if (config == nullptr || !project_rom_set) {
 				element |= color(Color::Red);
 			}
-			else if (!project_rom_exists) {
+			else if (!project_rom_exists && !is_save_button) {
 				element |= color(Color::GrayDark);
 			}
 			return element;
@@ -77,7 +82,7 @@ namespace stardust {
 
 			Renderer([] { return separator(); }),
 
-			getRomOnlyButton("Save ROM (S)", [=] { saveButton(); }),
+			getRomOnlyButton("Save ROM (S)", [=] { saveButton(); }, true),
 			getRomOnlyButton("Edit ROM (E)", [=] { editButton(); }),
 
 			Renderer([] { return separator(); }),
@@ -186,6 +191,7 @@ namespace stardust {
 		}) };
 
 		full_menu |= Modal(getModal(), &show_modal);
+		full_menu |= Modal(getChoiceModal(), &show_choice_modal);
 
 		const auto wrapped{ wrapMenuInEventCatcher(full_menu) };
 
@@ -376,14 +382,28 @@ namespace stardust {
 		}
 
 		if (!fs::exists(config->project_rom.getOrThrow())) {
-			showModal("Error", fmt::format(
-				"No ROM found at\n    {}\n\nCannot save ROM",
-				config->project_rom.getOrThrow().string())
-			);
+			if (!config->clean_rom.isSet() || !fs::exists(config->clean_rom.getOrThrow())) {
+				showModal("Error", fmt::format(
+					"No ROM found at\n    {}\n\nCannot save ROM",
+					config->project_rom.getOrThrow().string())
+				);
+			}
+			else {
+				showChoiceModal("Prompt", fmt::format(
+					"No ROM found at\n    {}\n\nSave from clean ROM instead?"
+					"\n\n(WARNING: This may overwrite previously exported files with vanilla ones,\n"
+					"only use this if you are starting a fresh project!)",
+					config->project_rom.getOrThrow().string()),
+					[=] { runWithLogging("Clean ROM Save", [=] { 
+						Saver::exportResources(config->clean_rom.getOrThrow(), *config, true, false); }); 
+					},
+					[] {}
+				);
+			}
 			return;
 		}
 
-		runWithLogging( "Save", [=] { Saver::exportResources(config->project_rom.getOrThrow(), *config, true); });
+		runWithLogging( "ROM Save", [=] { Saver::exportResources(config->project_rom.getOrThrow(), *config, true); });
 	}
 
 	void TUI::editButton() {
@@ -513,6 +533,32 @@ namespace stardust {
 				| size(WIDTH, GREATER_THAN, 30);
 			});
 		return component;
+	}
+
+	Component TUI::getChoiceModal() {
+		auto component = Container::Horizontal({
+			Button("Yes", [=] { show_choice_modal = false; choice_yes_func(); }, ButtonOption::Ascii()),
+			Button("No", [=] { show_choice_modal = false; choice_no_func(); }, ButtonOption::Ascii())
+		});
+
+		component |= Renderer([&](Element inner) {
+			return window(text(choice_modal_title), vbox({
+						nonWrappingParagraph(choice_modal_text),
+						separator(),
+						inner | center,
+				}))
+				| size(WIDTH, GREATER_THAN, 30);
+			});
+		return component;
+	}
+
+	void TUI::showChoiceModal(const std::string& new_title, const std::string& new_text, 
+		std::function<void()> yes_function, std::function<void()> no_function) {
+		show_choice_modal = true;
+		choice_modal_title = new_title;
+		choice_modal_text = new_text;
+		choice_yes_func = yes_function;
+		choice_no_func = no_function;
 	}
 
 	std::optional<std::string> TUI::getLastConfigName(const fs::path& stardust_directory) const {

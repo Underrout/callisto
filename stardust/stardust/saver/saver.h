@@ -40,13 +40,14 @@ namespace stardust {
 		static const std::unordered_map<ExtractableType, Symbol> extractable_to_symbol;
 
 		static std::vector<ExtractableType> getExtractableTypes(const Configuration& config);
-		static std::shared_ptr<Extractable> extractableTypeToExtractable(const Configuration& config, ExtractableType type);
+		static std::shared_ptr<Extractable> extractableTypeToExtractable(
+			const Configuration& config, ExtractableType type, const fs::path& extracting_rom);
 		static std::vector<std::shared_ptr<Extractable>> getExtractables(const Configuration& config, 
-			const std::vector<ExtractableType>& extractable_types);
+			const std::vector<ExtractableType>& extractable_types, const fs::path& extracting_rom);
 		static void updateBuildReport(const fs::path& build_report, const std::vector<ExtractableType>& extracted_types);
 
 	public:
 		static void writeMarkerToRom(const fs::path& rom_path, const Configuration& config);
-		static void exportResources(const fs::path& rom_path, const Configuration& config, bool force = false);
+		static void exportResources(const fs::path& rom_path, const Configuration& config, bool force = false, bool mark = true);
 	};
 }
