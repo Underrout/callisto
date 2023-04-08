@@ -39,7 +39,6 @@ namespace stardust {
 	protected:
 		static const std::unordered_map<ExtractableType, Symbol> extractable_to_symbol;
 
-		static std::vector<ExtractableType> getExtractableTypes(const Configuration& config);
 		static std::shared_ptr<Extractable> extractableTypeToExtractable(
 			const Configuration& config, ExtractableType type, const fs::path& extracting_rom);
 		static std::vector<std::shared_ptr<Extractable>> getExtractables(const Configuration& config, 
@@ -47,6 +46,7 @@ namespace stardust {
 		static void updateBuildReport(const fs::path& build_report, const std::vector<ExtractableType>& extracted_types);
 
 	public:
+		static std::vector<ExtractableType> getExtractableTypes(const Configuration& config);
 		static void writeMarkerToRom(const fs::path& rom_path, const Configuration& config);
 		static void exportResources(const fs::path& rom_path, const Configuration& config, bool force = false, bool mark = true);
 	};

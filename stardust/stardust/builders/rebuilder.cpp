@@ -28,18 +28,32 @@ namespace stardust {
 			old_rom = getRom(config.temporary_rom.getOrThrow());
 		}
 
+		std::optional<Insertable::NoDependencyReportFound> failed_dependency_report;
 		auto insertables{ buildOrderToInsertables(config) };
 		for (auto& [descriptor, insertable] : insertables) {
-			const auto resource_dependencies{ insertable->insertWithDependencies() };
-			const auto config_dependencies{ insertable->getConfigurationDependencies() };
+			if (!failed_dependency_report.has_value()) {
+				std::unordered_set<ResourceDependency> resource_dependencies;
+				try {
+					resource_dependencies = insertable->insertWithDependencies();
+				}
+				catch (const Insertable::NoDependencyReportFound& e) {
+					failed_dependency_report = e;
+				}
 
-			dependencies.push_back({ descriptor, { resource_dependencies, config_dependencies } });
+				if (!failed_dependency_report.has_value()) {
+					const auto config_dependencies{ insertable->getConfigurationDependencies() };
+					dependencies.push_back({ descriptor, { resource_dependencies, config_dependencies } });
+				}
 
-			if (check_conflicts_policy != Conflicts::NONE) {
-				auto new_rom{ getRom(config.temporary_rom.getOrThrow()) };
-				updateWrites(old_rom, new_rom, check_conflicts_policy, write_map,
-					descriptor.toString(config.project_root.getOrThrow()));
-				old_rom.swap(new_rom);
+				if (check_conflicts_policy != Conflicts::NONE) {
+					auto new_rom{ getRom(config.temporary_rom.getOrThrow()) };
+					updateWrites(old_rom, new_rom, check_conflicts_policy, write_map,
+						descriptor.toString(config.project_root.getOrThrow()));
+					old_rom.swap(new_rom);
+				}
+			}
+			else {
+				insertable->insert();
 			}
 		}
 
@@ -47,15 +61,23 @@ namespace stardust {
 			std::make_optional(config.conflict_log_file.getOrThrow()) : 
 			std::nullopt);
 
-		const auto insertion_report{ getJsonDependencies(dependencies) };
+		if (!failed_dependency_report.has_value()) {
+			const auto insertion_report{ getJsonDependencies(dependencies) };
 
-		writeBuildReport(config.project_root.getOrThrow(), createBuildReport(config, insertion_report));
+			writeBuildReport(config.project_root.getOrThrow(), createBuildReport(config, insertion_report));
+
+		}
+		else {
+			spdlog::info("{}, Quickbuild not applicable, read the documentation "
+					"on details for how to set up Quickbuild correctly", failed_dependency_report.value().what());
+			removeBuildReport(config.project_root.getOrThrow());
+		}
 
 		cacheGlobules(config.project_root.getOrThrow());
 
 		Saver::writeMarkerToRom(config.temporary_rom.getOrThrow(), config);
-
 		moveTempToOutput(config);
+		spdlog::info("Build finished successfully!");
 	}
 
 	json Rebuilder::getJsonDependencies(const DependencyVector& dependencies) {

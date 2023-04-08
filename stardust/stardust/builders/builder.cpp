@@ -209,4 +209,17 @@ namespace stardust {
 			out.close();
 		}
 	}
+
+	void Builder::removeBuildReport(const fs::path& project_root) {
+		const auto path{ PathUtil::getBuildReportPath(project_root) };
+		try {
+			if (fs::exists(path)) {
+				fs::remove(path);
+			}
+		}
+		catch (const std::exception& e) {
+			spdlog::warn("Failed to remove previous build report with the "
+				"following exception, Quickbuild may behave erroneously:\n{}");
+		}
+	}
 }

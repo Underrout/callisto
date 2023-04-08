@@ -1,6 +1,20 @@
 #include "quick_builder.h"
 
 namespace stardust {
+	QuickBuilder::QuickBuilder(const fs::path& stardust_root) {
+		const auto build_report_path{ PathUtil::getBuildReportPath(stardust_root) };
+		if (!fs::exists(build_report_path)) {
+			throw MustRebuildException(fmt::format(
+				"No build report found at {}, must rebuild",
+				build_report_path.string()
+			));
+		}
+
+		std::ifstream build_report{ build_report_path };
+		report = json::parse(build_report);
+		build_report.close();
+	}
+
 	void QuickBuilder::build(const Configuration& config) {
 		spdlog::info("Quick Build started");
 
@@ -19,6 +33,7 @@ namespace stardust {
 		checkRebuildConfigDependencies(json_dependencies, config);
 
 		bool any_work_done{ false };
+		std::optional<Insertable::NoDependencyReportFound> failed_dependency_report;
 		size_t i{ 0 };
 		for (auto& entry : json_dependencies) {
 			checkRebuildResourceDependencies(json_dependencies, config.project_root.getOrThrow(), i++);
@@ -64,16 +79,29 @@ namespace stardust {
 				}
 
 				auto insertable{ descriptorToInsertable(descriptor, config) };
-				const auto config_dependencies{ insertable->getConfigurationDependencies() };
-				const auto resource_dependencies{ insertable->insertWithDependencies() };
-				entry["resource_dependencies"] = std::vector<json>();
-				entry["configuration_dependencies"] = std::vector<json>();
 
-				for (const auto& config_dep : config_dependencies) {
-					entry["configuration_dependencies"].push_back(config_dep.toJson());
+				if (!failed_dependency_report.has_value()) {
+					std::unordered_set<ResourceDependency> resource_dependencies;
+					try {
+						resource_dependencies = insertable->insertWithDependencies();
+					}
+					catch (const Insertable::NoDependencyReportFound& e) {
+						failed_dependency_report = e;
+						continue;
+					}
+					const auto config_dependencies{ insertable->getConfigurationDependencies() };
+					entry["resource_dependencies"] = std::vector<json>();
+					entry["configuration_dependencies"] = std::vector<json>();
+
+					for (const auto& config_dep : config_dependencies) {
+						entry["configuration_dependencies"].push_back(config_dep.toJson());
+					}
+					for (const auto& resource_dep : resource_dependencies) {
+						entry["resource_dependencies"].push_back(resource_dep.toJson());
+					}
 				}
-				for (const auto& resource_dep : resource_dependencies) {
-					entry["resource_dependencies"].push_back(resource_dep.toJson());
+				else {
+					insertable->insert();
 				}
 			}
 			else {
@@ -86,13 +114,21 @@ namespace stardust {
 		}
 
 		if (any_work_done) {
-			writeBuildReport(config.project_root.getOrThrow(), createBuildReport(config, report["dependencies"]));
+			if (!failed_dependency_report.has_value()) {
+				writeBuildReport(config.project_root.getOrThrow(), createBuildReport(config, report["dependencies"]));
+			}
+			else {
+				spdlog::warn("{}, Quickbuild not applicable, read the documentation "
+					"on details for how to set up Quickbuild correctly", failed_dependency_report.value().what());
+				removeBuildReport(config.project_root.getOrThrow());
+			}
 
 			cacheGlobules(config.project_root.getOrThrow());
-
 			Saver::writeMarkerToRom(config.temporary_rom.getOrThrow(), config);
 
 			moveTempToOutput(config);
+
+			spdlog::info("Quickbuild finished successfully!");
 		}
 		else {
 			spdlog::info("Everything already up to date!");

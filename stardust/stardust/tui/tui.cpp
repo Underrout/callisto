@@ -77,7 +77,7 @@ namespace stardust {
 	void TUI::setMainMenu() {
 		main_menu_component = Container::Vertical({
 			getConfigOnlyButton("Rebuild ROM (R)", [=] { rebuildButton(); }),
-			getConfigOnlyButton("Quickbuild ROM (Q)", [&] { showModal("Error", "Can't do that yet"); }),
+			getConfigOnlyButton("Quickbuild ROM (Q)", [=] { quickbuildButton(); }),
 			getRomOnlyButton("Package ROM (P)", [=] { packageButton(); }),
 
 			Renderer([] { return separator(); }),
@@ -102,7 +102,7 @@ namespace stardust {
 			Renderer([] { return separator(); }),
 
 			Button("Exit (ESC)", [] { exit(0); }, ButtonOption::Ascii())
-		}, &selected_main_menu_entry);
+			}, &selected_main_menu_entry);
 
 		const auto window_title{ fmt::format("stardust {}.{}.{}", STARDUST_VERSION_MAJOR, STARDUST_VERSION_MINOR, STARDUST_VERSION_PATCH) };
 		main_menu = Renderer(main_menu_component, [=] { return window(text(window_title), main_menu_component->Render()); });
@@ -135,7 +135,7 @@ namespace stardust {
 			for (const auto& emulator_name : emulator_names) {
 				emulator_menu_component->Add(getRomOnlyButton(emulator_name + fmt::format(" ({})", i++), [=] {
 					emulatorButton(emulator_name);
-				}));
+					}));
 			}
 		}
 	}
@@ -170,6 +170,32 @@ namespace stardust {
 		previously_selected_profile_menu_entry = selected_profile_menu_entry;
 	}
 
+	void TUI::markerSafeguard(const std::string& title, std::function<void()> func) {
+		if (config != nullptr && config->project_rom.isSet() && fs::exists(config->project_rom.getOrThrow())) {
+			const auto needs_extraction{ Marker::getNeededExtractions(config->project_rom.getOrThrow(),
+				Saver::getExtractableTypes(*config),
+				config->use_text_map16_format.getOrDefault(false)) };
+			if (!needs_extraction.empty()) {
+				showChoiceModal("Prompt", fmt::format(
+					"WARNING: Potentially unexported resources present in ROM\n    {}\n\n"
+					"Building anyway could lead to loss of data. Run Save before the build?",
+					config->project_rom.getOrThrow().string()
+				), [=] {
+					runWithLogging(title + " (with Save)", [=] {
+						Saver::exportResources(config->project_rom.getOrThrow(), *config, true);
+						func();
+					});
+					},
+					[=] {
+						showModal("Info", "Aborting build to prevent potential data loss");
+				}
+				);
+				return;
+			}
+		}
+		runWithLogging(title, func);
+	}
+
 	void TUI::run() {
 		profile_names = config_manager.getProfileNames();
 		determineInitialProfile();
@@ -190,12 +216,12 @@ namespace stardust {
 			})
 		}) };
 
+		full_menu = wrapMenuInEventCatcher(full_menu);
+
 		full_menu |= Modal(getModal(), &show_modal);
 		full_menu |= Modal(getChoiceModal(), &show_choice_modal);
 
-		const auto wrapped{ wrapMenuInEventCatcher(full_menu) };
-
-		screen.Loop(wrapped);
+		screen.Loop(full_menu);
 	}
 
 	void TUI::setConfiguration(const std::optional<std::string>& profile_name, const fs::path& stardust_directory) {
@@ -265,16 +291,16 @@ namespace stardust {
 		spdlog::set_level(spdlog::level::info);
 		screen.WithRestoredIO([=] {
 			auto now{ std::chrono::system_clock::now() };
-			spdlog::info(
-				"--- {} at {} ---\n",
-				function_name, now
-			);
-			logError(func);
-			std::cout << "Press ESC to return to stardust" << std::endl;
-			waitForEscape();
-			std::cout << std::endl << std::endl;
-		})();
-		spdlog::set_level(spdlog::level::off);
+		spdlog::info(
+			"--- {} at {} ---\n",
+			function_name, now
+		);
+		logError(func);
+		std::cout << "Press ESC to return to stardust" << std::endl;
+		waitForEscape();
+		std::cout << std::endl << std::endl;
+			})();
+			spdlog::set_level(spdlog::level::off);
 	}
 
 	bool TUI::modalError(std::function<void()> func) {
@@ -343,7 +369,7 @@ namespace stardust {
 				fs::create_directories(package_folder);
 			}
 			catch (const fs::filesystem_error& e) {
-				showModal("Error", fmt::format("Failed to create folder at\n    {}\nwith exception:{}", 
+				showModal("Error", fmt::format("Failed to create folder at\n    {}\nwith exception:{}",
 					package_folder.string(), e.what()
 				));
 			}
@@ -352,7 +378,7 @@ namespace stardust {
 		int exit_code;
 		try {
 			exit_code = bp::system(
-				config->flips_path.getOrThrow().string() , "--create", "--bps-delta", config->clean_rom.getOrThrow().string(),
+				config->flips_path.getOrThrow().string(), "--create", "--bps-delta", config->clean_rom.getOrThrow().string(),
 				config->project_rom.getOrThrow().string(), config->bps_package.getOrThrow().string(), bp::std_out > bp::null
 			);
 		}
@@ -373,9 +399,30 @@ namespace stardust {
 	void TUI::rebuildButton() {
 		if (config == nullptr) {
 			showModal("Error", "Current configuration is not valid\nCannot build ROM");
+			return;
 		}
 
-		runWithLogging("Rebuild", [=] { Rebuilder rebuilder{}; rebuilder.build(*config); });
+		markerSafeguard("Rebuild", [=] { Rebuilder rebuilder{}; rebuilder.build(*config); });
+	}
+
+	void TUI::quickbuildButton() {
+		if (config == nullptr) {
+			showModal("Error", "Current configuration is not valid\nCannot quick build ROM");
+			return;
+		}
+
+
+		markerSafeguard("Quickbuild", [=] {
+			try {
+				QuickBuilder quick_builder{ stardust_directory };
+				quick_builder.build(*config);
+			}
+			catch (const MustRebuildException& e) {
+				spdlog::info("Quickbuild cannot continue due to the following reason, rebuilding ROM:\n{}", e.what());
+				Rebuilder rebuilder{};
+				rebuilder.build(*config);
+			}
+		});
 	}
 
 	void TUI::saveButton() {
@@ -402,16 +449,16 @@ namespace stardust {
 					"\n\n(WARNING: This may overwrite previously exported files with vanilla ones,\n"
 					"only use this if you are starting a fresh project!)",
 					config->project_rom.getOrThrow().string()),
-					[=] { runWithLogging("Clean ROM Save", [=] { 
-						Saver::exportResources(config->clean_rom.getOrThrow(), *config, true, false); }); 
+					[=] { runWithLogging("Clean ROM Save", [=] {
+						Saver::exportResources(config->clean_rom.getOrThrow(), *config, true, false); });
 					},
 					[] {}
-				);
+					);
 			}
 			return;
 		}
 
-		runWithLogging( "ROM Save", [=] { Saver::exportResources(config->project_rom.getOrThrow(), *config, true); });
+		runWithLogging("ROM Save", [=] { Saver::exportResources(config->project_rom.getOrThrow(), *config, true); });
 	}
 
 	void TUI::editButton() {
@@ -487,23 +534,27 @@ namespace stardust {
 				rebuildButton();
 				return true;
 			}
-
-			char i{ 0 };
-			for (const auto& emulator : emulator_names) {
-				if (i == 10) {
-					break;
-				}
-
-				char button_index_char{ '0' + i + 1 };
-				if (event == Event::Character(button_index_char)) {
-					emulatorButton(emulator_names.at(i));
-					return true;
-				}
-				++i;
+			else if (event == Event::Character('q')) {
+				quickbuildButton();
+				return true;
 			}
 
-			return false;
-		});
+		char i{ 0 };
+		for (const auto& emulator : emulator_names) {
+			if (i == 10) {
+				break;
+			}
+
+			char button_index_char{ '0' + i + 1 };
+			if (event == Event::Character(button_index_char)) {
+				emulatorButton(emulator_names.at(i));
+				return true;
+			}
+			++i;
+		}
+
+		return false;
+			});
 	}
 
 	void TUI::emulatorButton(const std::string& emulator_to_launch) {
@@ -551,7 +602,7 @@ namespace stardust {
 		auto component = Container::Horizontal({
 			Button("Yes", [=] { show_choice_modal = false; choice_yes_func(); }, ButtonOption::Ascii()),
 			Button("No", [=] { show_choice_modal = false; choice_no_func(); }, ButtonOption::Ascii())
-		});
+			});
 
 		component |= Renderer([&](Element inner) {
 			return window(text(choice_modal_title), vbox({
@@ -563,7 +614,7 @@ namespace stardust {
 			});
 		return CatchEvent(component, [=](const Event& e) {
 			if (e == Event::Character('y')) {
-				show_choice_modal = false; 
+				show_choice_modal = false;
 				choice_yes_func();
 				return true;
 			}
@@ -572,11 +623,11 @@ namespace stardust {
 				choice_no_func();
 				return true;
 			}
-			return false;
-		});
+		return false;
+			});
 	}
 
-	void TUI::showChoiceModal(const std::string& new_title, const std::string& new_text, 
+	void TUI::showChoiceModal(const std::string& new_title, const std::string& new_text,
 		std::function<void()> yes_function, std::function<void()> no_function) {
 		show_choice_modal = true;
 		choice_modal_title = new_title;

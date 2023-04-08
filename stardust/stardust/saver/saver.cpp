@@ -63,7 +63,6 @@ namespace stardust {
 					if (!fs::exists(graphics_folder)) {
 						// only extract graphics if there is no graphics folder, otherwise, assume that the graphics in the folder
 						// may be more up to date than the ones in the ROM and shouldn't be overwritten
-						spdlog::info("No Graphics folder found at {}, planning Graphics export", graphics_folder.string());
 						extractables.push_back(ExtractableType::GRAPHICS);
 					}
 				}
@@ -71,7 +70,6 @@ namespace stardust {
 					exgraphics_seen = true;
 					const auto exgraphics_folder{ config.project_rom.getOrThrow().parent_path() / "ExGraphics" };
 					if (!fs::exists(exgraphics_folder)) {
-						spdlog::info("No ExGraphics folder found at {}, planning ExGraphics export", exgraphics_folder.string());
 						extractables.push_back(ExtractableType::EX_GRAPHICS);
 					}
 				}

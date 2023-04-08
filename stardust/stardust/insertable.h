@@ -10,6 +10,10 @@
 
 namespace stardust {
 	class Insertable {
+	public:
+		class NoDependencyReportFound : public StardustException {
+			using StardustException::StardustException;
+		};
 	protected:
 		std::unordered_set<ConfigurationDependency> configuration_dependencies{};
 
@@ -17,7 +21,10 @@ namespace stardust {
 
 		static std::unordered_set<ResourceDependency> extractDependenciesFromReport(const fs::path& dependency_report_file_path) {
 			if (!fs::exists(dependency_report_file_path)) {
-				return {};
+				throw NoDependencyReportFound(fmt::format(
+					"No dependency report found at {}",
+					dependency_report_file_path.string()
+				));
 			}
 
 			std::unordered_set<ResourceDependency> dependencies{};

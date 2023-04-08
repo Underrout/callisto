@@ -31,6 +31,7 @@
 #include "../configuration/configuration_manager.h"
 
 #include "../builders/rebuilder.h"
+#include "../builders/quick_builder.h"
 #include "../saver/saver.h"
 
 #include "../path_util.h"
@@ -126,10 +127,13 @@ namespace stardust {
 #endif
 
 		void rebuildButton();
+		void quickbuildButton();
 		void packageButton();
 		void saveButton();
 		void emulatorButton(const std::string& emulator_name);
 		void editButton();
+
+		void markerSafeguard(const std::string& title, std::function<void()> func);
 
 		Component wrapMenuInEventCatcher(Component full_menu);
 
