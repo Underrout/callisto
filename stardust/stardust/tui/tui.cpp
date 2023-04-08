@@ -97,14 +97,20 @@ namespace stardust {
 
 			Renderer([] { return separator(); }),
 
-			Button("View console output (V)", screen.WithRestoredIO([=] { waitForEscape(); }), ButtonOption::Ascii()),
+			Button("View console output (V)", screen.WithRestoredIO([&] { 
+				if (!anything_on_command_line) {
+					std::cout << "Press ESC to return to stardust" << std::endl << std::endl << std::endl;
+					anything_on_command_line = true;
+				}
+				waitForEscape(); 
+			}), ButtonOption::Ascii()),
 
 			Renderer([] { return separator(); }),
 
 			Button("Exit (ESC)", [] { exit(0); }, ButtonOption::Ascii())
 			}, &selected_main_menu_entry);
 
-		const auto window_title{ fmt::format("stardust {}.{}.{}", STARDUST_VERSION_MAJOR, STARDUST_VERSION_MINOR, STARDUST_VERSION_PATCH) };
+		const auto window_title{ fmt::format("stardust v{}.{}.{}a", STARDUST_VERSION_MAJOR, STARDUST_VERSION_MINOR, STARDUST_VERSION_PATCH) };
 		main_menu = Renderer(main_menu_component, [=] { return window(text(window_title), main_menu_component->Render()); });
 	}
 
@@ -298,9 +304,10 @@ namespace stardust {
 		logError(func);
 		std::cout << "Press ESC to return to stardust" << std::endl;
 		waitForEscape();
+		anything_on_command_line = true;
 		std::cout << std::endl << std::endl;
 			})();
-			spdlog::set_level(spdlog::level::off);
+		spdlog::set_level(spdlog::level::off);
 	}
 
 	bool TUI::modalError(std::function<void()> func) {
