@@ -262,8 +262,8 @@ namespace stardust {
 			nullptr,
 			nullptr,
 			0,
-			nullptr,
-			0,
+			&empty_patch,
+			1,
 			false,
 			true
 		};

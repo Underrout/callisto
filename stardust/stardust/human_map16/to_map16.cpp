@@ -245,10 +245,10 @@ void HumanReadableMap16::to_map16::convert_full(std::vector<Byte>& tiles_vec, st
 
 	sscanf(line.c_str(), STANDARD_FORMAT,
 		&_16x16_tile_number, &acts_like,
-		&_8x8_tile_1, &palette_1, &x_1, 1, &y_1, 1, &p_1, 1,
-		&_8x8_tile_2, &palette_2, &x_2, 1, &y_2, 1, &p_2, 1,
-		&_8x8_tile_3, &palette_3, &x_3, 1, &y_3, 1, &p_3, 1,
-		&_8x8_tile_4, &palette_4, &x_4, 1, &y_4, 1, &p_4, 1
+		&_8x8_tile_1, &palette_1, &x_1, &y_1, &p_1,
+		&_8x8_tile_2, &palette_2, &x_2, &y_2, &p_2,
+		&_8x8_tile_3, &palette_3, &x_3, &y_3, &p_3,
+		&_8x8_tile_4, &palette_4, &x_4, &y_4, &p_4
 	);
 
 	split_and_insert_2(to_bytes(_8x8_tile_1, palette_1, x_1, y_1, p_1), tiles_vec);
@@ -459,7 +459,7 @@ void HumanReadableMap16::to_map16::verify_8x8_tile(const std::string line, unsig
 
 	unsigned int res = sscanf(tile_substr.c_str(), "%1X%1X%1X %X %c%c%c",
 		&_8x8_tile_digit_1, &_8x8_tile_digit_2, &_8x8_tile_digit_3, &palette,
-		&x, 1, &y, 1, &p, 1
+		&x, &y, &p
 	);
 
 	if (res != 7) {
@@ -558,10 +558,10 @@ void HumanReadableMap16::to_map16::convert_tiles_only(std::vector<Byte>& tiles_v
 
 	sscanf(line.c_str(), NO_ACTS_FORMAT,
 		&_16x16_tile_number,
-		&_8x8_tile_1, &palette_1, &x_1, 1, &y_1, 1, &p_1, 1,
-		&_8x8_tile_2, &palette_2, &x_2, 1, &y_2, 1, &p_2, 1,
-		&_8x8_tile_3, &palette_3, &x_3, 1, &y_3, 1, &p_3, 1,
-		&_8x8_tile_4, &palette_4, &x_4, 1, &y_4, 1, &p_4, 1
+		&_8x8_tile_1, &palette_1, &x_1, &y_1, &p_1,
+		&_8x8_tile_2, &palette_2, &x_2, &y_2, &p_2,
+		&_8x8_tile_3, &palette_3, &x_3, &y_3, &p_3,
+		&_8x8_tile_4, &palette_4, &x_4, &y_4, &p_4
 	);
 
 	split_and_insert_2(to_bytes(_8x8_tile_1, palette_1, x_1, y_1, p_1), tiles_vec);

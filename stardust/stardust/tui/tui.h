@@ -30,6 +30,7 @@
 #include "../emulators/emulators.h"
 #include "../configuration/configuration_manager.h"
 
+#include "../builders/rebuilder.h"
 #include "../saver/saver.h"
 
 #include "../path_util.h"
@@ -124,6 +125,7 @@ namespace stardust {
 		}
 #endif
 
+		void rebuildButton();
 		void packageButton();
 		void saveButton();
 		void emulatorButton(const std::string& emulator_name);

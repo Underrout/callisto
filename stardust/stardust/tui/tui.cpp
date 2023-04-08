@@ -1,4 +1,4 @@
-﻿#include "tui.h"
+#include "tui.h"
 
 namespace stardust {
 	TUI::TUI(const fs::path& stardust_directory) : config_manager(stardust_directory), stardust_directory(stardust_directory),
@@ -76,7 +76,7 @@ namespace stardust {
 
 	void TUI::setMainMenu() {
 		main_menu_component = Container::Vertical({
-			getConfigOnlyButton("Rebuild ROM (R)", [&] { showModal("Title", "haha, rebuild"); }),
+			getConfigOnlyButton("Rebuild ROM (R)", [=] { rebuildButton(); }),
 			getConfigOnlyButton("Quickbuild ROM (Q)", [&] { showModal("Error", "Can't do that yet"); }),
 			getRomOnlyButton("Package ROM (P)", [=] { packageButton(); }),
 
@@ -370,6 +370,14 @@ namespace stardust {
 		}
 	}
 
+	void TUI::rebuildButton() {
+		if (config == nullptr) {
+			showModal("Error", "Current configuration is not valid\nCannot build ROM");
+		}
+
+		runWithLogging("Rebuild", [=] { Rebuilder rebuilder{}; rebuilder.build(*config); });
+	}
+
 	void TUI::saveButton() {
 		if (config == nullptr) {
 			showModal("Error", "Current configuration is not valid\nCannot save ROM");
@@ -473,6 +481,10 @@ namespace stardust {
 			}
 			else if (event == Event::Character('p')) {
 				packageButton();
+				return true;
+			}
+			else if (event == Event::Character('r')) {
+				rebuildButton();
 				return true;
 			}
 
