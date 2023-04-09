@@ -164,3 +164,8 @@ add_custom_command(TARGET stardust POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
     $<TARGET_FILE:asar> $<TARGET_FILE_DIR:stardust>
 )
+
+add_custom_command(TARGET stardust POST_BUILD 
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+    "${CMAKE_CURRENT_SOURCE_DIR}/config.toml" $<TARGET_FILE_DIR:stardust>
+)
