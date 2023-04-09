@@ -130,7 +130,6 @@ namespace stardust {
 
 		const auto patch_string{ getMarkerInsertionPatch(extractables) };
 
-		// need to call this again since PIXI might have called asar_close
 		if (!asar_init()) {
 			spdlog::warn("Failed to insert marker string into ROM {} because asar not found", rom_path.string());
 		}

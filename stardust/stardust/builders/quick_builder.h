@@ -30,6 +30,6 @@ namespace stardust {
 	public:
 		void build(const Configuration& config) override;
 
-		QuickBuilder(const fs::path& stardust_root);
+		QuickBuilder(const fs::path& project_root);
 	};
 }

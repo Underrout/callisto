@@ -301,17 +301,6 @@ namespace stardust {
 			for (const auto& config : config_file_map.at(config_level)) {
 				try {
 					const auto& tools_table{ toml::find(config, "tools") };
-
-					try {
-						const auto& pixi_table{ toml::find(tools_table, "PIXI") };
-
-						trySet(pixi_working_dir, config, config_level, project_root,
-							user_variable_map.at(config_level));
-					}
-					catch (const std::out_of_range&) {
-						// pass
-					}
-
 					const auto& generic_tools_table{ toml::find<toml::table>(tools_table, "generic") };
 
 					for (const auto& [key, value] : generic_tools_table) {
@@ -388,10 +377,6 @@ namespace stardust {
 		
 		trySet(lunar_magic_path, config_file, level, root, user_variables);
 		trySet(lunar_magic_level_import_flags, config_file, level, user_variables);
-
-		trySet(pixi_options, config_file, level, user_variables);
-		pixi_static_dependencies.trySet(config_file, level, pixi_working_dir, user_variables);
-		pixi_dependency_report_file.trySet(config_file, level, pixi_working_dir, user_variables);
 
 		trySet(initial_patch, config_file, level, root, user_variables);
 		trySet(levels, config_file, level, root, user_variables);
@@ -571,16 +556,15 @@ namespace stardust {
 				std::vector<Descriptor> level_descriptors{};
 
 				for (const auto& entry : fs::directory_iterator(levels.getOrThrow())) {
-					level_descriptors.emplace_back(Symbol::LEVEL, entry.path().string());
+					if (entry.path().extension() == ".mwl") {
+						level_descriptors.emplace_back(Symbol::LEVEL, entry.path().string());
+					}
 				}
 				return level_descriptors;
 			}
 			else {
 				return {};
 			}
-		}
-		else if (symbol == "PIXI") {
-			return { Descriptor(Symbol::PIXI) };
 		}
 		else {
 			if (isValidPatchSymbol(PathUtil::normalize(symbol, project_root.getOrThrow()))) {

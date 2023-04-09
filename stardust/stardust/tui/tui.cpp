@@ -404,6 +404,8 @@ namespace stardust {
 	}
 
 	void TUI::rebuildButton() {
+		trySetConfiguration();
+
 		if (config == nullptr) {
 			showModal("Error", "Current configuration is not valid\nCannot build ROM");
 			return;
@@ -413,15 +415,16 @@ namespace stardust {
 	}
 
 	void TUI::quickbuildButton() {
+		trySetConfiguration();
+
 		if (config == nullptr) {
 			showModal("Error", "Current configuration is not valid\nCannot quick build ROM");
 			return;
 		}
 
-
 		markerSafeguard("Quickbuild", [=] {
 			try {
-				QuickBuilder quick_builder{ stardust_directory };
+				QuickBuilder quick_builder{ config->project_root.getOrThrow() };
 				quick_builder.build(*config);
 			}
 			catch (const MustRebuildException& e) {
@@ -433,6 +436,8 @@ namespace stardust {
 	}
 
 	void TUI::saveButton() {
+		trySetConfiguration();
+
 		if (config == nullptr) {
 			showModal("Error", "Current configuration is not valid\nCannot save ROM");
 			return;
@@ -469,6 +474,8 @@ namespace stardust {
 	}
 
 	void TUI::editButton() {
+		trySetConfiguration();
+		
 		if (config == nullptr) {
 			showModal("Error", "Current configuration is not valid\nCannot edit ROM");
 			return;

@@ -1,8 +1,8 @@
 #include "quick_builder.h"
 
 namespace stardust {
-	QuickBuilder::QuickBuilder(const fs::path& stardust_root) {
-		const auto build_report_path{ PathUtil::getBuildReportPath(stardust_root) };
+	QuickBuilder::QuickBuilder(const fs::path& project_root) {
+		const auto build_report_path{ PathUtil::getBuildReportPath(project_root) };
 		if (!fs::exists(build_report_path)) {
 			throw MustRebuildException(fmt::format(
 				"No build report found at {}, must rebuild",
@@ -293,14 +293,12 @@ namespace stardust {
 			true
 		};
 
-		// need to call this again since PIXI might have called asar_close
 		if (!asar_init()) {
 			throw ToolNotFoundException(
 				"Asar library file not found, did you forget to copy it alongside stardust?"
 			);
 		}
 
-		asar_reset();
 		const bool succeeded{ asar_patch_ex(&params) };
 
 		if (succeeded) {

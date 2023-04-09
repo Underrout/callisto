@@ -20,7 +20,6 @@
 #include "../insertables/external_tool.h"
 #include "../insertables/patch.h"
 #include "../insertables/globule.h"
-#include "../insertables/pixi.h"
 
 #include "../insertable.h"
 #include "../saver/saver.h"

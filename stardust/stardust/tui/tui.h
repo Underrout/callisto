@@ -46,7 +46,7 @@ namespace stardust {
 	protected:
 		ConfigurationManager config_manager;
 		std::shared_ptr<Configuration> config;
-		const fs::path& stardust_directory;
+		const fs::path stardust_directory;
 		
 		bool anything_on_command_line{ false };
 

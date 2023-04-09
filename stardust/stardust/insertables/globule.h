@@ -9,7 +9,7 @@
 
 #include <fmt/core.h>
 #include <spdlog/spdlog.h>
-#include <asar-dll-bindings/c/asardll.h>
+#include "asar-dll-bindings/c/asardll.h"
 #include <asar/warnings.h>
 #include <boost/filesystem.hpp>
 
