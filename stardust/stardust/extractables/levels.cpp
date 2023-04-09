@@ -15,11 +15,11 @@ namespace stardust {
 			}
 		}
 
-		void Levels::stripSourcePointers() const {
+		void Levels::normalize() const {
 			spdlog::debug("Stripping source pointers from MWLs in directory {}", levels_folder.string());
 			for (const auto& entry : fs::directory_iterator(levels_folder)) {
 				if (entry.path().extension() == ".mwl") {
-					Level::stripSourcePointers(entry.path());
+					Level::normalize(entry.path());
 				}
 			}
 		}
@@ -43,7 +43,7 @@ namespace stardust {
 				fs::remove_all(temporary_levels_folder);
 
 				if (strip_source_pointers) {
-					stripSourcePointers();
+					normalize();
 				}
 				spdlog::info("Successfully exported levels!");
 			}
