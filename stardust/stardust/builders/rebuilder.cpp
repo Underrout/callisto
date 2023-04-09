@@ -59,7 +59,7 @@ namespace stardust {
 
 		reportConflicts(write_map, config.conflict_log_file.isSet() ?
 			std::make_optional(config.conflict_log_file.getOrThrow()) : 
-			std::nullopt);
+			std::nullopt, check_conflicts_policy);
 
 		if (!failed_dependency_report.has_value()) {
 			const auto insertion_report{ getJsonDependencies(dependencies) };
@@ -114,7 +114,13 @@ namespace stardust {
 		return j;
 	}
 
-	void Rebuilder::reportConflicts(const WriteMap& write_map, const std::optional<fs::path>& log_file) {
+	void Rebuilder::reportConflicts(const WriteMap& write_map, const std::optional<fs::path>& log_file, 
+		Conflicts conflict_policy) {
+		if (conflict_policy == Conflicts::NONE) {
+			spdlog::info("Not set to detect conflicts");
+			return;
+		}
+
 		std::ofstream log;
 		int conflicts{ 0 };
 		const auto log_to_file{ log_file.has_value() };
@@ -156,7 +162,7 @@ namespace stardust {
 				++current;
 			}
 		}
-
+		
 		if (log_to_file) {
 			if (conflicts == 0) {
 				spdlog::info("No conflicts logged to {}", log_file.value().string());
