@@ -4,8 +4,7 @@
 
 namespace stardust
 {
-	class InsertionException : public StardustException
-	{
+	class InsertionException : public StardustException {
 		using StardustException::StardustException;
 	};
 }
