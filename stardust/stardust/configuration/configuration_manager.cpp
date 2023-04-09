@@ -11,6 +11,10 @@ namespace stardust {
 	std::vector<std::string> ConfigurationManager::getProfileNames() const {
 		const auto profiles_folder{ stardust_root / PROFILE_FOLDER_NAME };
 
+		if (!fs::exists(profiles_folder) || !fs::is_directory(profiles_folder)) {
+			return {};
+		}
+
 		std::vector<std::string> profile_names{};
 
 		for (const auto& entry : fs::directory_iterator(profiles_folder)) {
@@ -22,7 +26,7 @@ namespace stardust {
 		return profile_names;
 	}
 
-	Configuration ConfigurationManager::getConfiguration(std::optional<std::string> current_profile) const {
+	std::shared_ptr<Configuration> ConfigurationManager::getConfiguration(std::optional<std::string> current_profile) const {
 		Configuration::ConfigFileMap config_file_map{};
 		Configuration::VariableFileMap variable_file_map{};
 
@@ -60,6 +64,6 @@ namespace stardust {
 			}
 		}
 
-		return Configuration(config_file_map, variable_file_map, stardust_root);
+		return std::make_shared<Configuration>(config_file_map, variable_file_map, stardust_root);
 	}
 }

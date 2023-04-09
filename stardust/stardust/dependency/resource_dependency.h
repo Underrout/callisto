@@ -63,7 +63,7 @@ namespace std {
 	template<>
 	struct hash<stardust::ResourceDependency> {
 		size_t operator()(const stardust::ResourceDependency& dependency) const {
-			return hash<fs::path>{}(dependency.dependent_path);
+			return hash<std::string>{}(dependency.dependent_path.string());
 		}
 	};
 }

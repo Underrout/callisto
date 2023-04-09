@@ -15,7 +15,6 @@ namespace stardust {
 		LEVEL,
 		PATCH,
 		GLOBULE,
-		PIXI,
 		EXTERNAL_TOOL
 	};
 }

@@ -123,7 +123,6 @@ namespace stardust {
 			true
 		};
 
-		// need to call this again since PIXI might have called asar_close
 		if (!asar_init()) {
 			throw ToolNotFoundException(
 				"Asar library file not found, did you forget to copy it alongside stardust?"
@@ -262,8 +261,8 @@ namespace stardust {
 			nullptr,
 			nullptr,
 			0,
-			nullptr,
-			0,
+			&empty_patch,
+			1,
 			false,
 			true
 		};

@@ -30,7 +30,7 @@ namespace stardust {
 		static constexpr std::array VALID_STATIC_BUILD_ORDER_SYMBOLS{
 			"Globules", "Graphics", "ExGraphics", "Map16", "TitleScreenMovement", "SharedPalettes",
 			"Overworld", "TitleScreen", "Credits", "GlobalExAnimation", 
-			"Patches", "PIXI", "Levels"
+			"Patches", "Levels"
 		};
 
 		std::map<std::string, std::variant<std::monostate, std::string, bool>> key_val_map{};
@@ -103,11 +103,6 @@ namespace stardust {
 
 		PathConfigVariable lunar_magic_path{ {"tools", "LunarMagic", "executable"} };
 		StringConfigVariable lunar_magic_level_import_flags{ {"tools", "LunarMagic", "level_import_flags"} };
-
-		PathConfigVariable pixi_working_dir{ {"tools", "PIXI", "directory"} };
-		StringConfigVariable pixi_options{ {"tools", "PIXI", "options"} };
-		StaticResourceDependencyConfigVariable pixi_static_dependencies{ {"tools", "PIXI", "static_dependencies"} };
-		PathConfigVariable pixi_dependency_report_file{ {"tools", "PIXI", "dependency_report_file"} };
 
 		PathConfigVariable initial_patch{ {"resources", "initial_patch"} };
 		PathConfigVariable levels{ {"resources", "levels"} };

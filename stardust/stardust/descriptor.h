@@ -78,8 +78,6 @@ namespace stardust {
 				return fmt::format("Patch ({})", fs::relative(name.value(), project_root).string());
 			case Symbol::GLOBULE:
 				return fmt::format("Globule ({})", fs::relative(name.value(), project_root).string());
-			case Symbol::PIXI:
-				return "PIXI";
 			case Symbol::EXTERNAL_TOOL:
 				return name.value();
 			}

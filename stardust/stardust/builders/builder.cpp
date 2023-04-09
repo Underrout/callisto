@@ -47,9 +47,6 @@ namespace stardust {
 		else if (symbol == Symbol::GLOBAL_EX_ANIMATION) {
 			return std::make_shared<GlobalExAnimation>(config);
 		}
-		else if (symbol == Symbol::PIXI) {
-			return std::make_shared<Pixi>(config);
-		}
 		else if (symbol == Symbol::PATCH) {
 			std::vector<fs::path> include_paths{ PathUtil::getStardustDirectoryPath(config.project_root.getOrThrow()) };
 
@@ -95,7 +92,6 @@ namespace stardust {
 		spdlog::info("Creating build report");
 		json report{};
 		report["dependencies"] = dependency_report;
-		report["configuration"] = config.config_name.getOrThrow();
 		report["file_format_version"] = BUILD_REPORT_VERSION;
 		report["build_order"] = std::vector<std::string>();
 		if (config.rom_size.isSet()) {
@@ -208,6 +204,19 @@ namespace stardust {
 			std::ofstream out{ out_file };
 			out << str;
 			out.close();
+		}
+	}
+
+	void Builder::removeBuildReport(const fs::path& project_root) {
+		const auto path{ PathUtil::getBuildReportPath(project_root) };
+		try {
+			if (fs::exists(path)) {
+				fs::remove(path);
+			}
+		}
+		catch (const std::exception& e) {
+			spdlog::warn("Failed to remove previous build report with the "
+				"following exception, Quickbuild may behave erroneously:\n{}");
 		}
 	}
 }

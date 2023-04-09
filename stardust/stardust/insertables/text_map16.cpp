@@ -15,8 +15,7 @@ namespace stardust {
 		}
 	}
 
-	fs::path TextMap16::getTemporaryMap16FilePath() const
-	{
+	fs::path TextMap16::getTemporaryMap16FilePath() const {
 		return temporary_rom_path.parent_path() / (map16_folder_path.string() + ".map16");
 	}
 
@@ -30,15 +29,18 @@ namespace stardust {
 		));
 
 		const auto temp_map16{ getTemporaryMap16FilePath() };
-		
+		const auto current_path{ fs::current_path() };
+
 		try {
 			HumanReadableMap16::to_map16::convert(map16_folder_path, temp_map16);
 		}
 		catch (HumanMap16Exception& e) {
+			fs::current_path(current_path);
 			spdlog::error(e.get_detailed_error_message());
 			throw InsertionException("Failed to convert map16 folder to file");
 		}
 
+		fs::current_path(current_path);
 		return temp_map16;
 	}
 

@@ -19,7 +19,7 @@ namespace stardust {
 			const fs::path levels_folder;
 			const bool strip_source_pointers{ true };  // TODO potentially make this configurable?
 
-			void stripSourcePointers() const;
+			void normalize() const;
 
 		public:
 			void extract() override;

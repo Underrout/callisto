@@ -19,6 +19,7 @@ namespace stardust {
 		std::map<std::string, EmulatorConfiguration> emulators{};
 
 	public:
+		Emulators() {};
 		Emulators(const Configuration& config);
 
 		std::vector<std::string> getEmulatorNames() const;

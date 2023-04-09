@@ -34,6 +34,6 @@ namespace stardust {
 		ConfigurationManager(const fs::path& stardust_directory);
 
 		std::vector<std::string> getProfileNames() const;
-		Configuration getConfiguration(std::optional<std::string> current_profile) const;
+		std::shared_ptr<Configuration> getConfiguration(std::optional<std::string> current_profile) const;
 	};
 }

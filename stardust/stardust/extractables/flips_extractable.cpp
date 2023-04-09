@@ -47,6 +47,23 @@ namespace stardust {
 				clean_rom_path.string(), temporary_resource_rom.string()
 			));
 		}
+
+		spdlog::debug("Expanding temporary resource ROM {} to 4MB", temporary_resource_rom.string());
+		const auto exit_code{ bp::system(
+			lunar_magic_executable.string(),
+			"-ExpandROM",
+			temporary_resource_rom.string(),
+			"4MB"
+		) };
+
+		if (exit_code == 0) {
+			spdlog::debug("Successfully expanded ROM");
+		}
+		else {
+			spdlog::warn("Failed to expand temporary resource ROM at {} using Lunar Magic at {}, "
+				"if your {} data is large, you may get a Lunar Magic popup at some point",
+				temporary_resource_rom.string(), lunar_magic_executable.string(), getResourceName());
+		}
 	}
 
 	void FlipsExtractable::invokeLunarMagic(const fs::path& temporary_resource_rom) const {

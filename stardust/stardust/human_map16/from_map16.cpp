@@ -12,17 +12,18 @@ HumanReadableMap16::_4Bytes HumanReadableMap16::from_map16::join_bytes(ByteItera
 }
 
 std::vector<HumanReadableMap16::Byte> HumanReadableMap16::from_map16::read_binary_file(const fs::path file) {
-	std::ifstream f(file.string(), std::ios::binary);
+	std::ifstream f(file.string(), std::ios::in | std::ios::binary);
 
 	f.unsetf(std::ios::skipws);
 
 	f.seekg(0, std::ios::end);
 	size_t size = f.tellg();
 	f.seekg(0, std::ios::beg);
-	std::vector<Byte> vec;
-	vec.reserve(size);
+	std::vector<uint8_t> vec; 
+	vec.resize(size);
+	f.read(reinterpret_cast<std::ifstream::char_type*>(&vec.front()), size);
 
-	vec.insert(vec.begin(), std::istream_iterator<Byte>(f), std::istream_iterator<Byte>());
+	f.close();
 
 	return vec;
 }
@@ -77,7 +78,7 @@ bool HumanReadableMap16::from_map16::try_LM_empty_convert(FILE* fp, unsigned int
 		return false;
 	}
 
-	fprintf_s(fp, LM_EMPTY_TILE_FORMAT, tile_number);
+	fprintf(fp, LM_EMPTY_TILE_FORMAT, tile_number);
 
 	return true;
 }
@@ -98,7 +99,7 @@ void HumanReadableMap16::from_map16::convert_to_file(FILE* fp, unsigned int tile
 		return;
 	}
 
-	fprintf_s(fp, STANDARD_FORMAT,
+	fprintf(fp, STANDARD_FORMAT,
 		tile_number, acts_like,
 		TILE_FORMAT(tile1),
 		TILE_FORMAT(tile2),
@@ -108,7 +109,7 @@ void HumanReadableMap16::from_map16::convert_to_file(FILE* fp, unsigned int tile
 }
 
 void HumanReadableMap16::from_map16::convert_to_file(FILE* fp, unsigned int tile_number, _2Bytes acts_like) {
-	fprintf_s(fp, NO_TILES_FORMAT,
+	fprintf(fp, NO_TILES_FORMAT,
 		tile_number, acts_like
 	);
 }
@@ -118,7 +119,7 @@ void HumanReadableMap16::from_map16::convert_to_file(FILE* fp, unsigned int tile
 		return;
 	}
 
-	fprintf_s(fp, NO_ACTS_FORMAT,
+	fprintf(fp, NO_ACTS_FORMAT,
 		tile_number,
 		TILE_FORMAT(tile1),
 		TILE_FORMAT(tile2),
@@ -129,10 +130,9 @@ void HumanReadableMap16::from_map16::convert_to_file(FILE* fp, unsigned int tile
 
 void HumanReadableMap16::from_map16::convert_FG_page(std::vector<Byte> map16_buffer, unsigned int page_number,
 	size_t tiles_start_offset, size_t acts_like_start_offset) {
-	FILE* fp;
 	char filename[256];
-	sprintf_s(filename, "global_pages\\FG_pages\\page_%02X.txt", page_number);
-	fopen_s(&fp, filename, "w");
+	sprintf(filename, "global_pages\\FG_pages\\page_%02X.txt", page_number);
+	FILE* fp = fopen(filename, "w");
 	unsigned int curr_tile_number = page_number * PAGE_SIZE;
 	auto curr_tile_it = map16_buffer.begin() + tiles_start_offset + PAGE_SIZE * _16x16_BYTE_SIZE * page_number;
 	auto curr_acts_like_it = map16_buffer.begin() + acts_like_start_offset + PAGE_SIZE * ACTS_LIKE_SIZE * page_number;
@@ -147,7 +147,7 @@ void HumanReadableMap16::from_map16::convert_FG_page(std::vector<Byte> map16_buf
 		convert_to_file(fp, curr_tile_number, acts_like, tile1, tile2, tile3, tile4);
 
 		if (i != PAGE_SIZE - 1) {
-			fprintf_s(fp, "\n");
+			fprintf(fp, "\n");
 		}
 
 		++curr_tile_number;
@@ -159,8 +159,7 @@ void HumanReadableMap16::from_map16::convert_FG_page(std::vector<Byte> map16_buf
 }
 
 void HumanReadableMap16::from_map16::convert_global_page_2_for_tileset_specific_page_2s(std::vector<Byte> map16_buffer, size_t acts_like_offset) {
-	FILE* fp;
-	fopen_s(&fp, "global_pages\\FG_pages\\page_02.txt", "w");
+	FILE* fp = fopen("global_pages\\FG_pages\\page_02.txt", "w");
 
 	auto curr_acts_like_it = map16_buffer.begin() + acts_like_offset + PAGE_SIZE * ACTS_LIKE_SIZE * 2;
 
@@ -172,7 +171,7 @@ void HumanReadableMap16::from_map16::convert_global_page_2_for_tileset_specific_
 		convert_to_file(fp, curr_tile_number, acts_like);
 
 		if (i != PAGE_SIZE - 1) {
-			fprintf_s(fp, "\n");
+			fprintf(fp, "\n");
 		}
 
 		++curr_tile_number;
@@ -183,10 +182,9 @@ void HumanReadableMap16::from_map16::convert_global_page_2_for_tileset_specific_
 }
 
 void HumanReadableMap16::from_map16::convert_BG_page(std::vector<Byte> map16_buffer, unsigned int page_number, size_t tiles_start_offset) {
-	FILE* fp;
 	char filename[256];
-	sprintf_s(filename, "global_pages\\BG_pages\\page_%02X.txt", page_number);
-	fopen_s(&fp, filename, "w");
+	sprintf(filename, "global_pages\\BG_pages\\page_%02X.txt", page_number);
+	FILE* fp = fopen(filename, "w");
 	unsigned int curr_tile_number = page_number * PAGE_SIZE;
 	auto curr_tile_it = map16_buffer.begin() + tiles_start_offset + PAGE_SIZE * _16x16_BYTE_SIZE * page_number;
 
@@ -202,7 +200,7 @@ void HumanReadableMap16::from_map16::convert_BG_page(std::vector<Byte> map16_buf
 		curr_tile_it += _16x16_BYTE_SIZE;
 
 		if (i != PAGE_SIZE - 1) {
-			fprintf_s(fp, "\n");
+			fprintf(fp, "\n");
 		}
 	}
 
@@ -211,10 +209,9 @@ void HumanReadableMap16::from_map16::convert_BG_page(std::vector<Byte> map16_buf
 
 void HumanReadableMap16::from_map16::convert_tileset_group_specific_pages(std::vector<Byte> map16_buffer, unsigned int tileset_group_number,
 	size_t tiles_start_offset, size_t diagonal_pipes_offset) {
-	FILE* fp;
 	char filename[256];
-	sprintf_s(filename, "tileset_group_specific_tiles\\tileset_group_%X.txt", tileset_group_number);
-	fopen_s(&fp, filename, "w");
+	sprintf(filename, "tileset_group_specific_tiles\\tileset_group_%X.txt", tileset_group_number);
+	FILE* fp = fopen(filename, "w");
 
 	auto curr_tile_it = map16_buffer.begin() + tiles_start_offset + PAGE_SIZE * _16x16_BYTE_SIZE * 2 * tileset_group_number + _16x16_BYTE_SIZE * TILESET_GROUP_SPECIFIC_TILES.at(0);
 
@@ -229,7 +226,7 @@ void HumanReadableMap16::from_map16::convert_tileset_group_specific_pages(std::v
 		convert_to_file(fp, tile_number, tile1, tile2, tile3, tile4);
 
 		if (i != TILESET_GROUP_SPECIFIC_TILES.size() - 1) {
-			fprintf_s(fp, "\n");
+			fprintf(fp, "\n");
 		}
 
 		try {
@@ -252,7 +249,7 @@ void HumanReadableMap16::from_map16::convert_tileset_group_specific_pages(std::v
 			convert_to_file(fp, tile_number, tile1, tile2, tile3, tile4);
 
 			if (tile_number != DIAGONAL_PIPE_TILES.back()) {
-				fprintf_s(fp, "\n");
+				fprintf(fp, "\n");
 			}
 
 			diag_pipe_it += _16x16_BYTE_SIZE;
@@ -263,10 +260,9 @@ void HumanReadableMap16::from_map16::convert_tileset_group_specific_pages(std::v
 }
 
 void HumanReadableMap16::from_map16::convert_tileset_specific_page_2(std::vector<Byte> map16_buffer, unsigned int tileset_number, size_t tiles_start_offset) {
-	FILE* fp;
 	char filename[256];
-	sprintf_s(filename, "tileset_specific_tiles\\tileset_%X.txt", tileset_number);
-	fopen_s(&fp, filename, "w");
+	sprintf(filename, "tileset_specific_tiles\\tileset_%X.txt", tileset_number);
+	FILE* fp = fopen(filename, "w");
 
 	unsigned int base_tile_number = 0x200;
 
@@ -283,7 +279,7 @@ void HumanReadableMap16::from_map16::convert_tileset_specific_page_2(std::vector
 		convert_to_file(fp, tile_number, tile1, tile2, tile3, tile4);
 
 		if (i != PAGE_SIZE - 1) {
-			fprintf_s(fp, "\n");
+			fprintf(fp, "\n");
 		}
 
 		curr_tile_it += _16x16_BYTE_SIZE;
@@ -293,10 +289,9 @@ void HumanReadableMap16::from_map16::convert_tileset_specific_page_2(std::vector
 }
 
 void HumanReadableMap16::from_map16::convert_normal_pipe_tiles(std::vector<Byte> map16_buffer, unsigned int pipe_number, size_t normal_pipe_offset) {
-	FILE* fp;
 	char filename[256];
-	sprintf_s(filename, "pipe_tiles\\pipe_%X.txt", pipe_number);
-	fopen_s(&fp, filename, "w");
+	sprintf(filename, "pipe_tiles\\pipe_%X.txt", pipe_number);
+	FILE* fp = fopen(filename, "w");
 
 	auto curr_tile_it = map16_buffer.begin() + normal_pipe_offset + _16x16_BYTE_SIZE * 8 * pipe_number;
 
@@ -309,7 +304,7 @@ void HumanReadableMap16::from_map16::convert_normal_pipe_tiles(std::vector<Byte>
 		convert_to_file(fp, tile_number, tile1, tile2, tile3, tile4);
 
 		if (tile_number != NORMAL_PIPE_TILES.back()) {
-			fprintf_s(fp, "\n");
+			fprintf(fp, "\n");
 		}
 
 		curr_tile_it += _16x16_BYTE_SIZE;
@@ -321,10 +316,8 @@ void HumanReadableMap16::from_map16::convert_normal_pipe_tiles(std::vector<Byte>
 void HumanReadableMap16::from_map16::convert_first_two_non_tileset_specific(std::vector<Byte> map16_buffer,
 	size_t tileset_group_specific_offset, size_t acts_like_offset) {
 
-	FILE* fp1;
-	FILE* fp2;
-	fopen_s(&fp1, "global_pages\\FG_pages\\page_00.txt", "w");
-	fopen_s(&fp2, "global_pages\\FG_pages\\page_01.txt", "w");
+	FILE* fp1 = fopen("global_pages\\FG_pages\\page_00.txt", "w");
+	FILE* fp2 = fopen("global_pages\\FG_pages\\page_01.txt", "w");
 
 	std::unordered_set<_2Bytes> tileset_group_specific = std::unordered_set<_2Bytes>(TILESET_GROUP_SPECIFIC_TILES.begin(), TILESET_GROUP_SPECIFIC_TILES.end());
 
@@ -354,7 +347,7 @@ void HumanReadableMap16::from_map16::convert_first_two_non_tileset_specific(std:
 		}
 
 		if (i != (PAGE_SIZE * 2) - 1) {
-			fprintf_s(fp, "\n");
+			fprintf(fp, "\n");
 		}
 
 		curr_tile_it += _16x16_BYTE_SIZE;
@@ -366,8 +359,7 @@ void HumanReadableMap16::from_map16::convert_first_two_non_tileset_specific(std:
 }
 
 void HumanReadableMap16::from_map16::write_header_file(std::shared_ptr<Header> header, const fs::path header_path) {
-	FILE* fp;
-	fopen_s(&fp, header_path.string().c_str(), "w");
+	FILE* fp = fopen(header_path.string().c_str(), "w");
 
 	fprintf(
 		fp,
@@ -430,11 +422,12 @@ void HumanReadableMap16::from_map16::convert(const fs::path input_file, const fs
 	}
 
 	try {
+
 		fs::remove_all(output_path);
 		fs::create_directory(output_path);
-		_wchdir(output_path.c_str());
-
+		fs::current_path(output_path);
 		write_header_file(header, "header.txt");
+
 
 		fs::create_directory("global_pages");
 		fs::create_directory("global_pages\\FG_pages");

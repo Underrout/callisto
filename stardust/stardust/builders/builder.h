@@ -20,7 +20,6 @@
 #include "../insertables/external_tool.h"
 #include "../insertables/patch.h"
 #include "../insertables/globule.h"
-#include "../insertables/pixi.h"
 
 #include "../insertable.h"
 #include "../saver/saver.h"
@@ -60,6 +59,8 @@ namespace stardust {
 		static void generateGlobuleCallFile(const Configuration& config);
 
 		static void writeIfDifferent(const std::string& str, const fs::path& out_file);
+
+		static void removeBuildReport(const fs::path& project_root);
 
 	public:
 		virtual void build(const Configuration& config) = 0;
