@@ -52,7 +52,14 @@ namespace stardust {
 			));
 		}
 
-		std::unordered_set<ResourceDependency> dependencies{ static_dependencies.begin(), static_dependencies.end() };
+		std::unordered_set<ResourceDependency> dependencies{};
+		// little gross, but I need to do it like this because the files may have changed since when we
+		// created the initial dependency objects, should probably not use objects at first and just 
+		// do paths, but this is just how it is for now, I guess
+		for (const auto& static_dependency : static_dependencies) {
+			dependencies.insert(ResourceDependency(static_dependency.dependent_path));
+		}
+
 		const auto reported{ Insertable::extractDependenciesFromReport(dependency_report_file_path.value()) };
 
 		dependencies.insert(reported.begin(), reported.end());
