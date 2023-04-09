@@ -609,7 +609,13 @@ namespace stardust {
 				}))
 				| size(WIDTH, GREATER_THAN, 30);
 			});
-		return component;
+		return CatchEvent(component, [=](const Event& e) {
+			if (e == Event::Escape) {
+				show_modal = false;
+				return true;
+			}
+			return false;
+		});
 	}
 
 	Component TUI::getChoiceModal() {
@@ -632,7 +638,7 @@ namespace stardust {
 				choice_yes_func();
 				return true;
 			}
-			else if (e == Event::Character('n')) {
+			else if (e == Event::Character('n') || e == Event::Escape) {
 				show_choice_modal = false;
 				choice_no_func();
 				return true;
