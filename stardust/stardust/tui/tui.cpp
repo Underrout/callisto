@@ -76,14 +76,14 @@ namespace stardust {
 
 	void TUI::setMainMenu() {
 		main_menu_component = Container::Vertical({
-			getConfigOnlyButton("Rebuild ROM (R)", [=] { rebuildButton(); }),
-			getConfigOnlyButton("Quickbuild ROM (Q)", [=] { quickbuildButton(); }),
-			getRomOnlyButton("Package ROM (P)", [=] { packageButton(); }),
+			getConfigOnlyButton("Rebuild (R)", [=] { rebuildButton(); }),
+			getConfigOnlyButton("Quickbuild (Q)", [=] { quickbuildButton(); }),
+			getRomOnlyButton("Package (P)", [=] { packageButton(); }),
 
 			Renderer([] { return separator(); }),
 
-			getRomOnlyButton("Save ROM (S)", [=] { saveButton(); }, true),
-			getRomOnlyButton("Edit ROM (E)", [=] { editButton(); }),
+			getRomOnlyButton("Save (S)", [=] { saveButton(); }, true),
+			getRomOnlyButton("Edit (E)", [=] { editButton(); }),
 
 			Renderer([] { return separator(); }),
 
