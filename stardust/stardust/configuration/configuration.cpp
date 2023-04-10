@@ -370,6 +370,8 @@ namespace stardust {
 		trySet(temporary_rom, config_file, level, root, user_variables);
 		trySet(bps_package, config_file, level, root, user_variables);
 
+		trySet(level_import_flag, config_file, level, user_variables);
+
 		trySet(check_conflicts, config_file, level, user_variables);
 		trySet(conflict_log_file, config_file, level, root, user_variables);
 
@@ -552,19 +554,7 @@ namespace stardust {
 			return {};
 		}
 		else if (symbol == "Levels") {
-			if (levels.isSet() && fs::exists(levels.getOrThrow())) {
-				std::vector<Descriptor> level_descriptors{};
-
-				for (const auto& entry : fs::directory_iterator(levels.getOrThrow())) {
-					if (entry.path().extension() == ".mwl") {
-						level_descriptors.emplace_back(Symbol::LEVEL, entry.path().string());
-					}
-				}
-				return level_descriptors;
-			}
-			else {
-				return {};
-			}
+			return { Descriptor(Symbol::LEVELS) };
 		}
 		else {
 			if (isValidPatchSymbol(PathUtil::normalize(symbol, project_root.getOrThrow()))) {

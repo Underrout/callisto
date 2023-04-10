@@ -14,7 +14,7 @@
 #include "../insertables/global_exanimation.h"
 #include "../insertables/credits.h"
 #include "../insertables/title_moves.h"
-#include "../insertables/level.h"
+#include "../insertables/levels.h"
 #include "../insertables/binary_map16.h"
 #include "../insertables/text_map16.h"
 #include "../insertables/external_tool.h"

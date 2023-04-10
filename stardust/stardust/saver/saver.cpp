@@ -10,7 +10,7 @@ namespace stardust {
 		{ ExtractableType::GLOBAL_EX_ANIMATION, Symbol::GLOBAL_EX_ANIMATION },
 		{ ExtractableType::OVERWORLD, Symbol::OVERWORLD },
 		{ ExtractableType::TITLE_SCREEN, Symbol::TITLE_SCREEN },
-		{ ExtractableType::LEVELS, Symbol::LEVEL},
+		{ ExtractableType::LEVELS, Symbol::LEVELS},
 		{ ExtractableType::SHARED_PALETTES, Symbol::SHARED_PALETTES }
 	};
 
