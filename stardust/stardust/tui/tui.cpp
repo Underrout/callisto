@@ -520,6 +520,10 @@ namespace stardust {
 
 	Component TUI::wrapMenuInEventCatcher(Component full_menu) {
 		return CatchEvent(full_menu, [&](Event event) {
+			if (event.is_mouse()) {
+				return true;
+			}
+
 			if (event == Event::Escape) {
 				exit(0);
 				return true;
