@@ -32,7 +32,7 @@ namespace stardust {
 		static constexpr auto GRAPHICS_IMPORT_COMMAND{ "-ImportGFX" };
 		static constexpr auto EX_GRAPHICS_IMPORT_COMMAND{ "-ImportExGFX" };
 
-		static void exportResources(const Configuration& config, const fs::path& rom_path, bool exgfx);
+		static void exportResources(const Configuration& config, const fs::path& rom_path, bool exgfx, bool keep_symlink);
 		static void importResources(const Configuration& config, const fs::path& rom_path, bool exgfx);
 
 		static inline std::string getImportCommand(bool exgfx) {
@@ -110,7 +110,7 @@ namespace stardust {
 		static void importProjectGraphicsInto(const Configuration& config, const fs::path& rom_path);
 		static void importProjectExGraphicsInto(const Configuration& config, const fs::path& rom_path);
 
-		static void exportProjectGraphicsFrom(const Configuration& config, const fs::path& rom_path);
-		static void exportProjectExGraphicsFrom(const Configuration& config, const fs::path& rom_path);
+		static void exportProjectGraphicsFrom(const Configuration& config, const fs::path& rom_path, bool keep_symlink = true);
+		static void exportProjectExGraphicsFrom(const Configuration& config, const fs::path& rom_path, bool keep_symlink = true);
 	};
 }

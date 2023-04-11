@@ -1,7 +1,7 @@
 #include "graphics_util.h"
 
 namespace stardust {
-	void GraphicsUtil::exportResources(const Configuration& config, const fs::path& rom_path, bool exgfx) {
+	void GraphicsUtil::exportResources(const Configuration& config, const fs::path& rom_path, bool exgfx, bool keep_symlink) {
 		const auto final_output_path{ getExportFolderPath(config, exgfx) };
 		const auto intermediate_output_path{ 
 			getLunarMagicFolderPath(rom_path, exgfx) };
@@ -15,6 +15,10 @@ namespace stardust {
 		const auto command{ getExportCommand(exgfx) };
 		const auto exit_code{ callLunarMagic(config, getExportCommand(exgfx),
 			rom_path.string()) };
+
+		if (!keep_symlink) {
+			deleteSymlink(intermediate_output_path);
+		}
 
 		if (exit_code != 0) {
 			throw ExtractionException(fmt::format("Failed to export {} from ROM {} to {}",
@@ -59,11 +63,11 @@ namespace stardust {
 		importResources(config, rom_path, true);
 	}
 
-	void GraphicsUtil::exportProjectGraphicsFrom(const Configuration& config, const fs::path& rom_path) {
-		exportResources(config, rom_path, false);
+	void GraphicsUtil::exportProjectGraphicsFrom(const Configuration& config, const fs::path& rom_path, bool keep_symlink) {
+		exportResources(config, rom_path, false, keep_symlink);
 	}
 
-	void GraphicsUtil::exportProjectExGraphicsFrom(const Configuration& config, const fs::path& rom_path) {
-		exportResources(config, rom_path, true);
+	void GraphicsUtil::exportProjectExGraphicsFrom(const Configuration& config, const fs::path& rom_path, bool keep_symlink) {
+		exportResources(config, rom_path, true, keep_symlink);
 	}
 }

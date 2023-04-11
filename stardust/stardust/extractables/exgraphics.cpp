@@ -8,8 +8,10 @@ namespace stardust {
 		void ExGraphics::extract() {
 			spdlog::info("Exporting ExGraphics");
 
+			const auto keep_symlink{ extracting_rom == config.project_rom.getOrThrow() };
+
 			try {
-				GraphicsUtil::exportProjectExGraphicsFrom(config, extracting_rom);
+				GraphicsUtil::exportProjectExGraphicsFrom(config, extracting_rom, keep_symlink);
 			}
 			catch (const std::exception&) {
 				throw ExtractionException(fmt::format(
