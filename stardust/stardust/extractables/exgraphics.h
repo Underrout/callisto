@@ -8,6 +8,7 @@
 
 #include "lunar_magic_extractable.h"
 #include "extraction_exception.h"
+#include "../graphics_util.h"
 #include "../not_found_exception.h"
 
 #include "../configuration/configuration.h"
@@ -19,10 +20,7 @@ namespace stardust {
 	namespace extractables {
 		class ExGraphics : public LunarMagicExtractable {
 		protected:
-			static constexpr auto EXGRAPHICS_FOLDER_NAME = "ExGraphics";
-
-			const fs::path source_exgraphics_folder;
-			const fs::path target_exgraphics_folder;
+			const Configuration& config;
 
 		public:
 			void extract() override;

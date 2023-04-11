@@ -106,6 +106,8 @@ namespace stardust {
 		StringConfigVariable lunar_magic_level_import_flags{ {"tools", "LunarMagic", "level_import_flags"} };
 
 		PathConfigVariable initial_patch{ {"resources", "initial_patch"} };
+		PathConfigVariable graphics{ {"resources", "graphics"} };
+		PathConfigVariable ex_graphics{ {"resources", "ex_graphics"} };
 		PathConfigVariable levels{ {"resources", "levels"} };
 		PathConfigVariable shared_palettes{ {"resources", "shared_palettes"} };
 		PathConfigVariable map16{ {"resources", "map16"} };

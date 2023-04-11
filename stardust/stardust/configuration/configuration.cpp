@@ -381,6 +381,8 @@ namespace stardust {
 		trySet(lunar_magic_level_import_flags, config_file, level, user_variables);
 
 		trySet(initial_patch, config_file, level, root, user_variables);
+		trySet(graphics, config_file, level, root, user_variables);
+		trySet(ex_graphics, config_file, level, root, user_variables);
 		trySet(levels, config_file, level, root, user_variables);
 		trySet(shared_palettes, config_file, level, root, user_variables);
 		trySet(map16, config_file, level, root, user_variables);
