@@ -29,6 +29,19 @@ namespace stardust {
 	void Levels::insert() {
 		spdlog::info("Inserting levels");
 
+		bool at_least_one_level{ false };
+		for (const auto& entry : fs::directory_iterator(levels_folder)) {
+			if (entry.path().extension() == ".mwl") {
+				at_least_one_level = true;
+				break;
+			}
+		}
+
+		if (!at_least_one_level) {
+			spdlog::info("No levels to insert, skipping level insertion");
+			return;
+		}
+
 		int exit_code;
 
 		if (import_flag.has_value()) {
