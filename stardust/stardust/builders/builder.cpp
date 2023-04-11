@@ -47,6 +47,9 @@ namespace stardust {
 		else if (symbol == Symbol::GLOBAL_EX_ANIMATION) {
 			return std::make_shared<GlobalExAnimation>(config);
 		}
+		else if (symbol == Symbol::LEVELS) {
+			return std::make_shared<Levels>(config);
+		}
 		else if (symbol == Symbol::PATCH) {
 			std::vector<fs::path> include_paths{ PathUtil::getStardustDirectoryPath(config.project_root.getOrThrow()) };
 
@@ -75,12 +78,6 @@ namespace stardust {
 				name.value(),
 				config,
 				tool_config
-			);
-		}
-		else if (symbol == Symbol::LEVEL) {
-			return std::make_shared<Level>(
-				config,
-				name.value()
 			);
 		}
 		else {

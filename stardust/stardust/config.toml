@@ -80,7 +80,7 @@ executable = "pixi.exe"
 
 # Options to pass to the tool, by default, the path to the temporary
 # ROM is passed to the tool right after these
-options = "-l Tools/PIXI/list.txt"
+options = "-l tools/pixi/list.txt"
 
 # Uncomment to not pass path to temporary ROM to the tool
 # pass_rom = false
@@ -152,7 +152,15 @@ static_dependencies = [
 	{ path = "list.txt"}, 
 	{ path = "asar.dll", policy = "rebuild" }, 
 	{ path = "library" }, 
-	{ path = "routines" }
+	{ path = "routines" },
+
+# Maybe try uncommenting this if you're using UberASM < 2.0
+# and wanna try Quickbuild
+    # { path = "asm/base" },
+    # { path = "gamemode" },
+    # { path = "level" },
+    # { path = "other" },
+    # { path = "overworld" },
 ]
 dependency_report_file = ".dependencies"
 
@@ -194,6 +202,15 @@ titlescreen = "resources/titlescreen.bps"
 credits = "resources/credits.bps"
 global_exanimation = "resources/global_exanimation.bps"
 
+# Two new variables that can be used to keep your graphics
+# folders in places other than next to the built ROM
+# Symlinks are created between these folders and the 
+# folders Lunar Magic expects next to the ROM, so 
+# importing/exporting graphics manually in Lunar Magic
+# should still work fine
+graphics = "resources/graphics"
+ex_graphics = "resources/ex_graphics"
+
 patches = [
 	# "patches/some_patch.asm",
 	# "patches/etc.asm"
@@ -226,5 +243,5 @@ build_order = [
     "AddMusicK",                # Insert custom music
     "UberASM",                  # Insert UberASM code
 
-  	"patches/some_patch.asm",   # Example of inserting a specific patch at a specific point
+  	# "patches/some_patch.asm",   # Example of inserting a specific patch at a specific point
 ]

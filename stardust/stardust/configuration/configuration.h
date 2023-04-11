@@ -88,6 +88,7 @@ namespace stardust {
 
 		StringConfigVariable config_name{ {"settings", "config_name"} };
 		PathConfigVariable project_root{ {"settings", "project_root"} };
+		StringConfigVariable level_import_flag{ {"settings", "level_import_flag"} };
 		StringConfigVariable rom_size{ {"settings", "rom_size"} };
 		BoolConfigVariable use_text_map16_format{ {"settings", "use_text_map16_format"} };
 		PathConfigVariable log_file{ {"settings", "log_file"} };
@@ -105,6 +106,8 @@ namespace stardust {
 		StringConfigVariable lunar_magic_level_import_flags{ {"tools", "LunarMagic", "level_import_flags"} };
 
 		PathConfigVariable initial_patch{ {"resources", "initial_patch"} };
+		PathConfigVariable graphics{ {"resources", "graphics"} };
+		PathConfigVariable ex_graphics{ {"resources", "ex_graphics"} };
 		PathConfigVariable levels{ {"resources", "levels"} };
 		PathConfigVariable shared_palettes{ {"resources", "shared_palettes"} };
 		PathConfigVariable map16{ {"resources", "map16"} };

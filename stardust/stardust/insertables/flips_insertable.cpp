@@ -5,8 +5,18 @@ namespace stardust {
 		: LunarMagicInsertable(config), 
 		flips_path(registerConfigurationDependency(config.flips_path).getOrThrow()), 
 		clean_rom_path(registerConfigurationDependency(config.clean_rom).getOrThrow()), 
-		bps_patch_path(registerConfigurationDependency(bps_patch_path).getOrThrow())
+		bps_patch_path(registerConfigurationDependency(bps_patch_path).getOrThrow()),
+		config(config)
 	{
+		for (const auto& descriptor : config.build_order) {
+			if (descriptor.symbol == Symbol::GRAPHICS) {
+				needs_gfx = true;
+			}
+			if (descriptor.symbol == Symbol::EX_GRAPHICS) {
+				needs_exgfx = true;
+			}
+		}
+
 		if (!fs::exists(flips_path)) {
 			throw ToolNotFoundException(fmt::format(
 				"FLIPS not found at {}",
@@ -49,6 +59,14 @@ namespace stardust {
 		));
 		int exit_code{ bp::system(flips_path.string(), "--apply", bps_path.string(),
 			clean_rom_path.string(), output_rom_path.string()) };
+
+		if (needs_gfx) {
+			GraphicsUtil::importProjectGraphicsInto(config, output_rom_path);
+		}
+
+		if (needs_exgfx) {
+			GraphicsUtil::importProjectExGraphicsInto(config, output_rom_path);
+		}
 
 		if (exit_code == 0) {
 			spdlog::debug(fmt::format("Successfully patched to {}", output_rom_path.string()));

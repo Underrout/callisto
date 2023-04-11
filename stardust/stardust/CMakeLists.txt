@@ -14,6 +14,10 @@ add_definitions(-DSTARDUST_VERSION_MAJOR=${VERSION_MAJOR})
 add_definitions(-DSTARDUST_VERSION_MINOR=${VERSION_MINOR})
 add_definitions(-DSTARDUST_VERSION_PATCH=${VERSION_PATCH})
 
+set(STARDUST_LINK_OPTIONS "")
+set(STARDUST_COMPILE_OPTIONS "")
+set(STARDUST_COMPILE_DEFINITIONS "")
+
 set(RC_CONTENTS "1 ICON \"stardust.ico\" 
 1 VERSIONINFO 
       FILEVERSION     ${VERSION_MAJOR}, ${VERSION_MINOR}, ${VERSION_PATCH}, 0
@@ -56,15 +60,19 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(asar)
 set_target_properties(asar PROPERTIES CXX_STANDARD 14)
 
-add_executable (stardust "stardust.rc" "stardust.cpp" "stardust.h" "insertable.h" 
+set(STARDUST_SOURCE_FILES "")
+
+list(APPEND STARDUST_SOURCE_FILES
+"stardust.rc" "stardust.cpp" "stardust.h" "insertable.h" 
 "stardust_exception.h" "insertion_exception.h"  
  "insertables/exgraphics.h" "insertables/exgraphics.cpp"
   "insertables/graphics.h" "insertables/graphics.cpp" 
 "not_found_exception.h" "insertables/lunar_magic_insertable.h" "insertables/lunar_magic_insertable.cpp" 
+"insertables/levels.cpp" "insertables/levels.h"  
 "insertables/rom_insertable.h" "insertables/shared_palettes.h" "insertables/shared_palettes.cpp" 
 "insertables/flips_insertable.h" "insertables/flips_insertable.cpp" "insertables/overworld.h" 
  "insertables/title_screen.h"  "insertables/global_exanimation.h" "insertables/credits.h" 
- "insertables/title_moves.h" "insertables/title_moves.cpp" "insertables/level.h" "insertables/level.cpp" 
+ "insertables/title_moves.h" "insertables/title_moves.cpp"   
  "insertables/binary_map16.h" "insertables/binary_map16.cpp" "insertables/text_map16.h" "insertables/text_map16.cpp" 
     "insertables/external_tool.h" "insertables/external_tool.cpp" "insertables/patch.h" "insertables/patch.cpp"
 "configuration/config_exception.h" "configuration/config_variable.cpp" "configuration/config_variable.h" "configuration/configuration.h"
@@ -73,7 +81,23 @@ add_executable (stardust "stardust.rc" "stardust.cpp" "stardust.h" "insertable.h
 "human_map16/arrays.h" "human_map16/data_error.h" "human_map16/filesystem_error.h" "human_map16/from_map16.cpp"
 "human_map16/header_error.h" "human_map16/human_map16_exception.h" "human_map16/human_readable_map16.cpp" "human_map16/human_readable_map16.h"
 "human_map16/tile_error.h" "human_map16/tile_format.h" "human_map16/to_map16.cpp"  "insertables/initial_patch.h" "insertables/initial_patch.cpp" "dependency/policy.h" "builders/quick_builder.h"  "builders/quick_builder.cpp" "builders/must_rebuild_exception.h" "saver/extractable_type.h" "extractables/lunar_magic_extractable.h" "extractables/lunar_magic_extractable.cpp" "extractables/flips_extractable.h" "extractables/flips_extractable.cpp" "extractables/extraction_exception.h" "extractables/global_exanimation.h" "extractables/credits.h" "extractables/overworld.h" "extractables/shared_palettes.h" "extractables/shared_palettes.cpp" "extractables/binary_map16.h" "extractables/binary_map16.cpp" "extractables/text_map16.h" "extractables/text_map16.cpp" "extractables/levels.h" "extractables/levels.cpp" "extractables/level.h" "extractables/level.cpp" "saver/extractable_type.h" "saver/saver.h" "saver/marker.cpp" "saver/saver.cpp" "emulators/emulators.h" "emulators/emulators.cpp" "tui/tui.h" "tui/tui.cpp" "extractables/exgraphics.cpp" "extractables/exgraphics.h" "extractables/graphics.cpp" "extractables/graphics.h"
-"${asar_SOURCE_DIR}/src/asar-dll-bindings/c/asardll.c" "${asar_SOURCE_DIR}/src/asar-dll-bindings/c/asardll.h")
+"${asar_SOURCE_DIR}/src/asar-dll-bindings/c/asardll.c" "${asar_SOURCE_DIR}/src/asar-dll-bindings/c/asardll.h" "graphics_util.h" "graphics_util.cpp")
+
+if (MSVC) 
+  list(APPEND STARDUST_SOURCE_FILES
+    "junction/libntfslinks/include/CharUtils.h"
+    "junction/libntfslinks/include/Junction.h"
+    "junction/libntfslinks/include/ntfstypes.h"
+    "junction/libntfslinks/include/StringUtils.h"
+    "junction/libntfslinks/source/StringUtils.cpp"
+    "junction/libntfslinks/source/Junction.cpp"
+    "junction/libntfslinks/source/CharUtils.cpp")
+endif()
+
+add_executable (stardust ${STARDUST_SOURCE_FILES})
+target_link_options(stardust PRIVATE ${STARDUST_LINK_OPTIONS})
+target_compile_options(stardust PRIVATE ${STARDUST_COMPILE_OPTIONS})
+target_compile_definitions(stardust PRIVATE ${STARDUST_COMPILE_DEFINITIONS})
 
 target_include_directories(stardust PUBLIC ${asar_SOURCE_DIR}/src)
 

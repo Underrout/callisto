@@ -76,14 +76,14 @@ namespace stardust {
 
 	void TUI::setMainMenu() {
 		main_menu_component = Container::Vertical({
-			getConfigOnlyButton("Rebuild ROM (R)", [=] { rebuildButton(); }),
-			getConfigOnlyButton("Quickbuild ROM (Q)", [=] { quickbuildButton(); }),
-			getRomOnlyButton("Package ROM (P)", [=] { packageButton(); }),
+			getConfigOnlyButton("Rebuild (R)", [=] { rebuildButton(); }),
+			getConfigOnlyButton("Quickbuild (Q)", [=] { quickbuildButton(); }),
+			getRomOnlyButton("Package (P)", [=] { packageButton(); }),
 
 			Renderer([] { return separator(); }),
 
-			getRomOnlyButton("Save ROM (S)", [=] { saveButton(); }, true),
-			getRomOnlyButton("Edit ROM (E)", [=] { editButton(); }),
+			getRomOnlyButton("Save (S)", [=] { saveButton(); }, true),
+			getRomOnlyButton("Edit (E)", [=] { editButton(); }),
 
 			Renderer([] { return separator(); }),
 
@@ -110,7 +110,7 @@ namespace stardust {
 			Button("Exit (ESC)", [] { exit(0); }, ButtonOption::Ascii())
 			}, &selected_main_menu_entry);
 
-		const auto window_title{ fmt::format("stardust v{}.{}.{}a", STARDUST_VERSION_MAJOR, STARDUST_VERSION_MINOR, STARDUST_VERSION_PATCH) };
+		const auto window_title{ fmt::format("stardust v{}.{}.{}b", STARDUST_VERSION_MAJOR, STARDUST_VERSION_MINOR, STARDUST_VERSION_PATCH) };
 		main_menu = Renderer(main_menu_component, [=] { return window(text(window_title), main_menu_component->Render()); });
 	}
 
@@ -520,6 +520,10 @@ namespace stardust {
 
 	Component TUI::wrapMenuInEventCatcher(Component full_menu) {
 		return CatchEvent(full_menu, [&](Event event) {
+			if (event.is_mouse()) {
+				return true;
+			}
+
 			if (event == Event::Escape) {
 				exit(0);
 				return true;

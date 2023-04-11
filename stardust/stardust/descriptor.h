@@ -72,8 +72,8 @@ namespace stardust {
 				return "Credits";
 			case Symbol::GLOBAL_EX_ANIMATION:
 				return "Global ExAnimation";
-			case Symbol::LEVEL:
-				return fmt::format("Level ({})", fs::relative(name.value(), project_root).string());
+			case Symbol::LEVELS:
+				return "Levels";
 			case Symbol::PATCH:
 				return fmt::format("Patch ({})", fs::relative(name.value(), project_root).string());
 			case Symbol::GLOBULE:

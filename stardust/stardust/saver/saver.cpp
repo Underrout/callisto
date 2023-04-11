@@ -10,7 +10,7 @@ namespace stardust {
 		{ ExtractableType::GLOBAL_EX_ANIMATION, Symbol::GLOBAL_EX_ANIMATION },
 		{ ExtractableType::OVERWORLD, Symbol::OVERWORLD },
 		{ ExtractableType::TITLE_SCREEN, Symbol::TITLE_SCREEN },
-		{ ExtractableType::LEVELS, Symbol::LEVEL},
+		{ ExtractableType::LEVELS, Symbol::LEVELS},
 		{ ExtractableType::SHARED_PALETTES, Symbol::SHARED_PALETTES }
 	};
 
@@ -59,18 +59,30 @@ namespace stardust {
 				}
 				if (descriptor.symbol == Symbol::GRAPHICS && !graphics_seen) {
 					graphics_seen = true;
-					const auto graphics_folder{ config.project_rom.getOrThrow().parent_path() / "Graphics" };
+					const auto graphics_folder{ GraphicsUtil::getExportFolderPath(config, false) };
 					if (!fs::exists(graphics_folder)) {
 						// only extract graphics if there is no graphics folder, otherwise, assume that the graphics in the folder
 						// may be more up to date than the ones in the ROM and shouldn't be overwritten
 						extractables.push_back(ExtractableType::GRAPHICS);
 					}
+					else {
+						const auto link{ GraphicsUtil::getLunarMagicFolderPath(config.project_rom.getOrThrow(), false) };
+						if (!fs::exists(link)) {
+							GraphicsUtil::createSymlink(link, graphics_folder);
+						}
+					}
 				}
 				else if (descriptor.symbol == Symbol::EX_GRAPHICS && !exgraphics_seen) {
 					exgraphics_seen = true;
-					const auto exgraphics_folder{ config.project_rom.getOrThrow().parent_path() / "ExGraphics" };
+					const auto exgraphics_folder{ GraphicsUtil::getExportFolderPath(config, true) };
 					if (!fs::exists(exgraphics_folder)) {
 						extractables.push_back(ExtractableType::EX_GRAPHICS);
+					}
+					else {
+						const auto link{ GraphicsUtil::getLunarMagicFolderPath(config.project_rom.getOrThrow(), true) };
+						if (!fs::exists(link)) {
+							GraphicsUtil::createSymlink(link, exgraphics_folder);
+						}
 					}
 				}
 			}

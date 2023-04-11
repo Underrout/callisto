@@ -13,6 +13,8 @@
 #include "../insertion_exception.h"
 #include "rom_insertable.h"
 
+#include "../graphics_util.h"
+
 #include "../configuration/configuration.h"
 #include "../dependency/policy.h"
 
@@ -25,6 +27,11 @@ namespace stardust {
 		const fs::path flips_path;
 		const fs::path clean_rom_path;
 		const fs::path bps_patch_path;
+
+		const Configuration& config;
+
+		bool needs_exgfx{ false };
+		bool needs_gfx{ false };
 
 		fs::path getTemporaryPatchedRomPath() const;
 		fs::path createTemporaryPatchedRom() const;

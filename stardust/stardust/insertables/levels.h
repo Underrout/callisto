@@ -1,6 +1,7 @@
 #pragma once
 
 #include <filesystem>
+#include <optional>
 
 #include <fmt/core.h>
 
@@ -16,15 +17,16 @@
 namespace fs = std::filesystem;
 
 namespace stardust {
-	class Level : public LunarMagicInsertable {
+	class Levels : public LunarMagicInsertable {
 	protected:
-		const fs::path mwl_file;
+		const fs::path levels_folder;
+		std::optional<std::string> import_flag;
 
 		std::unordered_set<ResourceDependency> determineDependencies() override;
 
 	public:
 		void insert() override;
 
-		Level(const Configuration& config, const fs::path& mwl_file);
+		Levels(const Configuration& config);
 	};
 }
