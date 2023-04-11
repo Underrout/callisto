@@ -26,11 +26,14 @@ namespace stardust {
 
 		const fs::path patch_path;
 		std::vector<const char*> additional_include_paths;
+		std::vector<std::pair<size_t, size_t>> hijacks{};
 
 		std::unordered_set<ResourceDependency> determineDependencies() override;
 
 	public:
 		const fs::path project_relative_path;
+
+		const std::vector<std::pair<size_t, size_t>>& getHijacks() const;
 
 		Patch(const Configuration& config,
 			const fs::path& patch_path, const std::vector<fs::path>& additional_include_paths = {});

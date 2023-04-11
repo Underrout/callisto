@@ -105,6 +105,17 @@ namespace stardust {
 			std::ofstream out_rom{ temporary_rom_path, std::ios::out | std::ios::binary };
 			out_rom.write(rom_bytes.data(), rom_bytes.size());
 			out_rom.close();
+
+			int written_block_count;
+			const auto written_blocks{ asar_getwrittenblocks(&written_block_count) };
+
+			for (size_t i{ 0 }; i != written_block_count; ++i) {
+				const auto& block{ written_blocks[i] };
+				if (block.pcoffset < 0x80000) {
+					hijacks.push_back({ block.pcoffset, block.numbytes });
+				}
+			}
+
 			spdlog::info(fmt::format("Successfully applied patch {}!", project_relative_path.string()));
 		}
 		else {
@@ -124,6 +135,10 @@ namespace stardust {
 				error_string.str()
 			));
 		}
+	}
+
+	const std::vector<std::pair<size_t, size_t>>& Patch::getHijacks() const {
+		return hijacks;
 	}
 
 	std::unordered_set<ResourceDependency> Patch::determineDependencies() {
