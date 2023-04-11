@@ -27,6 +27,9 @@ namespace stardust {
 		static void cleanGlobule(const fs::path& globule_source_path, const fs::path& temporary_rom_path, const fs::path& project_root);
 		static void copyGlobule(const fs::path& globule_source_path, const fs::path& project_root);
 
+		static bool hijacksGoneBad(const std::vector<std::pair<size_t, size_t>>& old_hijacks, 
+			const std::vector<std::pair<size_t, size_t>>& new_hijacks);
+
 	public:
 		void build(const Configuration& config) override;
 
