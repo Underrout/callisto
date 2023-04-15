@@ -13,7 +13,6 @@
 #include <spdlog/spdlog.h>
 #include <toml.hpp>
 #include <fmt/core.h>
-#include <platform_folders.h>
 
 #include "configuration.h"
 #include "configuration_level.h"

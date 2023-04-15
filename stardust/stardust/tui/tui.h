@@ -34,6 +34,8 @@
 #include "../builders/quick_builder.h"
 #include "../saver/saver.h"
 
+#include "../recent_projects/recent_projects_manager.h"
+
 #include "../path_util.h"
 
 using namespace ftxui;
@@ -44,9 +46,12 @@ namespace bp = boost::process;
 namespace stardust {
 	class TUI {
 	protected:
+		RecentProjectsManager recent_projects;
+
 		ConfigurationManager config_manager;
 		std::shared_ptr<Configuration> config;
 		const fs::path stardust_directory;
+		const fs::path stardust_executable;
 		
 		bool anything_on_command_line{ false };
 
@@ -157,9 +162,11 @@ namespace stardust {
 			return vbox(std::move(lines));
 		}
 
+		void updateRecentProjects();
+
 	public:
 		void run();
 
-		TUI(const fs::path& stardust_directory);
+		TUI(const fs::path& stardust_executable);
 	};
 }

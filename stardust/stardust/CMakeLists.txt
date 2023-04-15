@@ -94,7 +94,7 @@ if (MSVC)
     "junction/libntfslinks/source/CharUtils.cpp")
 endif()
 
-add_executable (stardust ${STARDUST_SOURCE_FILES})
+add_executable (stardust ${STARDUST_SOURCE_FILES} "recent_projects/recent_projects_manager.h")
 target_link_options(stardust PRIVATE ${STARDUST_LINK_OPTIONS})
 target_compile_options(stardust PRIVATE ${STARDUST_COMPILE_OPTIONS})
 target_compile_definitions(stardust PRIVATE ${STARDUST_COMPILE_DEFINITIONS})

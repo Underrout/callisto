@@ -5,7 +5,7 @@ namespace stardust {
 		stardust_root(stardust_directory) {
 
 		// ensure our settings folder exists
-		fs::create_directories(fs::path(sago::getConfigHome()) / USER_SETTINGS_FOLDER_NAME);
+		fs::create_directories(PathUtil::getUserSettingsPath());
 	}
 
 	std::vector<std::string> ConfigurationManager::getProfileNames() const {

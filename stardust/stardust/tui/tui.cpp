@@ -1,7 +1,8 @@
 #include "tui.h"
 
 namespace stardust {
-	TUI::TUI(const fs::path& stardust_directory) : config_manager(stardust_directory), stardust_directory(stardust_directory),
+	TUI::TUI(const fs::path& stardust_executable) : stardust_executable(stardust_executable), 
+		stardust_directory(stardust_executable.parent_path()), config_manager(stardust_executable.parent_path()),
 		screen(ScreenInteractive::Fullscreen())
 	{
 		screen.SetCursor(ftxui::Screen::Cursor{ .shape = ftxui::Screen::Cursor::Shape::Hidden });
@@ -246,6 +247,8 @@ namespace stardust {
 			config = nullptr;
 			throw;
 		}
+
+		updateRecentProjects();
 	}
 
 	void TUI::trySetConfiguration() {
@@ -649,6 +652,18 @@ namespace stardust {
 			}
 		return false;
 			});
+	}
+
+	void TUI::updateRecentProjects() {
+		try {
+			if (config != nullptr) {
+				recent_projects.update(config->project_root.getOrThrow(), stardust_executable);
+			}
+		}
+		catch (const std::exception&) {
+			// pass, no big deal if we can't update recent projects for some reason,
+			// no need to show a modal or anything I think
+		}
 	}
 
 	void TUI::showChoiceModal(const std::string& new_title, const std::string& new_text,
