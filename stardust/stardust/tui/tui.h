@@ -96,6 +96,11 @@ namespace stardust {
 		void showChoiceModal(const std::string& new_title, const std::string& new_text,
 			std::function<void()> yes_function, std::function<void()> no_function);
 
+		bool show_recent_projects_modal{ false };
+		Component projects_modal;
+		Component setRecentProjectsModal(bool exit_button);
+		void updateProjectsModal();
+
 		std::optional<std::string> getLastConfigName(const fs::path& stardust_directory) const;
 		void setConfiguration(const std::optional<std::string>& profile_name, const fs::path& stardust_directory);
 		void trySetConfiguration();
@@ -163,6 +168,8 @@ namespace stardust {
 		}
 
 		void updateRecentProjects();
+
+		void launchRecentProject(const Project& project);
 
 	public:
 		void run();

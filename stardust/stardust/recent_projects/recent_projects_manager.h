@@ -119,7 +119,6 @@ namespace stardust {
 					for (const auto& entry : j) {
 						projects.push_back(Project(entry));
 					}
-					std::reverse(projects.begin(), projects.end());
 				}
 				catch (const std::exception&) {
 					throw std::runtime_error("Failed to read recent projects file, resetting recent projects list");
