@@ -78,17 +78,15 @@ namespace stardust {
 	void TUI::setMainMenu() {
 		main_menu_component = Container::Vertical({
 			Container::Horizontal({
-				Renderer([] { return text(" Current project: "); }),
-				Renderer([] { return separator(); }),
 				Renderer([=] { 
 					if (config != nullptr && config->project_root.isSet()) {
 						return text(
 							" " + config->project_root.getOrThrow().stem().string() +
 							" (" + config->project_root.getOrThrow().string() + ") "
-						);
+						) | bold;
 					}
 					else {
-						return text(" - ");
+						return text(" - ") | bold;
 					}
 				}),
 			}),
@@ -234,17 +232,33 @@ namespace stardust {
 			emulators = Emulators(*config);
 			emulator_names = emulators.getEmulatorNames();
 		}
+		else if (profile_names.empty()) {
+			bool any_project_config_files{ false };
+
+			const auto config_files{ config_manager.getConfigFilesToParse(std::nullopt) };
+
+			if (!config_files.contains(ConfigurationLevel::PROJECT) && !config_files.contains(ConfigurationLevel::PROFILE)) {
+				// No project or profile config files found, show recent projects menu only
+				show_recent_projects_modal = true;
+				Component recent_projects{ Container::Vertical({ 
+					Container::Horizontal({ setRecentProjectsModal(true), Renderer([] { return filler(); }) }),
+					Renderer([] { return filler(); }) 
+				}) };
+				screen.Loop(recent_projects);
+				return;
+			}
+		}
 
 		setMainMenu();
 		setEmulatorMenu();
 		setProfileMenu();
 
-		Component full_menu{ Container::Horizontal({
-			main_menu | size(HEIGHT, EQUAL, 16) | size(WIDTH, GREATER_THAN, 40),
+		Component full_menu{ Container::Vertical({ Container::Horizontal({
+			main_menu | size(WIDTH, GREATER_THAN, 40),
 			Container::Vertical({
 				profile_menu, emulator_menu
-			})
-		}) };
+			}),
+		}), Renderer([] { return filler(); }) }) };
 
 		full_menu = wrapMenuInEventCatcher(full_menu);
 

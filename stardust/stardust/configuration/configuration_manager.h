@@ -25,14 +25,16 @@ namespace stardust {
 	private:
 		static constexpr auto VARIABLE_FILE_NAME{ "variables.toml" };
 		static constexpr auto PROFILE_FOLDER_NAME{ "profiles" };
-		static constexpr auto USER_SETTINGS_FOLDER_NAME{ "stardust" };
 
 		const fs::path stardust_root;
+
 
 	public:
 		ConfigurationManager(const fs::path& stardust_directory);
 
 		std::vector<std::string> getProfileNames() const;
 		std::shared_ptr<Configuration> getConfiguration(std::optional<std::string> current_profile) const;
+
+		std::unordered_map<ConfigurationLevel, std::vector<fs::path>> getConfigFilesToParse(const std::optional<std::string>& profile);
 	};
 }

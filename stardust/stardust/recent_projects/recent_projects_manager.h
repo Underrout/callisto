@@ -62,7 +62,7 @@ namespace stardust {
 
 	class RecentProjectsManager {
 	protected:
-		static constexpr auto MAX_ENTRIES{ 10 };
+		static constexpr auto MAX_ENTRIES{ 9 };
 
 		std::vector<Project> projects;
 
@@ -100,7 +100,7 @@ namespace stardust {
 			}
 			else {
 				projects.insert(projects.begin(), project);
-				if (projects.size() == MAX_ENTRIES) {
+				if (projects.size() == MAX_ENTRIES + 1) {
 					projects.pop_back();
 				}
 			}
