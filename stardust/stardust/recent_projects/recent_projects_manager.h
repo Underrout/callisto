@@ -123,9 +123,7 @@ namespace stardust {
 					}
 				}
 				catch (const std::exception& e) {
-					recent_projects_file.close();
-					throw std::runtime_error(fmt::format("Failed to read recent projects file, resetting recent projects list:{}",
-						e.what()));
+					// pass I guess, just resetting recent projects list cause we can't read it
 				}
 
 				recent_projects_file.close();

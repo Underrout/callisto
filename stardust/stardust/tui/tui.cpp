@@ -750,10 +750,15 @@ namespace stardust {
 	void TUI::updateProjectsModal() {
 		projects_modal->DetachAllChildren();
 		auto i{ 0 };
-		for (const auto& project : recent_projects.get()) {
-			projects_modal->Add(Button(std::to_string(++i) + ' ' + project.toString(), [=] {
-				modalError([=] { launchRecentProject(project); });
-			}, ButtonOption::Ascii()));
+		if (!recent_projects.get().empty()) {
+			for (const auto& project : recent_projects.get()) {
+				projects_modal->Add(Button(std::to_string(++i) + ' ' + project.toString(), [=] {
+					modalError([=] { launchRecentProject(project); });
+					}, ButtonOption::Ascii()));
+			}
+		}
+		else {
+			projects_modal->Add(Renderer([] { return text("No recent projects yet!"); }));
 		}
 	}
 
