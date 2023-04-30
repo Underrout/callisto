@@ -118,7 +118,7 @@ namespace stardust {
 				std::ifstream recent_projects_file{ PathUtil::getRecentProjectsPath() };
 				try {
 					const auto j{ json::parse(recent_projects_file) };
-					for (const auto& entry : j["recent_projects"].array()) {
+					for (const auto& entry : j["recent_projects"]) {
 						projects.push_back(Project(entry));
 					}
 				}
