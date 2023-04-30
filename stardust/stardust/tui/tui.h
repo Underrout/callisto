@@ -34,6 +34,8 @@
 #include "../builders/quick_builder.h"
 #include "../saver/saver.h"
 
+#include "../recent_projects/recent_projects_manager.h"
+
 #include "../path_util.h"
 
 using namespace ftxui;
@@ -44,9 +46,12 @@ namespace bp = boost::process;
 namespace stardust {
 	class TUI {
 	protected:
+		RecentProjectsManager recent_projects;
+
 		ConfigurationManager config_manager;
 		std::shared_ptr<Configuration> config;
 		const fs::path stardust_directory;
+		const fs::path stardust_executable;
 		
 		bool anything_on_command_line{ false };
 
@@ -90,6 +95,11 @@ namespace stardust {
 		Component getChoiceModal();
 		void showChoiceModal(const std::string& new_title, const std::string& new_text,
 			std::function<void()> yes_function, std::function<void()> no_function);
+
+		bool show_recent_projects_modal{ false };
+		Component projects_modal;
+		Component setRecentProjectsModal(bool exit_button);
+		void updateProjectsModal();
 
 		std::optional<std::string> getLastConfigName(const fs::path& stardust_directory) const;
 		void setConfiguration(const std::optional<std::string>& profile_name, const fs::path& stardust_directory);
@@ -157,9 +167,13 @@ namespace stardust {
 			return vbox(std::move(lines));
 		}
 
+		void updateRecentProjects();
+
+		void launchRecentProject(const Project& project);
+
 	public:
 		void run();
 
-		TUI(const fs::path& stardust_directory);
+		TUI(const fs::path& stardust_executable);
 	};
 }

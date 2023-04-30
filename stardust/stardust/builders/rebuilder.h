@@ -16,6 +16,7 @@ namespace stardust {
 		using Writes = std::vector<std::pair<std::string, unsigned char>>;
 		using WriteMap = std::map<int, Writes>;
 		using ConflictVector = std::vector<std::pair<std::string, std::vector<unsigned char>>>;
+		using PatchHijacksVector = std::vector<std::optional<std::vector<std::pair<size_t, size_t>>>>;
 
 		enum class Conflicts {
 			NONE,
@@ -23,7 +24,7 @@ namespace stardust {
 			ALL
 		};
 
-		static json getJsonDependencies(const DependencyVector& dependencies);
+		static json getJsonDependencies(const DependencyVector& dependencies, const PatchHijacksVector& hijacks);
 		static void reportConflicts(const WriteMap& write_map, const std::optional<fs::path>& log_file, Conflicts conflict_policy);
 		static std::string getConflictString(const ConflictVector& conflict_vector, 
 			int pc_start_offset, int conflict_size, bool limit_lines = true);

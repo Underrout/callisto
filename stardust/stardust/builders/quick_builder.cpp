@@ -87,21 +87,37 @@ namespace stardust {
 					}
 					catch (const Insertable::NoDependencyReportFound& e) {
 						failed_dependency_report = e;
-						continue;
 					}
-					const auto config_dependencies{ insertable->getConfigurationDependencies() };
-					entry["resource_dependencies"] = std::vector<json>();
-					entry["configuration_dependencies"] = std::vector<json>();
 
-					for (const auto& config_dep : config_dependencies) {
-						entry["configuration_dependencies"].push_back(config_dep.toJson());
-					}
-					for (const auto& resource_dep : resource_dependencies) {
-						entry["resource_dependencies"].push_back(resource_dep.toJson());
+					if (!failed_dependency_report.has_value()) {
+						const auto config_dependencies{ insertable->getConfigurationDependencies() };
+						entry["resource_dependencies"] = std::vector<json>();
+						entry["configuration_dependencies"] = std::vector<json>();
+
+						for (const auto& config_dep : config_dependencies) {
+							entry["configuration_dependencies"].push_back(config_dep.toJson());
+						}
+						for (const auto& resource_dep : resource_dependencies) {
+							entry["resource_dependencies"].push_back(resource_dep.toJson());
+						}
 					}
 				}
 				else {
 					insertable->insert();
+				}
+
+				if (descriptor.symbol == Symbol::PATCH) {
+					const auto& old_hijacks{ entry["hijacks"] };
+					const auto patch{ static_pointer_cast<Patch>(insertable) };
+					const auto& new_hijacks{ patch->getHijacks() };
+
+					if (hijacksGoneBad(old_hijacks, new_hijacks)) {
+						throw MustRebuildException(fmt::format(
+							"Hijacks of patch {} have changed, must rebuild", patch->project_relative_path.string()));
+					}
+					else {
+						entry["hijacks"] = new_hijacks;
+					}
 				}
 			}
 			else {
@@ -332,4 +348,26 @@ namespace stardust {
 		const auto target{ PathUtil::getGlobuleImprintDirectoryPath(project_root) / imprint_name };
 		fs::copy_file(imprint_file, target, fs::copy_options::overwrite_existing);
 	}
+
+	bool QuickBuilder::hijacksGoneBad(const std::vector<std::pair<size_t, size_t>>& old_hijacks,
+		const std::vector<std::pair<size_t, size_t>>& new_hijacks) {
+		std::unordered_set<size_t> new_written_addresses{};
+
+		for (const auto& [address, number] : new_hijacks) {
+			for (size_t i{ 0 }; i != number; ++i) {
+				new_written_addresses.insert(address + i);
+			}
+		}
+
+		for (const auto& [address, number] : old_hijacks) {
+			for (size_t i{ 0 }; i != number; ++i) {
+				if (new_written_addresses.count(address + i) == 0) {
+					return true;
+				}
+			}
+		}
+		
+		return false;
+	}
 }
+ 

@@ -1,7 +1,8 @@
 #include "tui.h"
 
 namespace stardust {
-	TUI::TUI(const fs::path& stardust_directory) : config_manager(stardust_directory), stardust_directory(stardust_directory),
+	TUI::TUI(const fs::path& stardust_executable) : stardust_executable(stardust_executable), 
+		stardust_directory(stardust_executable.parent_path()), config_manager(stardust_executable.parent_path()),
 		screen(ScreenInteractive::Fullscreen())
 	{
 		screen.SetCursor(ftxui::Screen::Cursor{ .shape = ftxui::Screen::Cursor::Shape::Hidden });
@@ -76,6 +77,22 @@ namespace stardust {
 
 	void TUI::setMainMenu() {
 		main_menu_component = Container::Vertical({
+			Container::Horizontal({
+				Renderer([=] { 
+					if (config != nullptr && config->project_root.isSet()) {
+						return text(
+							" " + config->project_root.getOrThrow().stem().string() +
+							" (" + config->project_root.getOrThrow().string() + ") "
+						) | bold;
+					}
+					else {
+						return text(" - ") | bold;
+					}
+				}),
+			}),
+
+			Renderer([] { return separator(); }),
+
 			getConfigOnlyButton("Rebuild (R)", [=] { rebuildButton(); }),
 			getConfigOnlyButton("Quickbuild (Q)", [=] { quickbuildButton(); }),
 			getRomOnlyButton("Package (P)", [=] { packageButton(); }),
@@ -87,6 +104,11 @@ namespace stardust {
 
 			Renderer([] { return separator(); }),
 
+			Button("Recent projects (W)", [&] { 
+				recent_projects.reloadList(); 
+				updateProjectsModal(); 
+				show_recent_projects_modal = true; 
+			}, ButtonOption::Ascii()),
 			Button("Reload configuration (C)", [&] { trySetConfiguration(); }, ButtonOption::Ascii()),
 			Button("Reload profiles", [&] {
 				profile_names = config_manager.getProfileNames();
@@ -210,20 +232,37 @@ namespace stardust {
 			emulators = Emulators(*config);
 			emulator_names = emulators.getEmulatorNames();
 		}
+		else if (profile_names.empty()) {
+			bool any_project_config_files{ false };
+
+			const auto config_files{ config_manager.getConfigFilesToParse(std::nullopt) };
+
+			if (!config_files.contains(ConfigurationLevel::PROJECT) && !config_files.contains(ConfigurationLevel::PROFILE)) {
+				// No project or profile config files found, show recent projects menu only
+				show_recent_projects_modal = true;
+				Component recent_projects{ Container::Vertical({ 
+					Container::Horizontal({ setRecentProjectsModal(true), Renderer([] { return filler(); }) }),
+					Renderer([] { return filler(); }) 
+				}) };
+				screen.Loop(recent_projects);
+				return;
+			}
+		}
 
 		setMainMenu();
 		setEmulatorMenu();
 		setProfileMenu();
 
-		Component full_menu{ Container::Horizontal({
-			main_menu | size(HEIGHT, EQUAL, 13) | size(WIDTH, EQUAL, 40),
+		Component full_menu{ Container::Vertical({ Container::Horizontal({
+			main_menu | size(WIDTH, GREATER_THAN, 40),
 			Container::Vertical({
 				profile_menu, emulator_menu
-			})
-		}) };
+			}),
+		}), Renderer([] { return filler(); }) }) };
 
 		full_menu = wrapMenuInEventCatcher(full_menu);
 
+		full_menu |= Modal(setRecentProjectsModal(false), &show_recent_projects_modal);
 		full_menu |= Modal(getModal(), &show_modal);
 		full_menu |= Modal(getChoiceModal(), &show_choice_modal);
 
@@ -246,6 +285,8 @@ namespace stardust {
 			config = nullptr;
 			throw;
 		}
+
+		updateRecentProjects();
 	}
 
 	void TUI::trySetConfiguration() {
@@ -541,10 +582,21 @@ namespace stardust {
 				return true;
 			}
 			else if (event == Event::Character('v')) {
-				screen.WithRestoredIO([=] { waitForEscape(); })();
+				screen.WithRestoredIO([&] {
+					if (!anything_on_command_line) {
+						std::cout << "Press ESC to return to stardust" << std::endl << std::endl << std::endl;
+						anything_on_command_line = true;
+					}
+				waitForEscape(); })();
 				return true;
 			}
-			else if (event == Event::Character('p')) {
+			else if (event == Event::Character('w')) {
+				recent_projects.reloadList();
+				updateProjectsModal();
+				show_recent_projects_modal = true;
+				return true;
+			}
+ 			else if (event == Event::Character('p')) {
 				packageButton();
 				return true;
 			}
@@ -651,6 +703,41 @@ namespace stardust {
 			});
 	}
 
+	void TUI::updateRecentProjects() {
+		try {
+			if (config != nullptr) {
+				recent_projects.update(config->project_root.getOrThrow(), stardust_executable);
+			}
+		}
+		catch (const std::exception&) {
+			// pass, no big deal if we can't update recent projects for some reason,
+			// no need to show a modal or anything I think
+		}
+	}
+
+	void TUI::launchRecentProject(const Project& project) {
+		modalError([=] {
+			if (!fs::exists(project.project_root)) {
+				throw std::runtime_error(fmt::format("{} not found", project.project_root.string()));
+			}
+
+			if (!fs::exists(project.stardust_executable)) {
+				throw std::runtime_error(fmt::format("{} not found", project.stardust_executable.string()));
+			}
+
+			auto child{ bp::child(project.stardust_executable.string()) };
+
+			if (!child.running()) {
+				throw std::runtime_error(fmt::format("Failed to start stardust at {}", project.stardust_executable.string()));
+			}
+			else {
+				child.detach();
+				screen.ExitLoopClosure();
+				exit(0);
+			}
+		});
+	}
+
 	void TUI::showChoiceModal(const std::string& new_title, const std::string& new_text,
 		std::function<void()> yes_function, std::function<void()> no_function) {
 		show_choice_modal = true;
@@ -658,6 +745,75 @@ namespace stardust {
 		choice_modal_text = new_text;
 		choice_yes_func = yes_function;
 		choice_no_func = no_function;
+	}
+
+	void TUI::updateProjectsModal() {
+		projects_modal->DetachAllChildren();
+		auto i{ 0 };
+		for (const auto& project : recent_projects.get()) {
+			projects_modal->Add(Button(std::to_string(++i) + ' ' + project.toString(), [=] {
+				modalError([=] { launchRecentProject(project); });
+			}, ButtonOption::Ascii()));
+		}
+	}
+
+	Component TUI::setRecentProjectsModal(bool exit_button){
+		auto back_button = Button(exit_button ? "Exit" : "Back", [=] {
+			if (!exit_button) {
+				show_recent_projects_modal = false;
+			}
+			else {
+				exit(0);
+			}
+		}, ButtonOption::Ascii());
+
+		projects_modal = Container::Vertical({});
+		updateProjectsModal();
+
+		auto menu{ Container::Vertical({
+			projects_modal,
+
+			Renderer([] { return separator(); }),
+
+			back_button | center
+		}) };
+
+		auto component{ Renderer(menu, [=] {
+			return window(text("Recent projects"), menu->Render()
+				| size(WIDTH, GREATER_THAN, 30));
+			}) };
+
+		return CatchEvent(component, [=](Event event) {
+			if (event.is_mouse()) {
+				return true;
+			};
+
+			if (event == Event::Escape) {
+				if (!exit_button) {
+					show_recent_projects_modal = false;
+				}
+				else {
+					exit(0);
+				}
+				return true;
+			}
+
+			char i{ 0 };
+			for (const auto& project : recent_projects.get()) {
+				if (i == 10) {
+					break;
+				}
+
+				char button_index_char{ '0' + i + 1 };
+				if (event == Event::Character(button_index_char)) {
+					launchRecentProject(project);
+					return true;
+				}
+				++i;
+			}
+
+			return false;
+		});
 	}
 
 	std::optional<std::string> TUI::getLastConfigName(const fs::path& stardust_directory) const {

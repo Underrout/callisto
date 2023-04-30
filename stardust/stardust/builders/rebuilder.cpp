@@ -7,6 +7,7 @@ namespace stardust {
 		init(config);
 
 		DependencyVector dependencies{};
+		PatchHijacksVector patch_hijacks{};
 
 		fs::copy_file(config.clean_rom.getOrThrow(), config.temporary_rom.getOrThrow(), fs::copy_options::overwrite_existing);
 
@@ -16,6 +17,7 @@ namespace stardust {
 			const auto initial_patch_config_dependencies{ initial_patch.getConfigurationDependencies() };
 			dependencies.push_back({ Descriptor(Symbol::INITIAL_PATCH), 
 				{ initial_patch_resource_dependencies, initial_patch_config_dependencies } });
+			patch_hijacks.push_back({});
 		}
 
 		expandRom(config);
@@ -40,6 +42,13 @@ namespace stardust {
 					failed_dependency_report = e;
 				}
 
+				if (descriptor.symbol == Symbol::PATCH) {
+					patch_hijacks.push_back(static_pointer_cast<Patch>(insertable)->getHijacks());
+				}
+				else {
+					patch_hijacks.push_back({});
+				}
+
 				if (!failed_dependency_report.has_value()) {
 					const auto config_dependencies{ insertable->getConfigurationDependencies() };
 					dependencies.push_back({ descriptor, { resource_dependencies, config_dependencies } });
@@ -62,7 +71,7 @@ namespace stardust {
 			std::nullopt, check_conflicts_policy);
 
 		if (!failed_dependency_report.has_value()) {
-			const auto insertion_report{ getJsonDependencies(dependencies) };
+			const auto insertion_report{ getJsonDependencies(dependencies, patch_hijacks) };
 
 			writeBuildReport(config.project_root.getOrThrow(), createBuildReport(config, insertion_report));
 
@@ -80,13 +89,14 @@ namespace stardust {
 		spdlog::info("Build finished successfully!");
 	}
 
-	json Rebuilder::getJsonDependencies(const DependencyVector& dependencies) {
+	json Rebuilder::getJsonDependencies(const DependencyVector& dependencies, const PatchHijacksVector& hijacks) {
 		json j;
 
 		std::unordered_set<Descriptor> seen{};
-
+		size_t i{ dependencies.size() - 1 };
 		for (const auto& [descriptor, pair] : boost::adaptors::reverse(dependencies)) {
 			if (seen.count(descriptor) != 0) {
+				--i;
 				continue;
 			}
 
@@ -104,6 +114,12 @@ namespace stardust {
 
 			for (const auto& config_dependency : pair.second) {
 				block["configuration_dependencies"].push_back(config_dependency.toJson());
+			}
+
+			const auto& patch_hijacks{ hijacks[i--] };
+			 
+			if (patch_hijacks.has_value()) {
+				block["hijacks"] = patch_hijacks.value();
 			}
 
 			j.push_back(block);
@@ -246,7 +262,7 @@ namespace stardust {
 		int size{ static_cast<int>(std::max(old_rom.size(), new_rom.size())) };
 
 		if (conflict_policy == Conflicts::HIJACKS) {
-			size = std::min(size, 0x78000);
+			size = std::min(size, 0x80000);
 		}
 
 		for (int i{ 0 }; i != size; ++i) {

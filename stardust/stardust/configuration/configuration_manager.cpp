@@ -1,11 +1,37 @@
 #include "configuration_manager.h"
 
 namespace stardust {
-	ConfigurationManager::ConfigurationManager(const fs::path& stardust_directory) : 
+	std::unordered_map<ConfigurationLevel, std::vector<fs::path>> ConfigurationManager::getConfigFilesToParse(const std::optional<std::string>& profile) {
+		std::unordered_map<ConfigurationLevel, std::vector<fs::path>> config_files{};
+
+		const auto user_folder{ PathUtil::getUserSettingsPath() };
+
+		for (const auto& entry : fs::directory_iterator(user_folder)) {
+			if (entry.path().extension() == ".toml") {
+				config_files[ConfigurationLevel::USER].push_back(entry.path());
+			}
+		}
+
+		for (const auto& entry : fs::directory_iterator(stardust_root)) {
+			if (entry.path().extension() == ".toml") {
+				config_files[ConfigurationLevel::PROJECT].push_back(entry.path());
+			}
+		}
+
+		if (profile.has_value()) {
+			for (const auto& entry : fs::directory_iterator(stardust_root / PROFILE_FOLDER_NAME / profile.value())) {
+				config_files[ConfigurationLevel::PROFILE].push_back(entry.path());
+			}
+		}
+
+		return config_files;
+	}
+
+	ConfigurationManager::ConfigurationManager(const fs::path& stardust_directory) :
 		stardust_root(stardust_directory) {
 
 		// ensure our settings folder exists
-		fs::create_directories(fs::path(sago::getConfigHome()) / USER_SETTINGS_FOLDER_NAME);
+		fs::create_directories(PathUtil::getUserSettingsPath());
 	}
 
 	std::vector<std::string> ConfigurationManager::getProfileNames() const {
@@ -31,7 +57,7 @@ namespace stardust {
 		Configuration::VariableFileMap variable_file_map{};
 
 		std::vector<fs::path> config_root_folders{
-			fs::path(sago::getConfigHome()) / USER_SETTINGS_FOLDER_NAME,
+			PathUtil::getUserSettingsPath(),
 			stardust_root
 		};
 

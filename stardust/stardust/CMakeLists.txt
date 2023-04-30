@@ -94,7 +94,7 @@ if (MSVC)
     "junction/libntfslinks/source/CharUtils.cpp")
 endif()
 
-add_executable (stardust ${STARDUST_SOURCE_FILES})
+add_executable (stardust ${STARDUST_SOURCE_FILES} "recent_projects/recent_projects_manager.h")
 target_link_options(stardust PRIVATE ${STARDUST_LINK_OPTIONS})
 target_compile_options(stardust PRIVATE ${STARDUST_COMPILE_OPTIONS})
 target_compile_definitions(stardust PRIVATE ${STARDUST_COMPILE_DEFINITIONS})
@@ -192,4 +192,14 @@ add_custom_command(TARGET stardust POST_BUILD
 add_custom_command(TARGET stardust POST_BUILD 
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
     "${CMAKE_CURRENT_SOURCE_DIR}/config.toml" $<TARGET_FILE_DIR:stardust>
+)
+
+add_custom_command(TARGET stardust POST_BUILD 
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+    "${CMAKE_CURRENT_SOURCE_DIR}/ASAR_LICENSE" $<TARGET_FILE_DIR:stardust>
+)
+
+add_custom_command(TARGET stardust POST_BUILD 
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+    "${CMAKE_CURRENT_SOURCE_DIR}/LICENSE" $<TARGET_FILE_DIR:stardust>
 )
