@@ -132,7 +132,7 @@ namespace stardust {
 			Button("Exit (ESC)", [] { exit(0); }, ButtonOption::Ascii())
 			}, &selected_main_menu_entry);
 
-		const auto window_title{ fmt::format("stardust v{}.{}.{}b", STARDUST_VERSION_MAJOR, STARDUST_VERSION_MINOR, STARDUST_VERSION_PATCH) };
+		const auto window_title{ fmt::format("stardust v{}.{}.{}d", STARDUST_VERSION_MAJOR, STARDUST_VERSION_MINOR, STARDUST_VERSION_PATCH) };
 		main_menu = Renderer(main_menu_component, [=] { return window(text(window_title), main_menu_component->Render()); });
 	}
 
@@ -369,6 +369,8 @@ namespace stardust {
 	}
 
 	void TUI::packageButton() {
+		trySetConfiguration();
+		
 		if (config == nullptr) {
 			showModal("Error", "Current configuration is not valid\nCannot package ROM");
 			return;
@@ -750,10 +752,15 @@ namespace stardust {
 	void TUI::updateProjectsModal() {
 		projects_modal->DetachAllChildren();
 		auto i{ 0 };
-		for (const auto& project : recent_projects.get()) {
-			projects_modal->Add(Button(std::to_string(++i) + ' ' + project.toString(), [=] {
-				modalError([=] { launchRecentProject(project); });
-			}, ButtonOption::Ascii()));
+		if (!recent_projects.get().empty()) {
+			for (const auto& project : recent_projects.get()) {
+				projects_modal->Add(Button(std::to_string(++i) + ' ' + project.toString(), [=] {
+					modalError([=] { launchRecentProject(project); });
+					}, ButtonOption::Ascii()));
+			}
+		}
+		else {
+			projects_modal->Add(Renderer([] { return text("No recent projects yet!"); }));
 		}
 	}
 

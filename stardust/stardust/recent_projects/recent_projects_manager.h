@@ -118,14 +118,12 @@ namespace stardust {
 				std::ifstream recent_projects_file{ PathUtil::getRecentProjectsPath() };
 				try {
 					const auto j{ json::parse(recent_projects_file) };
-					for (const auto& entry : j["recent_projects"].array()) {
+					for (const auto& entry : j["recent_projects"]) {
 						projects.push_back(Project(entry));
 					}
 				}
 				catch (const std::exception& e) {
-					recent_projects_file.close();
-					throw std::runtime_error(fmt::format("Failed to read recent projects file, resetting recent projects list:{}",
-						e.what()));
+					// pass I guess, just resetting recent projects list cause we can't read it
 				}
 
 				recent_projects_file.close();
