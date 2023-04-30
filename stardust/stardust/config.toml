@@ -11,7 +11,7 @@
 
 project_name = "my_hack"
 
-project_root = "../"
+project_root = "../.."
 
 [settings]
 
@@ -27,16 +27,16 @@ project_root = "{project_root}"
 # can be set to "none" to disable it, "hijacks" 
 # to only check for conflicts in the vanilla 
 # ROM area or "all" to check everywhere
-check_conflicts = "none"
+check_conflicts = "hijacks"
 
 # Optional log file for conflicts, if 
 # set, stardust will log conflicts to this 
 # file instead of the console after rebuilds
-# conflict_log_file = "conflicts.txt"
+conflict_log_file = "conflicts.txt"
 
 # Uncomment to use integrated text map16 format
 # instead of binary format
-# use_text_map16_format = true
+use_text_map16_format = true
 
 # ROM size to expand to after applying initial patch
 rom_size = "4MB"
@@ -47,13 +47,13 @@ rom_size = "4MB"
 # I'm using a variable here with the {} syntax, 
 # this will expand to
 #      project_rom = "my_hack.smc"
-project_rom = "{project_name}.smc"
+project_rom = "build/{project_name}.smc"
 
 # Path for temporary ROM used during builds
-temporary_rom = "temp.smc"
+temporary_rom = "build/temp/temp.smc"
 
 # Path for BPS package output by the Package function
-bps_package = "package.bps"
+bps_package = "build/package/{project_name}.bps"
 
 [tools]
 
@@ -63,7 +63,7 @@ executable = "tools/flips/flips.exe"
 
 [tools.LunarMagic]
 # Path to Lunar Magic executable
-executable = "tools/lunar_magic/lunar_magic.exe"
+executable = "tools/lunar_magic/Lunar Magic.exe"
 
 # You can use [tools.generic.my_tool] to specify any tool you want, 
 # not just the ones included here
@@ -80,7 +80,7 @@ executable = "pixi.exe"
 
 # Options to pass to the tool, by default, the path to the temporary
 # ROM is passed to the tool right after these
-options = "-l tools/pixi/list.txt"
+options = "-l ../../tools/pixi/list.txt"
 
 # Uncomment to not pass path to temporary ROM to the tool
 # pass_rom = false
@@ -108,12 +108,12 @@ static_dependencies = [
 	# Omitting policy is the same as specifying policy = "reinsert"
     { path = "list.txt" }, 
 
-    { path = "asar.dll", policy = "rebuild"}, 
-    { path = "NewtonSoft.Json.dll", policy = "rebuild"} ,
+    { path = "asar.dll", policy = "rebuild" }, 
+    { path = "NewtonSoft.Json.dll", policy = "rebuild" } ,
 
 	# policy = "reinsert" is not needed here, since it's 
 	# the default, but it can still be specified for explicitness
-    { path = "routines", policy = "reinsert"},
+    { path = "routines", policy = "reinsert" },
 
 	# Need to add the "sprites" folder here, because the 
 	# dependency report for PIXI won't include .json/.cfg files
@@ -143,13 +143,13 @@ dependency_report_file = ".dependencies"
 
 
 [tools.generic.UberASM]
-directory = "tools/uberasm"
+directory = "tools/uberasm_tool"
 executable = "UberASMTool.exe"
 options = "list.txt"
 
 static_dependencies = [
 	{ path = "UberASMTool.exe" },
-	{ path = "list.txt"}, 
+	{ path = "list.txt" }, 
 	{ path = "asar.dll", policy = "rebuild" }, 
 	{ path = "library" }, 
 	{ path = "routines" },
@@ -166,7 +166,7 @@ dependency_report_file = ".dependencies"
 
 
 [tools.generic.AddMusicK]
-directory = "tools/addmusic"
+directory = "tools/addmusick"
 executable = "AddMusicK.exe"
 
 # AMK doesn't use asar for much, so we need a 
@@ -194,9 +194,9 @@ dependency_report_file = ".dependencies"
 # Note that "global_data" has been split into
 # overworld, titlescreen, credits and global_exanimation
 initial_patch = "resources/initial_patch.bps"
-levels = "levels"
+levels = "resources/levels"
 shared_palettes = "resources/shared_palettes.pal"
-map16 = "resources/all.map16"
+map16 = "resources/all_map16"
 overworld = "resources/overworld.bps"
 titlescreen = "resources/titlescreen.bps"
 credits = "resources/credits.bps"
@@ -209,7 +209,7 @@ global_exanimation = "resources/global_exanimation.bps"
 # importing/exporting graphics manually in Lunar Magic
 # should still work fine
 graphics = "resources/graphics"
-ex_graphics = "resources/ex_graphics"
+ex_graphics = "resources/exgraphics"
 
 patches = [
 	# "patches/some_patch.asm",
@@ -222,7 +222,7 @@ build_order = [
     "ExGraphics",               # Insert ExGFX
     "Map16",                    # Insert Map16
 
-	"TitleScreenMovement",      # Uncomment this if you're inserting title moves
+	# "TitleScreenMovement",      # Uncomment this if you're inserting title moves
 
     "SharedPalettes",           # Insert Shared Palettes 
     "Overworld",                # Insert Overworld
