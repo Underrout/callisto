@@ -369,6 +369,8 @@ namespace stardust {
 	}
 
 	void TUI::packageButton() {
+		trySetConfiguration();
+		
 		if (config == nullptr) {
 			showModal("Error", "Current configuration is not valid\nCannot package ROM");
 			return;
