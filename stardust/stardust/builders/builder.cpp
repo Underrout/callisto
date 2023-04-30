@@ -148,6 +148,12 @@ namespace stardust {
 		ensureCacheStructure(config);
 		generateAssemblyLevelInformation(config);
 		generateGlobuleCallFile(config);
+		if (config.temporary_rom.isSet()) {
+			fs::create_directories(config.temporary_rom.getOrThrow().parent_path());
+		}
+		if (config.project_rom.isSet()) {
+			fs::create_directories(config.project_rom.getOrThrow().parent_path());
+		}
 	}
 
 	void Builder::ensureCacheStructure(const Configuration& config) {
