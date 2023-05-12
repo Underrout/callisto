@@ -129,7 +129,7 @@ namespace stardust {
 
 			Renderer([] { return separator(); }),
 
-			Button("Exit (ESC)", [] { exit(0); }, ButtonOption::Ascii())
+			Button("Exit (ESC)", [=] { screen.ExitLoopClosure(); exit(0); }, ButtonOption::Ascii())
 			}, &selected_main_menu_entry);
 
 		const auto window_title{ fmt::format("stardust v{}.{}.{}d", STARDUST_VERSION_MAJOR, STARDUST_VERSION_MINOR, STARDUST_VERSION_PATCH) };
@@ -770,6 +770,7 @@ namespace stardust {
 				show_recent_projects_modal = false;
 			}
 			else {
+				screen.ExitLoopClosure();
 				exit(0);
 			}
 		}, ButtonOption::Ascii());
@@ -800,6 +801,7 @@ namespace stardust {
 					show_recent_projects_modal = false;
 				}
 				else {
+					screen.ExitLoopClosure();
 					exit(0);
 				}
 				return true;
