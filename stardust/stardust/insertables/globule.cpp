@@ -208,6 +208,11 @@ namespace stardust {
 				continue;
 			}
 
+			if (name.find('.') != std::string::npos) {
+				// it's a struct field (Struct.field), skip it
+				continue;
+			}
+
 			const auto underscore_idx{ name.find('_', 0) };
 			if (other_globule_names.count(name) != 0 || 
 				(underscore_idx != -1 && other_globule_names.count(name.substr(0, underscore_idx)) != 0)) {
