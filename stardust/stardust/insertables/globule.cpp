@@ -54,6 +54,7 @@ namespace stardust {
 			
 			temp_patch << "warnings disable W1011" << std::endl << std::endl
 				<< "warnings disable W1007" << std::endl << std::endl
+				<< "warnings disable W1008" << std::endl << std::endl
 				<< "if read1($00FFD5) == $23\nsa1rom\nendif" << std::endl << std::endl
 				<< "freecode cleaned" << std::endl << std::endl;
 
