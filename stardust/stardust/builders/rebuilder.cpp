@@ -30,9 +30,11 @@ namespace stardust {
 			old_rom = getRom(config.temporary_rom.getOrThrow());
 		}
 
-		std::optional<Insertable::NoDependencyReportFound> failed_dependency_report;
+		std::optional<Insertable::NoDependencyReportFound> failed_dependency_report{};
 		auto insertables{ buildOrderToInsertables(config) };
-		for (auto& [descriptor, insertable] : insertables) {
+		for (const std::pair<const Descriptor&, std::shared_ptr<Insertable>> pair : insertables) {
+			const auto insertable{ pair.second };
+			const auto& descriptor{ pair.first };
 			if (!failed_dependency_report.has_value()) {
 				std::unordered_set<ResourceDependency> resource_dependencies;
 				try {
