@@ -9,7 +9,7 @@ namespace stardust {
 		RomInsertable(config), 
 		project_relative_path(fs::relative(globule_path, registerConfigurationDependency(config.project_root).getOrThrow())),
 		globule_path(globule_path), imprint_directory(imprint_directory), globule_call_file(globule_call_file),
-		globule_header_file(registerConfigurationDependency(config.globule_header, Policy::REINSERT).getOrThrow())
+		globule_header_file(registerConfigurationDependency(config.globule_header, Policy::REINSERT).isSet() ? std::make_optional(config.globule_header.getOrThrow()) : std::nullopt)
 	{
 		if (!fs::exists(globule_path)) {
 			throw ResourceNotFoundException(fmt::format(

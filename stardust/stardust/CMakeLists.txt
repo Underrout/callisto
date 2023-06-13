@@ -101,6 +101,10 @@ target_compile_definitions(stardust PRIVATE ${STARDUST_COMPILE_DEFINITIONS})
 
 target_include_directories(stardust PUBLIC ${asar_SOURCE_DIR}/src)
 
+if (MSVC) 
+  target_link_options(stardust PRIVATE $<$<CONFIG:RELWITHDEBINFO>:/PROFILE>)
+endif()
+
 FetchContent_Declare(
         cli11
         GIT_REPOSITORY https://github.com/CLIUtils/CLI11
