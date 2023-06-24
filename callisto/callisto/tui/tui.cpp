@@ -200,7 +200,8 @@ namespace callisto {
 
 	void TUI::markerSafeguard(const std::string& title, std::function<void()> func) {
 		if (config != nullptr && config->project_rom.isSet() && fs::exists(config->project_rom.getOrThrow())) {
-			const auto needs_extraction{ Marker::getNeededExtractions(config->project_rom.getOrThrow(),
+			const auto needs_extraction{ Marker::getNeededExtractions(config->project_rom.getOrThrow(), 
+				config->project_root.getOrThrow(),
 				Saver::getExtractableTypes(*config),
 				config->use_text_map16_format.getOrDefault(false)) };
 			if (!needs_extraction.empty()) {

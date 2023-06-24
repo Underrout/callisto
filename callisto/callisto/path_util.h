@@ -14,6 +14,7 @@ namespace callisto {
 		static constexpr auto GLOBULES_IMPRINT_DIRECTORY_NAME{ "globules" };
 		static constexpr auto INSERTED_GLOBULES_DIRECTORY_NAME{ "inserted_globules" };
 		static constexpr auto BUILD_REPORT_FILE_NAME{ "build_report.json" };
+		static constexpr auto LAST_ROM_SYNC_TIME_FILE_NAME{ "last_rom_sync.json" };
 		static constexpr auto GLOBULE_CALL_FILE{ "call.asm" };
 		static constexpr auto ASSEMBLY_INFO_FILE{ "info.asm" };
 		static constexpr auto USER_SETTINGS_FOLDER_NAME{ "callisto" };
@@ -50,6 +51,10 @@ namespace callisto {
 
 		static fs::path getBuildReportPath(const fs::path& project_root) {
 			return getCallistoCachePath(project_root) / BUILD_REPORT_FILE_NAME;
+		}
+
+		static fs::path getLastRomSyncPath(const fs::path& project_root) {
+			return getCallistoCachePath(project_root) / LAST_ROM_SYNC_TIME_FILE_NAME;
 		}
 
 		static fs::path getGlobuleImprintDirectoryPath(const fs::path& project_root) {

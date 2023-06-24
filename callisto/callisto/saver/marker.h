@@ -10,9 +10,12 @@
 #include <fmt/format.h>
 #include <asar-dll-bindings/c/asardll.h>
 #include <boost/filesystem.hpp>
+#include <nlohmann/json.hpp>
 
 #include "extractable_type.h"
+#include "../path_util.h"
 
+using json = nlohmann::json;
 namespace fs = std::filesystem;
 
 namespace callisto {
@@ -56,7 +59,7 @@ namespace callisto {
 
 	public:
 		static void insertMarkerString(const fs::path& rom_path, const std::vector<ExtractableType>& extractables, int64_t timestamp);
-		static std::vector<ExtractableType> getNeededExtractions(const fs::path& rom_path, 
+		static std::vector<ExtractableType> getNeededExtractions(const fs::path& rom_path, const fs::path& project_root,
 			const std::vector<ExtractableType>& extractables, bool use_text_map16);
 	};
 }

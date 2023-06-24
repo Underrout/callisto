@@ -167,12 +167,24 @@ namespace callisto {
 		Marker::insertMarkerString(rom_path, getExtractableTypes(config), timestamp);
 
 		fs::last_write_time(rom_path, std::chrono::clock_cast<std::chrono::file_clock>(now));
+
+		// little uggo to put this here, but I'm essentially storing the timestamp also to a cache file
+		// so that if the ROM is switched with a different ROM that was built at a different time, we can still tell
+		const auto project_root{ config.project_root.getOrThrow() };
+		const auto last_rom_sync_path{ PathUtil::getLastRomSyncPath(project_root) };
+
+		json j;
+		j["last_sync_time"] = timestamp;
+
+		std::ofstream sync_file{ last_rom_sync_path };
+		sync_file << std::setw(4) << j << std::endl;
+		sync_file.close();
 	}
 
 	void Saver::exportResources(const fs::path& rom_path, const Configuration& config, bool force, bool mark) {
 		std::vector<ExtractableType> need_extraction;
 		if (!force) {
-			need_extraction = Marker::getNeededExtractions(rom_path,
+			need_extraction = Marker::getNeededExtractions(rom_path, config.project_root.getOrThrow(),
 				getExtractableTypes(config), config.use_text_map16_format.getOrDefault(false));
 		}
 		else {

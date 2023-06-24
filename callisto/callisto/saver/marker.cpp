@@ -198,8 +198,15 @@ namespace callisto {
 		}
 	}
 
-	std::vector<ExtractableType> Marker::getNeededExtractions(const fs::path& rom_path, 
+	std::vector<ExtractableType> Marker::getNeededExtractions(const fs::path& rom_path, const fs::path& project_root,
 		const std::vector<ExtractableType>& extractables, bool use_text_map16) {
+
+		const auto last_rom_sync_path{ PathUtil::getLastRomSyncPath(project_root) };
+		if (!fs::exists(last_rom_sync_path)) {
+			// Don't know when ROM was last synced with project files, assume worst case and export all
+			return extractables;
+		}
+
 		const auto extracted_information{ extractInformation(rom_path) };
 		if (!extracted_information.has_value()) {
 			// Marker not found, export all
@@ -211,6 +218,17 @@ namespace callisto {
 		
 		if (rom_epoch != extracted_information.value().timestamp) {
 			// Marker timestamp does not match last ROM write time, export all
+			return extractables;
+		}
+
+		std::ifstream last_sync_file{ last_rom_sync_path };
+		const auto last_sync_json{ json::parse(last_sync_file) };
+		const auto last_sync_time{ last_sync_json["last_sync_time"] };
+		last_sync_file.close();
+
+		if (rom_epoch != last_sync_time) {
+			// ROM's last modified time & marker timestamp mismatch with our last recorded sync time,
+			// our ROM must have been replaced by another ROM, export all
 			return extractables;
 		}
 
