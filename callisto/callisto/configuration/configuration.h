@@ -81,10 +81,12 @@ namespace callisto {
 		static std::map<std::string, std::string> parseUserVariables(const toml::value& table,
 			const std::map<std::string, std::string>& previous_user_variables = {});
 
-		Configuration(const ConfigFileMap& config_file_map, const VariableFileMap& variable_file_map, 
-			const fs::path& callisto_root_directory);
+		Configuration(const ConfigFileMap& config_file_map, const VariableFileMap& variable_file_map,
+			const fs::path& callisto_root_directory, bool allow_user_input = true);
 
 		std::variant<std::monostate, std::string, bool> getByKey(const std::string& key) const;
+
+		const bool allow_user_input;
 
 		StringConfigVariable config_name{ {"settings", "config_name"} };
 		PathConfigVariable project_root{ {"settings", "project_root"} };

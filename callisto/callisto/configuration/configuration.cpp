@@ -2,7 +2,7 @@
 
 namespace callisto {
 	Configuration::Configuration(const ConfigFileMap& config_file_map, const VariableFileMap& variable_file_map, 
-		const fs::path& callisto_root_directory) {
+		const fs::path& callisto_root_directory, bool allow_user_input) : allow_user_input(allow_user_input) {
 
 		const auto user_variables{ parseVariableFiles(variable_file_map) };
 		const auto config_files{ parseConfigFiles(config_file_map) };

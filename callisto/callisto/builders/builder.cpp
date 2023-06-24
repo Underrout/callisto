@@ -136,8 +136,34 @@ namespace callisto {
 					const auto source{ entry.path() };
 					const auto target{ config.project_rom.getOrThrow().parent_path() / 
 						(config.project_rom.getOrThrow().stem().string() + entry.path().extension().string())};
-					fs::copy_file(source, target, fs::copy_options::overwrite_existing);
-					fs::remove(source);
+
+					while (true) {
+						try {
+							fs::copy_file(source, target, fs::copy_options::overwrite_existing);
+							break;
+						}
+						catch (const std::runtime_error& e) {
+							if (!config.allow_user_input) {
+								throw e;
+							}
+							char input;
+							do {
+								spdlog::error("Failed to copy '{}' to '{}', try again? Y/N", source.string(), target.string());
+								std::cin >> input;
+							} while (input != 'y' && input != 'Y' && input != 'n' && input != 'N');
+
+							if (input == 'n' || input == 'N') {
+								throw e;
+							}
+						}
+					}
+
+					try {
+						fs::remove(source);
+					}
+					catch (const std::runtime_error&) {
+						spdlog::warn("Failed to remove temporary file '{}'", source.string());
+					}
 				}
 			}
 		}
