@@ -52,14 +52,14 @@ namespace callisto {
 			try {
 				fs::remove(symlink_path);
 			}
-			catch (const std::exception& e) {
+			catch (const std::exception&) {
 				throw CallistoException(fmt::format("Failed to delete symlink {}", symlink_path.string()));
 			}
 #else
 			try {
 				libntfslinks::DeleteJunction(symlink_path.string().c_str());
 			}
-			catch (const std::exception& e) {
+			catch (const std::exception&) {
 				throw CallistoException(fmt::format("Failed to delete junction {}", symlink_path.string()));
 			}
 #endif
@@ -87,7 +87,7 @@ namespace callisto {
 				}
 				fs::create_directory_symlink(target_name, link_name);
 			}
-			catch (const std::exception& e) {
+			catch (const std::exception&) {
 				throw CallistoException(fmt::format("Failed to create symlink {} -> {}", link_name.string(), target_name.string()));
 			}
 #else
@@ -97,7 +97,7 @@ namespace callisto {
 				}
 				libntfslinks::CreateJunction(link_name.string().c_str(), target_name.string().c_str());
 			}
-			catch (const std::exception& e) {
+			catch (const std::exception&) {
 				throw CallistoException(fmt::format("Failed to create junction {} -> {}", link_name.string(), target_name.string()));
 			}
 #endif

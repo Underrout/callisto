@@ -122,7 +122,7 @@ namespace callisto {
 						projects.push_back(Project(entry));
 					}
 				}
-				catch (const std::exception& e) {
+				catch (const std::exception&) {
 					// pass I guess, just resetting recent projects list cause we can't read it
 				}
 
