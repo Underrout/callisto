@@ -160,7 +160,13 @@ namespace stardust {
 	}
 
 	void Saver::writeMarkerToRom(const fs::path& rom_path, const Configuration& config) {
-		Marker::insertMarkerString(rom_path, getExtractableTypes(config));
+		const auto now{ std::chrono::system_clock::now() };
+		auto timestamp{ std::chrono::duration_cast<std::chrono::seconds>(now.time_since_epoch()).count() };
+		spdlog::debug("Marker timestamp is {:010X}", timestamp);
+
+		Marker::insertMarkerString(rom_path, getExtractableTypes(config), timestamp);
+
+		fs::last_write_time(rom_path, std::chrono::clock_cast<std::chrono::file_clock>(now));
 	}
 
 	void Saver::exportResources(const fs::path& rom_path, const Configuration& config, bool force, bool mark) {

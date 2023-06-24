@@ -20,12 +20,18 @@ namespace stardust {
 		return extractables;
 	}
 
-	std::string Marker::getMarkerString(const std::vector<ExtractableType>& extractables) {
-		return fmt::format(MARKER_STRING, STARDUST_STRING, extractablesToBitField(extractables));
+	std::string Marker::getMarkerString(const std::vector<ExtractableType>& extractables, int64_t timestamp) {
+		const auto high_timestamp{ (timestamp & 0xFFFF000000) >> 24 };
+		const auto low_timestamp{ timestamp & 0xFFFFFF };
+
+		spdlog::debug("High marker timestamp is {:04X}", high_timestamp);
+		spdlog::debug("Low marker timestamp is {:06X}", low_timestamp);
+
+		return fmt::format(MARKER_STRING, STARDUST_STRING, high_timestamp, low_timestamp, extractablesToBitField(extractables));
 	}
 
-	std::string Marker::getMarkerInsertionPatch(const std::vector<ExtractableType>& extractables){
-		return fmt::format("org ${:06X}\ndb \"{}\"", COMMENT_ADDRESS, getMarkerString(extractables));
+	std::string Marker::getMarkerInsertionPatch(const std::vector<ExtractableType>& extractables, int64_t timestamp){
+		return fmt::format("org ${:06X}\ndb \"{}\"", COMMENT_ADDRESS, getMarkerString(extractables, timestamp));
 	}
 
 	std::string Marker::getMarkerCheckPatch() {
@@ -41,11 +47,15 @@ namespace stardust {
 				STARDUST_STRING_LOCATION + i++, static_cast<int>(byte)
 			);
 		}
-		patch << fmt::format("if !marker_present\nprint hex(read2(${:06X}))\nendif", BITFIELD_LOCATION);
+		patch << fmt::format("if !marker_present\n"
+			"print hex(read2(${:06X}))\n"
+			"print hex(read2(${:06X}))\n"
+			"print hex(read3(${:06X}))\n"
+			"endif", BITFIELD_LOCATION, TIMESTAMP_LOCATION, TIMESTAMP_LOCATION + 2);
 		return patch.str();
 	}
 
-	std::optional<uint16_t> Marker::extractBitField(const fs::path& rom_path) {
+	std::optional<Marker::Extracted> Marker::extractInformation(const fs::path& rom_path) {
 		std::ifstream rom_file(rom_path, std::ios::in | std::ios::binary);
 		std::vector<char> rom_bytes((std::istreambuf_iterator<char>(rom_file)), (std::istreambuf_iterator<char>()));
 		rom_file.close();
@@ -99,17 +109,24 @@ namespace stardust {
 		if (succeeded) {
 			int print_count;
 			const auto prints{ asar_getprints(&print_count) };
-			if (print_count == 0) {
-				spdlog::debug("No marker string found in ROM {}", rom_path.string());
+			if (print_count != 3) {
+				spdlog::debug("Failed to extract marker information from ROM {}", rom_path.string());
 				return {};
 			}
 			else {
-				int bits;
+				uint16_t bits;
+
 				std::stringstream temp;
 				temp << std::hex << prints[0];
 				temp >> bits;
-				spdlog::debug("Marker found in ROM {}, bitfield is 0x{:04X}", rom_path.string(), bits);
-				return bits;
+
+				uint64_t timestamp;
+				temp.clear();
+				temp << std::hex << prints[1] << prints[2];
+				temp >> timestamp;
+
+				spdlog::debug("Marker found in ROM {}, bitfield is 0x{:04X}, timestamp is 0x{:010X}", rom_path.string(), bits, timestamp);
+				return Extracted(bits, timestamp);
 			}
 		}
 		else {
@@ -118,7 +135,7 @@ namespace stardust {
 		}
 	}
 
-	void Marker::insertMarkerString(const fs::path& rom_path, const std::vector<ExtractableType>& extractables) {
+	void Marker::insertMarkerString(const fs::path& rom_path, const std::vector<ExtractableType>& extractables, int64_t timestamp) {
 		std::ifstream rom_file(rom_path, std::ios::in | std::ios::binary);
 		std::vector<char> rom_bytes((std::istreambuf_iterator<char>(rom_file)), (std::istreambuf_iterator<char>()));
 		rom_file.close();
@@ -128,7 +145,7 @@ namespace stardust {
 
 		int unheadered_rom_size{ rom_size - header_size };
 
-		const auto patch_string{ getMarkerInsertionPatch(extractables) };
+		const auto patch_string{ getMarkerInsertionPatch(extractables, timestamp) };
 
 		if (!asar_init()) {
 			spdlog::warn("Failed to insert marker string into ROM {} because asar not found", rom_path.string());
@@ -183,11 +200,20 @@ namespace stardust {
 
 	std::vector<ExtractableType> Marker::getNeededExtractions(const fs::path& rom_path, 
 		const std::vector<ExtractableType>& extractables, bool use_text_map16) {
-		const auto bitfield{ extractBitField(rom_path) };
-		if (!bitfield.has_value()) {
+		const auto extracted_information{ extractInformation(rom_path) };
+		if (!extracted_information.has_value()) {
+			// Marker not found, export all
 			return extractables;
 		}
 
-		return determineAddedExtractables(bitfield.value(), extractablesToBitField(extractables));
+		const auto rom_write_time{ std::chrono::clock_cast<std::chrono::system_clock>(fs::last_write_time(rom_path)) };
+		const auto rom_epoch{ std::chrono::duration_cast<std::chrono::seconds>(rom_write_time.time_since_epoch()).count() };
+		
+		if (rom_epoch != extracted_information.value().timestamp) {
+			// Marker timestamp does not match last ROM write time, export all
+			return extractables;
+		}
+
+		return determineAddedExtractables(extracted_information.value().bitfield, extractablesToBitField(extractables));
 	}
 }
