@@ -1,6 +1,8 @@
 #pragma once
 
 #include <filesystem>
+#include <algorithm>
+#include <execution>
 
 #include <fmt/core.h>
 #include <spdlog/spdlog.h>

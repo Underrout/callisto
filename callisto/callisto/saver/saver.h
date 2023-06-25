@@ -4,6 +4,8 @@
 #include <vector>
 #include <memory>
 #include <unordered_map>
+#include <algorithm>
+#include <execution>
 
 #include <nlohmann/json.hpp>
 #include <spdlog/spdlog.h>

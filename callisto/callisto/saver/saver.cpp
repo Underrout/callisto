@@ -17,6 +17,10 @@ namespace callisto {
 	std::vector<ExtractableType> Saver::getExtractableTypes(const Configuration& config) {
 		std::vector<ExtractableType> extractables{};
 
+		if (config.levels.isSet()) {
+			extractables.push_back(ExtractableType::LEVELS);
+		}
+
 		if (config.map16.isSet()) {
 			if (config.use_text_map16_format.getOrDefault(false)) {
 				extractables.push_back(ExtractableType::TEXT_MAP16);
@@ -40,10 +44,6 @@ namespace callisto {
 
 		if (config.titlescreen.isSet()) {
 			extractables.push_back(ExtractableType::TITLE_SCREEN);
-		}
-
-		if (config.levels.isSet()) {
-			extractables.push_back(ExtractableType::LEVELS);
 		}
 
 		if (config.shared_palettes.isSet()) {
@@ -202,11 +202,8 @@ namespace callisto {
 
 			const auto extractables{ getExtractables(config, need_extraction, rom_path) };
 
-			for (const auto& extractable : extractables) {
-				extractable->extract();
-			}
-
-			spdlog::info("All resources exported successfully!");
+			std::for_each(std::execution::par, extractables.begin(), extractables.end(), 
+				[&](auto&& extractable) { extractable->extract(); });
 
 			if (mark) {
 				const auto potential_build_report{ PathUtil::getBuildReportPath(config.project_root.getOrThrow()) };

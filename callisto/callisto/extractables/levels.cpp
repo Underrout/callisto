@@ -17,11 +17,15 @@ namespace callisto {
 
 		void Levels::normalize() const {
 			spdlog::debug("Stripping source pointers from MWLs in directory {}", levels_folder.string());
+			std::vector<fs::path> mwls{};
 			for (const auto& entry : fs::directory_iterator(levels_folder)) {
 				if (entry.path().extension() == ".mwl") {
-					Level::normalize(entry.path());
+					mwls.push_back(entry.path());
 				}
 			}
+
+			std::for_each(std::execution::par, mwls.begin(), mwls.end(), 
+				[&](auto&& path) { Level::normalize(path); });
 		}
 
 		void Levels::extract() {

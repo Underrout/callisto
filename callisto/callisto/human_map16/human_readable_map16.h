@@ -8,6 +8,8 @@
 #include <filesystem>
 #include <iterator>
 #include <algorithm>
+#include <execution>
+#include <boost/range/irange.hpp>
 namespace fs = std::filesystem;
 
 #include "tile_format.h"
