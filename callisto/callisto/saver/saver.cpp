@@ -198,6 +198,8 @@ namespace callisto {
 			else {
 				spdlog::info("Exporting all resources");
 			}
+			const auto export_start{ std::chrono::high_resolution_clock::now() };
+
 			const auto extractables{ getExtractables(config, need_extraction, rom_path) };
 
 			for (const auto& extractable : extractables) {
@@ -228,6 +230,10 @@ namespace callisto {
 					spdlog::warn("Failed to write export marker to ROM with exception:\n{}", e.what());
 				}
 			}
+
+			const auto export_end{ std::chrono::high_resolution_clock::now() };
+
+			spdlog::info("All resources exported successfully in {}!", TimeUtil::getDurationString(export_end - export_start));
 		}
 		else {
 			spdlog::info("All resources already exported!");

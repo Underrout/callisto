@@ -148,7 +148,7 @@ namespace callisto {
 
 			const auto build_end{ std::chrono::high_resolution_clock::now() };
 
-			spdlog::info("Quickbuild finished successfully in {}!", getDurationString(build_end - build_start));
+			spdlog::info("Quickbuild finished successfully in {}!", TimeUtil::getDurationString(build_end - build_start));
 		}
 		else {
 			spdlog::info("Everything already up to date!");

@@ -93,7 +93,7 @@ namespace callisto {
 
 		const auto build_end{ std::chrono::high_resolution_clock::now() };
 		
-		spdlog::info("Build finished successfully in {}!", getDurationString(build_end - build_start));
+		spdlog::info("Build finished successfully in {}!", TimeUtil::getDurationString(build_end - build_start));
 	}
 
 	json Rebuilder::getJsonDependencies(const DependencyVector& dependencies, const PatchHijacksVector& hijacks) {
