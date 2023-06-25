@@ -2,6 +2,8 @@
 
 namespace callisto {
 	void Rebuilder::build(const Configuration& config) {
+		const auto build_start{ std::chrono::high_resolution_clock::now() };
+
 		spdlog::info("Build started");
 
 		init(config);
@@ -88,7 +90,10 @@ namespace callisto {
 
 		Saver::writeMarkerToRom(config.temporary_rom.getOrThrow(), config);
 		moveTempToOutput(config);
-		spdlog::info("Build finished successfully!");
+
+		const auto build_end{ std::chrono::high_resolution_clock::now() };
+		
+		spdlog::info("Build finished successfully in {}!", getDurationString(build_end - build_start));
 	}
 
 	json Rebuilder::getJsonDependencies(const DependencyVector& dependencies, const PatchHijacksVector& hijacks) {

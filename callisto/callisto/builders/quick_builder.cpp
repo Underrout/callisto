@@ -16,6 +16,8 @@ namespace callisto {
 	}
 
 	void QuickBuilder::build(const Configuration& config) {
+		const auto build_start{ std::chrono::high_resolution_clock::now() };
+
 		spdlog::info("Quick Build started");
 
 		init(config);
@@ -144,7 +146,9 @@ namespace callisto {
 
 			moveTempToOutput(config);
 
-			spdlog::info("Quickbuild finished successfully!");
+			const auto build_end{ std::chrono::high_resolution_clock::now() };
+
+			spdlog::info("Quickbuild finished successfully in {}!", getDurationString(build_end - build_start));
 		}
 		else {
 			spdlog::info("Everything already up to date!");
