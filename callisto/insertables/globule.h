@@ -27,6 +27,8 @@ namespace callisto {
 	protected:
 		static constexpr auto MAX_ROM_SIZE = 16 * 1024 * 1024;
 
+		std::string patch_string{};
+
 		const fs::path globule_path;
 		const fs::path project_relative_path;
 		std::vector<const char*> additional_include_paths;
@@ -50,6 +52,7 @@ namespace callisto {
 			const std::vector<fs::path>& other_globule_paths,
 			const std::vector<fs::path>& additional_include_paths = {});
 
+		void init() override;
 		void insert() override;
 	};
 }

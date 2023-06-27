@@ -82,6 +82,7 @@ namespace callisto {
 
 				auto insertable{ descriptorToInsertable(descriptor, config) };
 
+				insertable->init();
 				if (!failed_dependency_report.has_value()) {
 					std::unordered_set<ResourceDependency> resource_dependencies;
 					try {

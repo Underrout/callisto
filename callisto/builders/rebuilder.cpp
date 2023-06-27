@@ -13,6 +13,9 @@ namespace callisto {
 
 		fs::copy_file(config.clean_rom.getOrThrow(), config.temporary_rom.getOrThrow(), fs::copy_options::overwrite_existing);
 
+		auto insertables{ buildOrderToInsertables(config) };
+		auto init_threads{ createInitThreads(insertables) };
+
 		if (config.initial_patch.isSet()) {
 			InitialPatch initial_patch{ config };
 			const auto initial_patch_resource_dependencies{ initial_patch.insertWithDependencies() };
@@ -32,11 +35,13 @@ namespace callisto {
 			old_rom = getRom(config.temporary_rom.getOrThrow());
 		}
 
+		size_t i{ 0 };
 		std::optional<Insertable::NoDependencyReportFound> failed_dependency_report{};
-		auto insertables{ buildOrderToInsertables(config) };
 		for (const std::pair<const Descriptor&, std::shared_ptr<Insertable>> pair : insertables) {
 			const auto insertable{ pair.second };
 			const auto& descriptor{ pair.first };
+
+			init_threads.at(i++).join();
 			if (!failed_dependency_report.has_value()) {
 				std::unordered_set<ResourceDependency> resource_dependencies;
 				try {

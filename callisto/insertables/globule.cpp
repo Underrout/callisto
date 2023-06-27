@@ -38,20 +38,10 @@ namespace callisto {
 		}
 	}
 
-	// TODO this whole thing is pretty much the same as the Patch.insert() method, probably merge 
-	//      them into a single static method or something later
-	void Globule::insert() {
-		const auto prev_folder{ fs::current_path() };
-		fs::current_path(globule_path.parent_path());
-
+	void Globule::init() {
 		std::ostringstream temp_patch{};
 
-		// delete potential previous dependency report
-		fs::remove(globule_path.parent_path() / ".dependencies");
-
 		if (globule_path.extension() == ".asm") {
-			spdlog::info(fmt::format("Inserting ASM globule {}", project_relative_path.string()));
-			
 			temp_patch << "warnings disable W1011" << std::endl << std::endl
 				<< "warnings disable W1007" << std::endl << std::endl
 				<< "warnings disable W1008" << std::endl << std::endl
@@ -65,15 +55,25 @@ namespace callisto {
 			temp_patch << "incsrc \"" << globule_path.string() << '"' << std::endl;
 		}
 		else {
-			spdlog::info(fmt::format("Inserting binary globule {}", project_relative_path.string()));
-
-			auto label_name{ globule_path.stem().string()};
+			auto label_name{ globule_path.stem().string() };
 			std::replace(label_name.begin(), label_name.end(), ' ', '_');
 
-			temp_patch << fmt::format("incbin \"{}\" -> {}", globule_path.string(), label_name ) << std::endl;
+			temp_patch << fmt::format("incbin \"{}\" -> {}", globule_path.string(), label_name) << std::endl;
 		}
 
-		std::string patch_string{ temp_patch.str() };
+		patch_string = temp_patch.str();
+	}
+
+	// TODO this whole thing is pretty much the same as the Patch.insert() method, probably merge 
+	//      them into a single static method or something later
+	void Globule::insert() {
+		const auto prev_folder{ fs::current_path() };
+		fs::current_path(globule_path.parent_path());
+
+		// delete potential previous dependency report
+		fs::remove(globule_path.parent_path() / ".dependencies");
+
+		spdlog::info(fmt::format("Inserting globule {}", project_relative_path.string()));
 
 		memoryfile patch;
 		patch.path = "temp.asm";

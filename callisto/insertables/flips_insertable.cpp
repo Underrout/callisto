@@ -60,14 +60,6 @@ namespace callisto {
 		int exit_code{ bp::system(flips_path.string(), "--apply", bps_path.string(),
 			clean_rom_path.string(), output_rom_path.string()) };
 
-		if (needs_gfx) {
-			GraphicsUtil::importProjectGraphicsInto(config, output_rom_path);
-		}
-
-		if (needs_exgfx) {
-			GraphicsUtil::importProjectExGraphicsInto(config, output_rom_path);
-		}
-
 		if (exit_code == 0) {
 			spdlog::debug(fmt::format("Successfully patched to {}", output_rom_path.string()));
 		}
@@ -129,6 +121,10 @@ namespace callisto {
 		}
 	}
 
+	void FlipsInsertable::init() {
+		temporary_patched_rom_path = createTemporaryPatchedRom();
+	}
+
 	void FlipsInsertable::insert() {
 		spdlog::info(fmt::format("Inserting {}", getResourceName()));
 		spdlog::debug(fmt::format(
@@ -138,7 +134,14 @@ namespace callisto {
 			temporary_rom_path.string()
 		));
 
-		const auto temporary_patched_rom_path{ createTemporaryPatchedRom() };
+		if (needs_gfx) {
+			GraphicsUtil::importProjectGraphicsInto(config, temporary_patched_rom_path);
+		}
+
+		if (needs_exgfx) {
+			GraphicsUtil::importProjectExGraphicsInto(config, temporary_patched_rom_path);
+		}
+
 		const auto transfer_result{ callLunarMagic(
 			getLunarMagicFlag(),
 			temporary_rom_path.string(),

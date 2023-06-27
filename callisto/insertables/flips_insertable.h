@@ -27,6 +27,7 @@ namespace callisto {
 		const fs::path flips_path;
 		const fs::path clean_rom_path;
 		const fs::path bps_patch_path;
+		fs::path temporary_patched_rom_path;
 
 		const Configuration& config;
 
@@ -50,6 +51,7 @@ namespace callisto {
 		std::unordered_set<ResourceDependency> determineDependencies() override;
 
 	public:
+		void init() override;
 		void insert() override;
 	};
 }

@@ -114,6 +114,7 @@ namespace callisto {
 		}
 
 	public:
+		virtual void init() {}
 		virtual void insert() = 0;
 
 		std::unordered_set<ResourceDependency> insertWithDependencies() {

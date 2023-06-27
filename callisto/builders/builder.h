@@ -64,6 +64,8 @@ namespace callisto {
 
 		static void removeBuildReport(const fs::path& project_root);
 
+		static std::vector<std::thread> createInitThreads(const Insertables& insertables);
+
 	public:
 		virtual void build(const Configuration& config) = 0;
 	};

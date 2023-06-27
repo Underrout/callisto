@@ -248,4 +248,14 @@ namespace callisto {
 				"following exception, Quickbuild may behave erroneously:\n{}");
 		}
 	}
+
+	std::vector<std::thread> Builder::createInitThreads(const Insertables& insertables) {
+		std::vector<std::thread> threads{};
+		for (auto& [descriptor, insertable] : insertables) {
+			threads.emplace_back([=] {
+				insertable->init();
+			});
+		}
+		return threads;
+	}
 }
