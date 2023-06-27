@@ -18,10 +18,19 @@ namespace callisto {
 	namespace extractables {
 		class Levels : public LunarMagicExtractable {
 		protected:
+			static constexpr auto LAYER_1_POINTERS_OFFSET{ 0x2E000 };
+			static constexpr auto LAYER_1_POINTER_SIZE{ 3 };
+			static constexpr auto LAYER_1_POINTERS_AMOUNT{ 0x200 };
+			
 			const fs::path levels_folder;
 			const bool strip_source_pointers{ true };  // TODO potentially make this configurable?
+			const fs::path temp_folder;
 
 			void normalize() const;
+			
+			std::vector<size_t> determineModifiedOffsets(const fs::path& extracting_rom);
+			fs::path createChunkedRom(const fs::path& temp_folder, size_t chunk_idx, size_t chunk_amount,
+				const fs::path& extracting_rom, const std::vector<size_t>& offsets);
 
 		public:
 			void extract() override;
