@@ -465,16 +465,34 @@ void HumanReadableMap16::from_map16::convert(const fs::path input_file, const fs
 		first_truly_global_page = 2;
 	}
 
+	std::exception_ptr thread_exception{};
 	auto page_numbers = boost::irange<int>(first_truly_global_page, 0x80);
 	std::for_each(std::execution::par, page_numbers.begin(), page_numbers.end(), [&](auto&& page_number) {
-		convert_FG_page(bytes, page_number, full_map16_pair.first, full_acts_like_pair.first);
+		try {
+			convert_FG_page(bytes, page_number, full_map16_pair.first, full_acts_like_pair.first);
+		}
+		catch (...) {
+			thread_exception = std::current_exception();
+		}
 	});
+	
+	if (thread_exception != nullptr) {
+		std::rethrow_exception(thread_exception);
+	}
 
 	page_numbers = boost::irange<int>(0x80, 0x100);
 	std::for_each(std::execution::par, page_numbers.begin(), page_numbers.end(), [&](auto&& page_number) {
-		convert_BG_page(bytes, page_number, full_map16_pair.first);
+		try {
+			convert_BG_page(bytes, page_number, full_map16_pair.first);
+		}
+		catch (...) {
+			thread_exception = std::current_exception();
+		}
 	});
 
+	if (thread_exception != nullptr) {
+		std::rethrow_exception(thread_exception);
+	}
 
 	for (unsigned int tileset_group = 0; tileset_group != 5; tileset_group++) {
 		convert_tileset_group_specific_pages(bytes, tileset_group, tileset_specific_first_two_pair.first, diagonal_grassland_pipes.first);

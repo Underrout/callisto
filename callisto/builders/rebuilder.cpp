@@ -17,35 +17,59 @@ namespace callisto {
 
 
 		std::thread init_thread;
+		std::exception_ptr thread_exception{};
 		if (!insertables.empty()) {
-			init_thread = std::thread([&] { insertables[0].second->init(); });
+			init_thread = std::thread([&] { 
+				try {
+					insertables[0].second->init(); 
+				}
+				catch (...) {
+					thread_exception = std::current_exception();
+				}
+			});
 		}
-
-		if (config.initial_patch.isSet()) {
-			InitialPatch initial_patch{ config };
-			const auto initial_patch_resource_dependencies{ initial_patch.insertWithDependencies() };
-			const auto initial_patch_config_dependencies{ initial_patch.getConfigurationDependencies() };
-			dependencies.push_back({ Descriptor(Symbol::INITIAL_PATCH), 
-				{ initial_patch_resource_dependencies, initial_patch_config_dependencies } });
-			patch_hijacks.push_back({});
-		}
-
-		expandRom(config);
 
 		WriteMap write_map{};
 		std::vector<char> old_rom;
+		Conflicts check_conflicts_policy;
+		try {
+			if (config.initial_patch.isSet()) {
+				InitialPatch initial_patch{ config };
+				const auto initial_patch_resource_dependencies{ initial_patch.insertWithDependencies() };
+				const auto initial_patch_config_dependencies{ initial_patch.getConfigurationDependencies() };
+				dependencies.push_back({ Descriptor(Symbol::INITIAL_PATCH),
+					{ initial_patch_resource_dependencies, initial_patch_config_dependencies } });
+				patch_hijacks.push_back({});
+			}
 
-		const auto check_conflicts_policy{ determineConflictCheckSetting(config) };
-		if (check_conflicts_policy != Conflicts::NONE) {
-			old_rom = getRom(config.temporary_rom.getOrThrow());
+			expandRom(config);
+
+			check_conflicts_policy = determineConflictCheckSetting(config);
+			if (check_conflicts_policy != Conflicts::NONE) {
+				old_rom = getRom(config.temporary_rom.getOrThrow());
+			}
+		}
+		catch (...) {
+			init_thread.join();  // ensuring our other thread is still joined before we exit this function
+			std::rethrow_exception(std::current_exception());
 		}
 
 		size_t i{ 0 };
 		std::optional<Insertable::NoDependencyReportFound> failed_dependency_report{};
 		for (const std::pair<const Descriptor&, std::shared_ptr<Insertable>> pair : insertables) {
 			init_thread.join();
+			if (thread_exception != nullptr) {
+				std::rethrow_exception(thread_exception);
+			}
 			if (i != insertables.size() - 1) {
-				init_thread = std::thread([&] { insertables[++i].second->init(); });
+				init_thread = std::thread([&] { 
+					try {
+						insertables[++i].second->init(); 
+					}
+					catch (...) {
+						thread_exception = std::current_exception();
+					}
+				});
 			}
 
 			const auto insertable{ pair.second };

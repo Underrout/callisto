@@ -28,8 +28,19 @@ namespace callisto {
 				}
 			}
 
-			std::for_each(std::execution::par, mwls.begin(), mwls.end(), 
-				[&](auto&& path) { Level::normalize(path); });
+			std::exception_ptr thread_exception{};
+			std::for_each(std::execution::par, mwls.begin(), mwls.end(), [&](auto&& path) { 
+				try {
+					Level::normalize(path); 
+				}
+				catch (...) {
+					thread_exception = std::current_exception();
+				}
+			});
+
+			if (thread_exception != nullptr) {
+				std::rethrow_exception(thread_exception);
+			}
 		}
 
 		std::vector<size_t> Levels::determineModifiedOffsets(const fs::path& extracting_rom) {
@@ -105,22 +116,32 @@ namespace callisto {
 
 			const auto modified_offsets{ determineModifiedOffsets(extracting_rom) };
 			const auto thread_count{ std::thread::hardware_concurrency() };
+			std::exception_ptr thread_exception{};
 			std::vector<std::thread> export_threads{};
 			std::vector<int> exit_codes(thread_count, 0);
 
 			for (size_t i{ 0 }; i != thread_count; ++i) {
-				export_threads.emplace_back([=, &exit_codes, &modified_offsets] {
-					const auto temp_rom{ createChunkedRom(temp_folder, i, 
-						thread_count, extracting_rom, modified_offsets) };
-					const auto exit_code{ callLunarMagic("-ExportMultLevels",
-					temp_rom.string(), (temporary_levels_folder / "level").string()) };
-					exit_codes[i] = exit_code;
-					fs::remove(temp_rom);
+				export_threads.emplace_back([=, &exit_codes, &modified_offsets, &thread_exception] {
+					try {
+						const auto temp_rom{ createChunkedRom(temp_folder, i,
+				thread_count, extracting_rom, modified_offsets) };
+						const auto exit_code{ callLunarMagic("-ExportMultLevels",
+						temp_rom.string(), (temporary_levels_folder / "level").string()) };
+						exit_codes[i] = exit_code;
+						fs::remove(temp_rom);
+					}
+					catch (...) {
+						thread_exception = std::current_exception();
+					}
 				});
 			}
 
 			for (auto& thread : export_threads) {
 				thread.join();
+			}
+
+			if (thread_exception != nullptr) {
+				std::rethrow_exception(thread_exception);
 			}
 
 			if (std::all_of(exit_codes.begin(), exit_codes.end(), [](auto e) { return e == 0; })) {

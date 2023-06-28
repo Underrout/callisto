@@ -202,8 +202,19 @@ namespace callisto {
 
 			const auto extractables{ getExtractables(config, need_extraction, rom_path) };
 
-			std::for_each(std::execution::par, extractables.begin(), extractables.end(), 
-				[&](auto&& extractable) { extractable->extract(); });
+			std::exception_ptr thread_exception{};
+			std::for_each(std::execution::par, extractables.begin(), extractables.end(), [&](auto&& extractable) { 
+				try {
+					extractable->extract(); 
+				}
+				catch (...) {
+					thread_exception = std::current_exception();
+				}
+			});
+
+			if (thread_exception != nullptr) {
+				std::rethrow_exception(thread_exception);
+			}
 
 			if (mark) {
 				const auto potential_build_report{ PathUtil::getBuildReportPath(config.project_root.getOrThrow()) };
