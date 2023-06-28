@@ -123,6 +123,14 @@ namespace callisto {
 
 	void FlipsInsertable::init() {
 		temporary_patched_rom_path = createTemporaryPatchedRom();
+
+		if (needs_gfx) {
+			GraphicsUtil::importProjectGraphicsInto(config, temporary_patched_rom_path);
+		}
+
+		if (needs_exgfx) {
+			GraphicsUtil::importProjectExGraphicsInto(config, temporary_patched_rom_path);
+		}
 	}
 
 	void FlipsInsertable::insert() {
@@ -133,14 +141,6 @@ namespace callisto {
 			bps_patch_path.string(),
 			temporary_rom_path.string()
 		));
-
-		if (needs_gfx) {
-			GraphicsUtil::importProjectGraphicsInto(config, temporary_patched_rom_path);
-		}
-
-		if (needs_exgfx) {
-			GraphicsUtil::importProjectExGraphicsInto(config, temporary_patched_rom_path);
-		}
 
 		const auto transfer_result{ callLunarMagic(
 			getLunarMagicFlag(),
