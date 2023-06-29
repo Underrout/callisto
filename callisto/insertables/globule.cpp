@@ -151,6 +151,7 @@ namespace callisto {
 			spdlog::info(fmt::format("Successfully applied globule {}!", project_relative_path.string()));
 
 			emitImprintFile();
+			fixAsarMemoryLeak();
 
 			fs::current_path(prev_folder);
 		}
@@ -165,6 +166,9 @@ namespace callisto {
 
 				error_string << errors[i].fullerrdata;
 			}
+
+			fixAsarMemoryLeak();
+
 			fs::current_path(prev_folder);
 			throw InsertionException(fmt::format(
 				"Failed to apply globule {} with the following error(s):\n{}",
@@ -227,8 +231,6 @@ namespace callisto {
 			imprint << fmt::format("!{}_{} = ${:06X}", globule_name, name, label.location) << std::endl;
 		}
 
-		// fixAsarMemoryLeak();
-
 		imprint.close();
 	}
 
@@ -250,7 +252,7 @@ namespace callisto {
 		// without labels and then get them again, so I guess we'll do this?
 
 		const memoryfile empty_patch{ "empty.asm", "", 0 };
-		int size;
+		int size{ 0 };
 
 		const patchparams params{
 			sizeof(struct patchparams),

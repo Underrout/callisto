@@ -30,6 +30,8 @@ namespace callisto {
 
 		std::unordered_set<ResourceDependency> determineDependencies() override;
 
+		void fixAsarMemoryLeak() const;
+
 	public:
 		const fs::path project_relative_path;
 
