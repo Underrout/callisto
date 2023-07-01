@@ -116,8 +116,6 @@ namespace callisto {
 				}
 			}
 
-			fixAsarMemoryLeak();
-
 			spdlog::info(fmt::format("Successfully applied patch {}!", project_relative_path.string()));
 		}
 		else {
@@ -131,8 +129,6 @@ namespace callisto {
 
 				error_string << errors[i].fullerrdata;
 			}
-
-			fixAsarMemoryLeak();
 
 			throw InsertionException(fmt::format(
 				"Failed to apply patch {} with the following error(s):\n{}",
@@ -151,41 +147,5 @@ namespace callisto {
 			patch_path.parent_path() / ".dependencies"
 		) };
 		return dependencies;
-	}
-
-	void Patch::fixAsarMemoryLeak() const {
-		// apparently labels will leak unless you patch a file 
-		// without labels and then get them again, so I guess we'll do this?
-
-		const memoryfile empty_patch{ "empty.asm", "", 0 };
-		int size{ 0 };
-
-		const patchparams params{
-			sizeof(struct patchparams),
-			"empty.asm",
-			nullptr,
-			0,
-			&size,
-			nullptr,
-			0,
-			true,
-			nullptr,
-			0,
-			nullptr,
-			nullptr,
-			nullptr,
-			0,
-			&empty_patch,
-			1,
-			false,
-			true
-		};
-
-		if (!asar_patch_ex(&params)) {
-			spdlog::warn("Failed to clean up asar labels, callisto might leak memory.");
-			return;
-		}
-		int labels;
-		asar_getalllabels(&labels);
 	}
 }
