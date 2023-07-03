@@ -119,12 +119,9 @@ namespace callisto {
 
 			Renderer([] { return separator(); }),
 
-			Button("View console output (V)", screen.WithRestoredIO([&] { 
-				if (!anything_on_command_line) {
-					std::cout << "Press ESC to return to callisto" << std::endl << std::endl << std::endl;
-					anything_on_command_line = true;
-				}
-				waitForEscape(); 
+			Button("View console output (V)", screen.WithRestoredIO([&] {
+				waitForEnter(!anything_on_command_line);
+				anything_on_command_line = true;
 			}), ButtonOption::Ascii()),
 
 			Renderer([] { return separator(); }),
@@ -311,12 +308,12 @@ namespace callisto {
 		previously_selected_profile_menu_entry = selected_profile_menu_entry;
 	}
 
-	void TUI::waitForEscape() {
-#ifdef _WIN32
-		while (_getch() != 27) {}
-#elif defined(__LINUX__) || defined(__gnu_linux__) || defined(__linux__) || defined(__APPLE__)
-		while (getch() != 27) {}
-#endif
+	void TUI::waitForEnter(bool prompt) {
+		if (prompt) {
+			std::cout << '\n' << "Press the ENTER key to return to the main menu...";
+		}
+
+		while (std::cin.get() != '\n') {}
 	}
 
 	std::optional<std::string> TUI::errorToText(std::function<void()> func) {
@@ -344,8 +341,7 @@ namespace callisto {
 			function_name, now
 		);
 		logError(func);
-		std::cout << "Press ESC to return to callisto" << std::endl;
-		waitForEscape();
+		waitForEnter(true);
 		anything_on_command_line = true;
 		std::cout << std::endl << std::endl;
 			})();
@@ -586,11 +582,9 @@ namespace callisto {
 			}
 			else if (event == Event::Character('v')) {
 				screen.WithRestoredIO([&] {
-					if (!anything_on_command_line) {
-						std::cout << "Press ESC to return to callisto" << std::endl << std::endl << std::endl;
-						anything_on_command_line = true;
-					}
-				waitForEscape(); })();
+					waitForEnter(!anything_on_command_line);
+					anything_on_command_line = true;
+				})();
 				return true;
 			}
 			else if (event == Event::Character('w')) {

@@ -7,13 +7,6 @@
 #include <string>
 #include <sstream>
 
-#ifdef _WIN32
-#include <conio.h>
-#elif defined(__LINUX__) || defined(__gnu_linux__) || defined(__linux__) || defined(__APPLE__)
-#include <unistd.h>
-#include <termios.h>
-#endif
-
 #include <spdlog/spdlog.h>
 #include <boost/process.hpp>
 #include <fmt/chrono.h>
@@ -111,32 +104,7 @@ namespace callisto {
 		bool modalError(std::function<void()> func);
 		void logError(std::function<void()> func);
 
-		void waitForEscape();
-
-#if defined(__LINUX__) || defined(__gnu_linux__) || defined(__linux__) || defined(__APPLE__)
-		// Credit for getch: https://stackoverflow.com/a/16361724
-		char getch(void)
-		{
-			char buf = 0;
-			struct termios old = { 0 };
-			fflush(stdout);
-			if (tcgetattr(0, &old) < 0)
-				perror("tcsetattr()");
-			old.c_lflag &= ~ICANON;
-			old.c_lflag &= ~ECHO;
-			old.c_cc[VMIN] = 1;
-			old.c_cc[VTIME] = 0;
-			if (tcsetattr(0, TCSANOW, &old) < 0)
-				perror("tcsetattr ICANON");
-			if (read(0, &buf, 1) < 0)
-				perror("read()");
-			old.c_lflag |= ICANON;
-			old.c_lflag |= ECHO;
-			if (tcsetattr(0, TCSADRAIN, &old) < 0)
-				perror("tcsetattr ~ICANON");
-			return buf;
-		}
-#endif
+		void waitForEnter(bool prompt = false);
 
 		void rebuildButton();
 		void quickbuildButton();
