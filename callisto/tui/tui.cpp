@@ -104,11 +104,13 @@ namespace callisto {
 
 			Renderer([] { return separator(); }),
 
+			/*
 			Button("Recent projects (W)", [&] { 
 				recent_projects.reloadList(); 
 				updateProjectsModal(); 
 				show_recent_projects_modal = true; 
 			}, ButtonOption::Ascii()),
+			*/
 			Button("Reload configuration (C)", [&] { trySetConfiguration(); }, ButtonOption::Ascii()),
 			Button("Reload profiles", [&] {
 				profile_names = config_manager.getProfileNames();
@@ -126,7 +128,7 @@ namespace callisto {
 
 			Renderer([] { return separator(); }),
 
-			Button("Exit (ESC)", [=] { screen.ExitLoopClosure(); exit(0); }, ButtonOption::Ascii())
+			Button("Exit (ESC)", [=] { screen.Exit(); }, ButtonOption::Ascii())
 			}, &selected_main_menu_entry);
 
 		const auto window_title{ fmt::format("callisto v{}.{}.{}d", CALLISTO_VERSION_MAJOR, CALLISTO_VERSION_MINOR, CALLISTO_VERSION_PATCH) };
@@ -230,6 +232,7 @@ namespace callisto {
 			emulators = Emulators(*config);
 			emulator_names = emulators.getEmulatorNames();
 		}
+		/*
 		else if (profile_names.empty()) {
 			bool any_project_config_files{ false };
 
@@ -246,6 +249,7 @@ namespace callisto {
 				return;
 			}
 		}
+		*/
 
 		setMainMenu();
 		setEmulatorMenu();
@@ -313,7 +317,7 @@ namespace callisto {
 			std::cout << '\n' << "Press the ENTER key to return to the main menu...";
 		}
 
-		while (std::cin.get() != '\n') {}
+		std::cin.ignore((std::numeric_limits< std::streamsize >::max)(), '\n');
 	}
 
 	std::optional<std::string> TUI::errorToText(std::function<void()> func) {
@@ -565,7 +569,7 @@ namespace callisto {
 			}
 
 			if (event == Event::Escape) {
-				exit(0);
+				screen.Exit();
 				return true;
 			}
 			else if (event == Event::Character('s')) {
@@ -587,12 +591,14 @@ namespace callisto {
 				})();
 				return true;
 			}
+			/*
 			else if (event == Event::Character('w')) {
 				recent_projects.reloadList();
 				updateProjectsModal();
 				show_recent_projects_modal = true;
 				return true;
 			}
+			*/
  			else if (event == Event::Character('p')) {
 				packageButton();
 				return true;
@@ -729,8 +735,6 @@ namespace callisto {
 			}
 			else {
 				child.detach();
-				screen.ExitLoopClosure();
-				exit(0);
 			}
 		});
 	}
@@ -765,8 +769,7 @@ namespace callisto {
 				show_recent_projects_modal = false;
 			}
 			else {
-				screen.ExitLoopClosure();
-				exit(0);
+				screen.Exit();
 			}
 		}, ButtonOption::Ascii());
 
@@ -796,8 +799,7 @@ namespace callisto {
 					show_recent_projects_modal = false;
 				}
 				else {
-					screen.ExitLoopClosure();
-					exit(0);
+					screen.Exit();
 				}
 				return true;
 			}
