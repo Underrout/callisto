@@ -63,7 +63,7 @@ set_target_properties(asar PROPERTIES CXX_STANDARD 14)
 set(CALLISTO_SOURCE_FILES "")
 
 list(APPEND CALLISTO_SOURCE_FILES
-"callisto.rc" "callisto.cpp" "callisto.h" "insertable.h" 
+"callisto.rc" "callisto.cpp" "callisto.h" "insertable.h" "cli/cli_handler.h" "cli/cli_handler.cpp"
 "callisto_exception.h" "insertion_exception.h"  
  "insertables/exgraphics.h" "insertables/exgraphics.cpp"
   "insertables/graphics.h" "insertables/graphics.cpp" 
@@ -94,7 +94,7 @@ if (MSVC)
     "junction/libntfslinks/source/CharUtils.cpp")
 endif()
 
-add_executable (callisto ${CALLISTO_SOURCE_FILES} "recent_projects/recent_projects_manager.h")
+add_executable (callisto ${CALLISTO_SOURCE_FILES} "recent_projects/recent_projects_manager.h" "cli/cli_handler.h")
 target_link_options(callisto PRIVATE ${CALLISTO_LINK_OPTIONS})
 target_compile_options(callisto PRIVATE ${CALLISTO_COMPILE_OPTIONS})
 target_compile_definitions(callisto PRIVATE ${CALLISTO_COMPILE_DEFINITIONS})
