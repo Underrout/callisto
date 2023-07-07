@@ -203,7 +203,7 @@ namespace callisto {
 				int conflict_size{ 0 };
 				do {
 					for (int i{ 0 }; i != writers.size(); ++i) {
-						const auto written_byte{ writes.at(i).second };
+						const auto written_byte{ current->second.at(i).second };
 						written_bytes.at(i).second.push_back(written_byte);
 					}
 					++conflict_size;
