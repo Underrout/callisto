@@ -67,6 +67,7 @@ namespace callisto {
 								e.what()
 							));
 						}
+						spdlog::info("Successfully renamed '{}' to '{}'", entry.filename().string(), target_path.filename().string());
 						continue;
 					}
 				}
@@ -100,6 +101,7 @@ namespace callisto {
 								e.what()
 							));
 						}
+						spdlog::info("Successfully set source level number of '{}' to {:X}", entry.filename().string(), file_level_number.value());
 						continue;
 					}
 					else if (answer == 'b' || answer == 'B') {
@@ -120,6 +122,7 @@ namespace callisto {
 								e.what()
 							));
 						}
+						spdlog::info("Successfully renamed '{}' to '{}'", entry.filename().string(), target_path.filename().string());
 						continue;
 					}
 				}
