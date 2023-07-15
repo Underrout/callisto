@@ -125,7 +125,7 @@ namespace callisto {
 				}
 
 				new_rom = getRom(config.temporary_rom.getOrThrow());
-				conflict_thread = std::jthread([&] {
+				conflict_thread = std::jthread([&old_rom, &new_rom, check_conflicts_policy, &write_map, descriptor, &config, &conflict_thread_exception] {
 					try {
 						updateWrites(old_rom, new_rom, check_conflicts_policy, write_map,
 							descriptor.toString(config.project_root.getOrThrow()));
