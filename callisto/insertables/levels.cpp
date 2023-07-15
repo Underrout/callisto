@@ -51,6 +51,12 @@ namespace callisto {
 					std::cin >> answer;
 					if (answer == 'y' || answer == 'Y') {
 						const auto target_path{ entry.parent_path() / fmt::format("level {:03X}.mwl", mwl_level_number.value()) };
+						if (fs::exists(target_path)) {
+							throw InsertionException(fmt::format(
+								"Failed to rename '{}', '{}' already exists",
+								entry.filename().string(), target_path.filename().string()
+							));
+						}
 						try {
 							fs::rename(entry, target_path);
 						}
@@ -98,6 +104,12 @@ namespace callisto {
 					}
 					else if (answer == 'b' || answer == 'B') {
 						const auto target_path{ entry.parent_path() / fmt::format("level {:03X}.mwl", mwl_level_number.value()) };
+						if (fs::exists(target_path)) {
+							throw InsertionException(fmt::format(
+								"Failed to rename '{}', '{}' already exists",
+								entry.filename().string(), target_path.filename().string()
+							));
+						}
 						try {
 							fs::rename(entry, target_path);
 						}
