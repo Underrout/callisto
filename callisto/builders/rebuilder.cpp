@@ -15,59 +15,71 @@ namespace callisto {
 
 		auto insertables{ buildOrderToInsertables(config) };
 
-
-		std::thread init_thread;
-		std::exception_ptr thread_exception{};
+		std::jthread init_thread;
+		std::jthread conflict_thread;
+		std::exception_ptr init_thread_exception{};
+		std::exception_ptr conflict_thread_exception{};
+		bool conflict_thread_created{ false };
 		if (!insertables.empty()) {
-			init_thread = std::thread([&] { 
+			init_thread = std::jthread([&] { 
 				try {
 					insertables[0].second->init(); 
 				}
 				catch (...) {
-					thread_exception = std::current_exception();
+					init_thread_exception = std::current_exception();
 				}
 			});
 		}
 
 		WriteMap write_map{};
 		std::vector<char> old_rom;
-		Conflicts check_conflicts_policy;
-		try {
-			if (config.initial_patch.isSet()) {
-				InitialPatch initial_patch{ config };
-				const auto initial_patch_resource_dependencies{ initial_patch.insertWithDependencies() };
-				const auto initial_patch_config_dependencies{ initial_patch.getConfigurationDependencies() };
-				dependencies.push_back({ Descriptor(Symbol::INITIAL_PATCH),
-					{ initial_patch_resource_dependencies, initial_patch_config_dependencies } });
-				patch_hijacks.push_back({});
-			}
+		std::vector<char> new_rom;
+		Conflicts check_conflicts_policy{ determineConflictCheckSetting(config) };
 
-			expandRom(config);
+		if (check_conflicts_policy != Conflicts::NONE) {
+			old_rom = getRom(config.temporary_rom.getOrThrow());
+		}
 
-			check_conflicts_policy = determineConflictCheckSetting(config);
+		if (config.initial_patch.isSet()) {
+			InitialPatch initial_patch{ config };
+			const auto initial_patch_resource_dependencies{ initial_patch.insertWithDependencies() };
+			const auto initial_patch_config_dependencies{ initial_patch.getConfigurationDependencies() };
+			dependencies.push_back({ Descriptor(Symbol::INITIAL_PATCH),
+				{ initial_patch_resource_dependencies, initial_patch_config_dependencies } });
+			patch_hijacks.push_back({});
+
 			if (check_conflicts_policy != Conflicts::NONE) {
-				old_rom = getRom(config.temporary_rom.getOrThrow());
+				conflict_thread_created = true;
+				conflict_thread = std::jthread([&] {
+					try {
+						auto new_rom{ getRom(config.temporary_rom.getOrThrow()) };
+						updateWrites(old_rom, new_rom, check_conflicts_policy, write_map,
+							Descriptor(Symbol::INITIAL_PATCH).toString(config.project_root.getOrThrow()));
+						old_rom.swap(new_rom);
+					}
+					catch (...) {
+						conflict_thread_exception = std::current_exception();
+					}
+				});
 			}
 		}
-		catch (...) {
-			init_thread.join();  // ensuring our other thread is still joined before we exit this function
-			std::rethrow_exception(std::current_exception());
-		}
+
+		expandRom(config);
 
 		size_t i{ 0 };
 		std::optional<Insertable::NoDependencyReportFound> failed_dependency_report{};
 		for (const std::pair<const Descriptor&, std::shared_ptr<Insertable>> pair : insertables) {
 			init_thread.join();
-			if (thread_exception != nullptr) {
-				std::rethrow_exception(thread_exception);
+			if (init_thread_exception != nullptr) {
+				std::rethrow_exception(init_thread_exception);
 			}
 			if (i != insertables.size() - 1) {
-				init_thread = std::thread([&] { 
+				init_thread = std::jthread([&] { 
 					try {
 						insertables[++i].second->init(); 
 					}
 					catch (...) {
-						thread_exception = std::current_exception();
+						init_thread_exception = std::current_exception();
 					}
 				});
 			}
@@ -95,22 +107,54 @@ namespace callisto {
 					const auto config_dependencies{ insertable->getConfigurationDependencies() };
 					dependencies.push_back({ descriptor, { resource_dependencies, config_dependencies } });
 				}
-
-				if (check_conflicts_policy != Conflicts::NONE) {
-					auto new_rom{ getRom(config.temporary_rom.getOrThrow()) };
-					updateWrites(old_rom, new_rom, check_conflicts_policy, write_map,
-						descriptor.toString(config.project_root.getOrThrow()));
-					old_rom.swap(new_rom);
-				}
 			}
 			else {
 				insertable->insert();
 			}
+
+			if (check_conflicts_policy != Conflicts::NONE) {
+				if (conflict_thread_created) {
+					conflict_thread.join();
+				}
+				else {
+					conflict_thread_created = true;
+				}
+
+				if (conflict_thread_exception != nullptr) {
+					std::rethrow_exception(conflict_thread_exception);
+				}
+
+				new_rom = getRom(config.temporary_rom.getOrThrow());
+				conflict_thread = std::jthread([&] {
+					try {
+						updateWrites(old_rom, new_rom, check_conflicts_policy, write_map,
+							descriptor.toString(config.project_root.getOrThrow()));
+						old_rom.swap(new_rom);
+					}
+					catch (...) {
+						conflict_thread_exception = std::current_exception();
+					}
+				});
+			}
 		}
 
-		reportConflicts(write_map, config.conflict_log_file.isSet() ?
-			std::make_optional(config.conflict_log_file.getOrThrow()) : 
-			std::nullopt, check_conflicts_policy);
+		if (conflict_thread_created) {
+			conflict_thread.join();
+		}
+
+		if (check_conflicts_policy != Conflicts::NONE) {
+			conflict_thread_created = true;
+			conflict_thread = std::jthread([&] {
+				try {
+					reportConflicts(write_map, config.conflict_log_file.isSet() ?
+						std::make_optional(config.conflict_log_file.getOrThrow()) :
+						std::nullopt, check_conflicts_policy, conflict_thread_exception);
+				}
+				catch (...) {
+					conflict_thread_exception = std::current_exception();
+				}
+			});
+		}
 
 		if (!failed_dependency_report.has_value()) {
 			const auto insertion_report{ getJsonDependencies(dependencies, patch_hijacks) };
@@ -130,6 +174,19 @@ namespace callisto {
 		moveTempToOutput(config);
 
 		const auto build_end{ std::chrono::high_resolution_clock::now() };
+
+		if (conflict_thread_created) {
+			conflict_thread.join();
+		}
+
+		if (conflict_thread_exception != nullptr) {
+			try {
+				std::rethrow_exception(conflict_thread_exception);
+			}
+			catch (const std::exception& e) {
+				spdlog::warn("The following error occurred while attempting to report conflicts:\n{}", e.what());
+			}
+		}
 		
 		spdlog::info("Build finished successfully in {}!", TimeUtil::getDurationString(build_end - build_start));
 	}
@@ -176,10 +233,20 @@ namespace callisto {
 	}
 
 	void Rebuilder::reportConflicts(const WriteMap& write_map, const std::optional<fs::path>& log_file, 
-		Conflicts conflict_policy) {
+		Conflicts conflict_policy, std::exception_ptr conflict_exception) {
 		if (conflict_policy == Conflicts::NONE) {
 			spdlog::info("Not set to detect conflicts");
 			return;
+		}
+
+		if (conflict_exception != nullptr) {
+			try {
+				std::rethrow_exception(conflict_exception);
+			}
+			catch (const std::exception& e) {
+				spdlog::warn("The following exception prevented conflict detection:\n{}", e.what());
+				return;
+			}
 		}
 
 		std::ofstream log;
@@ -304,7 +371,7 @@ namespace callisto {
 		if (conflict_policy == Conflicts::NONE) {
 			return;
 		}
-		int size{ static_cast<int>(std::max(old_rom.size(), new_rom.size())) };
+		int size{ static_cast<int>(std::min(old_rom.size(), new_rom.size())) };
 
 		if (conflict_policy == Conflicts::HIJACKS) {
 			size = std::min(size, 0x80000);

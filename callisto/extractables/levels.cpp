@@ -115,9 +115,9 @@ namespace callisto {
 			spdlog::debug("Exporting levels to temporary folder {} from ROM {}", levels_folder.string(), extracting_rom.string());
 
 			const auto modified_offsets{ determineModifiedOffsets(extracting_rom) };
-			const auto thread_count{ std::thread::hardware_concurrency() };
+			const auto thread_count{ std::jthread::hardware_concurrency() };
 			std::exception_ptr thread_exception{};
-			std::vector<std::thread> export_threads{};
+			std::vector<std::jthread> export_threads{};
 			std::vector<int> exit_codes(thread_count, 0);
 
 			for (size_t i{ 0 }; i != thread_count; ++i) {

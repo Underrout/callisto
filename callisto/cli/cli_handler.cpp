@@ -143,5 +143,7 @@ namespace callisto {
 			spdlog::error(e.what());
 			exit(1);
 		}
+
+		exit(0);
 	}
 }
