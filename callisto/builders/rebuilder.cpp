@@ -308,7 +308,7 @@ namespace callisto {
 		std::ostringstream output{};
 		const auto byte_or_bytes{ conflict_size == 1 ? "byte" : "bytes" };
 		output << fmt::format(
-			"Conflict - 0x{:X} {} at SNES: ${:06X} (unheadered), PC: 0x{:06X} (headered):\n",
+			"Conflict - 0x{:X} {} at SNES: ${:06X} (unheadered), PC: 0x{:06X} (headered):\n\r",
 			conflict_size, byte_or_bytes,
 			pcToSnes(pc_start_offset), pc_start_offset + 0x200  // idk if the + 0x200 is controversial
 		);
@@ -322,11 +322,11 @@ namespace callisto {
 					break;
 				}
 				if (i % 0x10 == 0) {
-					output << std::endl << "\t\t";
+					output << "\n\r" << "\t\t";
 				}
 				output << fmt::format("{:02X} ", written_bytes.at(i++));
 			}
-			output << std::endl;
+			output << "\n\r";
 		}
 
 		return output.str();
