@@ -131,7 +131,7 @@ namespace callisto {
 			Button("Exit (ESC)", [=] { screen.Exit(); }, ButtonOption::Ascii())
 			}, &selected_main_menu_entry);
 
-		const auto window_title{ fmt::format("callisto v{}.{}.{}d", CALLISTO_VERSION_MAJOR, CALLISTO_VERSION_MINOR, CALLISTO_VERSION_PATCH) };
+		const auto window_title{ fmt::format("callisto v{}.{}.{}e", CALLISTO_VERSION_MAJOR, CALLISTO_VERSION_MINOR, CALLISTO_VERSION_PATCH) };
 		main_menu = Renderer(main_menu_component, [=] { return window(text(window_title), main_menu_component->Render()); });
 	}
 
