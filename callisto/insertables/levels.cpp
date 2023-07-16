@@ -49,6 +49,7 @@ namespace callisto {
 						entry.string(), mwl_level_number.value(), mwl_level_number.value()
 					);
 					std::cin >> answer;
+					std::cin.ignore((std::numeric_limits<std::streamsize>::max)(), '\n');
 					if (answer == 'y' || answer == 'Y') {
 						const auto target_path{ entry.parent_path() / fmt::format("level {:03X}.mwl", mwl_level_number.value()) };
 						if (fs::exists(target_path)) {
@@ -90,6 +91,7 @@ namespace callisto {
 						mwl_level_number.value(), mwl_level_number.value()
 					);
 					std::cin >> answer;
+					std::cin.ignore((std::numeric_limits<std::streamsize>::max)(), '\n');
 					if (answer == 'a' || answer == 'A') {
 						try {
 							setInternalLevelNumber(entry, file_level_number.value());

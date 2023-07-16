@@ -150,6 +150,7 @@ namespace callisto {
 							do {
 								spdlog::error("Failed to copy '{}' to '{}', try again? Y/N", source.string(), target.string());
 								std::cin >> input;
+								std::cin.ignore((std::numeric_limits<std::streamsize>::max)());
 							} while (input != 'y' && input != 'Y' && input != 'n' && input != 'N');
 
 							if (input == 'n' || input == 'N') {
