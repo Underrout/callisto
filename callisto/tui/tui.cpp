@@ -472,7 +472,7 @@ namespace callisto {
 				quick_builder.build(*config);
 			}
 			catch (const MustRebuildException& e) {
-				spdlog::info("Quickbuild cannot continue due to the following reason, rebuilding ROM:\n{}", e.what());
+				spdlog::info("Quickbuild cannot continue due to the following reason, rebuilding ROM:\n\r{}", e.what());
 				Rebuilder rebuilder{};
 				rebuilder.build(*config);
 			}

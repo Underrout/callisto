@@ -157,10 +157,14 @@ namespace callisto {
 		}
 
 		if (!failed_dependency_report.has_value()) {
-			const auto insertion_report{ getJsonDependencies(dependencies, patch_hijacks) };
+			try {
+				const auto insertion_report{ getJsonDependencies(dependencies, patch_hijacks) };
 
-			writeBuildReport(config.project_root.getOrThrow(), createBuildReport(config, insertion_report));
-
+				writeBuildReport(config.project_root.getOrThrow(), createBuildReport(config, insertion_report));
+			}
+			catch (const std::exception& e) {
+				spdlog::warn("Failed to write build report with following exception:\n\r{}", e.what());
+			}
 		}
 		else {
 			spdlog::info("{}, Quickbuild not applicable, read the documentation "

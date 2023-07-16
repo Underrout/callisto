@@ -103,6 +103,25 @@ namespace callisto {
 		for (const auto& descriptor : config.build_order) {
 			report["build_order"].push_back(descriptor.toJson());
 		}
+		
+		report["inserted_levels"] = std::vector<int>();
+		if (config.levels.isSet()) {
+			for (const auto& entry : fs::directory_iterator(config.levels.getOrThrow())) {
+				if (entry.path().extension() != ".mwl") {
+					continue;
+				}
+				try {
+					const auto level_number{ Levels::getInternalLevelNumber(entry) };
+					report["inserted_levels"].push_back(level_number.value());
+				}
+				catch (const std::exception& e) {
+					throw InsertionException(fmt::format(
+						"Failed to determine source level number of level file '{}' with exception:\n\r{}",
+						entry.path().string(), e.what()
+					));
+				}
+			}
+		}
 
 		return report;
 	}
@@ -180,6 +199,11 @@ namespace callisto {
 		}
 		if (config.project_rom.isSet()) {
 			fs::create_directories(config.project_rom.getOrThrow().parent_path());
+		}
+
+		if (config.levels.isSet()) {
+			spdlog::info("Ensuring normalized level filenames");
+			Levels::normalizeMwls(config.levels.getOrThrow(), config.allow_user_input);
 		}
 	}
 

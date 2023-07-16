@@ -22,17 +22,34 @@ namespace callisto {
 
 		init(config);
 
+		spdlog::info("Checking whether ROM from previous build exists");
 		if (!fs::exists(config.project_rom.getOrThrow())) {
 			throw MustRebuildException(fmt::format("No ROM found at {}, must rebuild", config.project_rom.getOrThrow().string()));
 		}
+		spdlog::info("ROM from previous build found at '{}'", config.project_rom.getOrThrow().string());
 
+		spdlog::info("Checking whether configured ROM size has changed");
 		checkRebuildRomSize(config);
+		spdlog::info("Configured ROM size has not changed");
+
+		spdlog::info("Checking whether build report format has changed");
 		checkBuildReportFormat();
+		spdlog::info("Build report format has not changed");
+
+		spdlog::info("Checking whether build order has changed");
 		checkBuildOrderChange(config);
+		spdlog::info("Build order has not changed");
+
+		if (config.levels.isSet()) {
+			spdlog::info("Checking whether level files have been removed since last build");
+			checkProblematicLevelChanges(config.levels.getOrThrow(), report["inserted_levels"]);
+			spdlog::info("No level files have been removed");
+		}
 
 		auto& json_dependencies{ report["dependencies"] };
-
+		spdlog::info("Checking whether any configuration changes require a rebuild");
 		checkRebuildConfigDependencies(json_dependencies, config);
+		spdlog::info("No configuration changes require a rebuild");
 
 		bool any_work_done{ false };
 		std::optional<Insertable::NoDependencyReportFound> failed_dependency_report;
@@ -59,7 +76,7 @@ namespace callisto {
 
 				if (resource_result.has_value()) {
 					spdlog::info(
-						"{} must be reinserted due to change in resource {}",
+						"{} must be reinserted due to change in resource '/{}'",
 						descriptor_string,
 						(fs::relative(resource_result.value().dependent_path, config.project_root.getOrThrow())).string()
 					);
@@ -179,6 +196,37 @@ namespace callisto {
 	void QuickBuilder::checkRebuildRomSize(const Configuration& config) const {
 		if ((report["rom_size"] == nullptr && config.rom_size.isSet()) || report["rom_size"] != config.rom_size.getOrThrow()) {
 			throw MustRebuildException(fmt::format("{} has changed, must rebuild", config.rom_size.name));
+		}
+	}
+
+	void QuickBuilder::checkProblematicLevelChanges(const fs::path& levels_path, const std::unordered_set<int>& old_level_numbers) {
+		std::unordered_set<int> new_level_numbers{};
+		
+		for (const auto& entry : fs::directory_iterator(levels_path)) {
+			if (entry.path().extension() == ".mwl") {
+				try {
+					new_level_numbers.insert(Levels::getInternalLevelNumber(entry).value());
+				}
+				catch (const std::exception& e) {
+					throw InsertionException(fmt::format(
+						"Failed to determine source level number of level file '{}' with exception:\n\r{}",
+						entry.path().string(), e.what()
+					));
+				}
+			}
+		}
+
+		const auto old_missing_from_new{
+			std::count_if(old_level_numbers.begin(), old_level_numbers.end(), [&](const auto& l) {
+				return !new_level_numbers.contains(l);
+			})
+		};
+
+		if (old_missing_from_new != 0) {
+			throw MustRebuildException(fmt::format(
+				"{} old level file{} {} been removed, must rebuild",
+				old_missing_from_new, old_missing_from_new > 1 ? "s" : "", old_missing_from_new > 1 ? "have" : "has"
+			));
 		}
 	}
 

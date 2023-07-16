@@ -24,20 +24,18 @@ namespace callisto {
 
 		const fs::path levels_folder;
 		std::optional<std::string> import_flag;
-		const bool allow_user_input;
 
-		void normalizeMwls();
+		static size_t readBytesAt(std::fstream& stream, size_t offset, size_t count);
 
-		size_t readBytesAt(std::fstream& stream, size_t offset, size_t count);
-
-		std::optional<int> getInternalLevelNumber(const fs::path& mwl_path);
-		std::optional<int> getExternalLevelNumber(const fs::path& mwl_path);
-		void setInternalLevelNumber(const fs::path& mwl_path, int level_number);
-		void normalizeMwl(const fs::path& mwl_path);
+		static std::optional<int> getExternalLevelNumber(const fs::path& mwl_path);
+		static void setInternalLevelNumber(const fs::path& mwl_path, int level_number);
 
 		std::unordered_set<ResourceDependency> determineDependencies() override;
 
 	public:
+		static std::optional<int> getInternalLevelNumber(const fs::path& mwl_path);
+		static void normalizeMwls(const fs::path& levels_folder_path, bool allow_user_input);
+
 		void insert() override;
 
 		Levels(const Configuration& config);

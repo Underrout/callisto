@@ -3,8 +3,7 @@
 namespace callisto {
 	Levels::Levels(const Configuration& config)
 		: LunarMagicInsertable(config), 
-		levels_folder(registerConfigurationDependency(config.levels, Policy::REINSERT).getOrThrow()),
-		allow_user_input(config.allow_user_input)
+		levels_folder(registerConfigurationDependency(config.levels, Policy::REINSERT).getOrThrow())
 	{
 		registerConfigurationDependency(config.level_import_flag);
 
@@ -23,9 +22,9 @@ namespace callisto {
 		}
 	}
 
-	void Levels::normalizeMwls() {
+	void Levels::normalizeMwls(const fs::path& levels_folder_path, bool allow_user_input) {
 		std::vector<fs::path> mwl_paths{};
-		for (const auto& entry : fs::directory_iterator(levels_folder)) {
+		for (const auto& entry : fs::directory_iterator(levels_folder_path)) {
 			if (entry.path().extension() == ".mwl") {
 				mwl_paths.push_back(entry);
 			}
@@ -205,7 +204,14 @@ namespace callisto {
 	}
 
 	std::unordered_set<ResourceDependency> Levels::determineDependencies() {
-		return { ResourceDependency(levels_folder) };
+		std::unordered_set<ResourceDependency> dependencies{};
+
+		const auto mwl_file_dependencies{ getResourceDependenciesFor(levels_folder, Policy::REINSERT) };
+
+		dependencies.insert(mwl_file_dependencies.begin(), mwl_file_dependencies.end());
+		dependencies.emplace(levels_folder);
+
+		return dependencies;
 	}
 
 	void Levels::insert() {
@@ -223,8 +229,6 @@ namespace callisto {
 			spdlog::info("No levels to insert, skipping level insertion");
 			return;
 		}
-
-		normalizeMwls();
 
 		int exit_code;
 

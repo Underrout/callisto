@@ -39,7 +39,7 @@ namespace callisto {
 		);
 
 		build_sub->callback([&] {
-			const auto config{ config_manager.getConfiguration(profile_name, false) };
+			const auto config{ config_manager.getConfiguration(profile_name, true) };
 
 			if (config->project_rom.isSet() && fs::exists(config->project_rom.getOrThrow())) {
 				const auto needs_extraction{ Marker::getNeededExtractions(config->project_rom.getOrThrow(),
@@ -82,7 +82,7 @@ namespace callisto {
 		);
 
 		save_sub->callback([&] {
-			const auto config{ config_manager.getConfiguration(profile_name, false) };
+			const auto config{ config_manager.getConfiguration(profile_name, true) };
 
 			Saver::exportResources(config->project_rom.getOrThrow(), *config, true);
 			exit(0);
@@ -95,7 +95,7 @@ namespace callisto {
 		);
 
 		edit_sub->callback([&] {
-			const auto config{ config_manager.getConfiguration(profile_name, false) };
+			const auto config{ config_manager.getConfiguration(profile_name, true) };
 
 			bp::spawn(fmt::format(
 				"\"{}\" \"{}\"",
@@ -111,7 +111,7 @@ namespace callisto {
 		);
 
 		package_sub->callback([&] {
-			const auto config{ config_manager.getConfiguration(profile_name, false) };
+			const auto config{ config_manager.getConfiguration(profile_name, true) };
 
 			const auto exit_code{ bp::system(
 				config->flips_path.getOrThrow().string(), "--create", "--bps-delta", config->clean_rom.getOrThrow().string(),
