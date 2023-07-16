@@ -184,7 +184,7 @@ namespace callisto {
 				std::rethrow_exception(conflict_thread_exception);
 			}
 			catch (const std::exception& e) {
-				spdlog::warn("The following error occurred while attempting to report conflicts:\n{}", e.what());
+				spdlog::warn("The following error occurred while attempting to report conflicts:\n\r{}", e.what());
 			}
 		}
 		
@@ -244,7 +244,7 @@ namespace callisto {
 				std::rethrow_exception(conflict_exception);
 			}
 			catch (const std::exception& e) {
-				spdlog::warn("The following exception prevented conflict detection:\n{}", e.what());
+				spdlog::warn("The following exception prevented conflict detection:\n\r{}", e.what());
 				return;
 			}
 		}

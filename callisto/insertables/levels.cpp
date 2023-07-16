@@ -45,7 +45,7 @@ namespace callisto {
 				if (allow_user_input) {
 					char answer;
 					spdlog::warn(
-						"Level file '{}' (pointing to level {:X}) has malformed filename, rename to 'level {:03X}.mwl'? y/n",
+						"Level file '{}' (pointing to level {:X}) has malformed filename, rename to 'level {:03X}.mwl'? Y/N",
 						entry.string(), mwl_level_number.value(), mwl_level_number.value()
 					);
 					std::cin >> answer;
@@ -63,7 +63,7 @@ namespace callisto {
 						}
 						catch (const std::exception& e) {
 							throw InsertionException(fmt::format(
-								"Failed to rename level file '{}' to '{}' with exception:\n{}",
+								"Failed to rename level file '{}' to '{}' with exception:\n\r{}",
 								entry.string(), target_path.string(),
 								e.what()
 							));
@@ -98,7 +98,7 @@ namespace callisto {
 						}
 						catch (const std::exception& e) {
 							throw InsertionException(fmt::format(
-								"Failed to set source level number of level file '{}' to {:X} with exception:\n{}",
+								"Failed to set source level number of level file '{}' to {:X} with exception:\n\r{}",
 								entry.string(), file_level_number.value(),
 								e.what()
 							));
@@ -119,7 +119,7 @@ namespace callisto {
 						}
 						catch (const std::exception& e) {
 							throw InsertionException(fmt::format(
-								"Failed to rename level file '{}' to '{}' with exception:\n{}",
+								"Failed to rename level file '{}' to '{}' with exception:\n\r{}",
 								entry.string(), target_path.string(),
 								e.what()
 							));

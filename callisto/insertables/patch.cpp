@@ -50,9 +50,9 @@ namespace callisto {
 		int unheadered_rom_size{ rom_size - header_size };
 
 		spdlog::debug(fmt::format(
-			"Applying patch {} to temporary ROM {}:\n"
-			"\tROM size:\t\t{}\n"
-			"\tROM header size:\t\t{}\n",
+			"Applying patch {} to temporary ROM {}:\n\r"
+			"\tROM size:\t\t{}\n\r"
+			"\tROM header size:\t\t{}\n\r",
 			patch_path.string(),
 			temporary_rom_path.string(),
 			rom_size,
@@ -131,7 +131,7 @@ namespace callisto {
 			}
 
 			throw InsertionException(fmt::format(
-				"Failed to apply patch {} with the following error(s):\n{}",
+				"Failed to apply patch {} with the following error(s):\n\r{}",
 				project_relative_path.string(),
 				error_string.str()
 			));

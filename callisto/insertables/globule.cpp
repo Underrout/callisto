@@ -90,9 +90,9 @@ namespace callisto {
 		int unheadered_rom_size{ rom_size - header_size };
 
 		spdlog::debug(fmt::format(
-			"Applying globule {} to temporary ROM {}:\n"
-			"\tROM size:\t\t{}\n"
-			"\tROM header size:\t\t{}\n",
+			"Applying globule {} to temporary ROM {}:\n\r"
+			"\tROM size:\t\t{}\n\r"
+			"\tROM header size:\t\t{}\n\r",
 			globule_path.string(),
 			temporary_rom_path.string(),
 			rom_size,
@@ -168,7 +168,7 @@ namespace callisto {
 
 			fs::current_path(prev_folder);
 			throw InsertionException(fmt::format(
-				"Failed to apply globule {} with the following error(s):\n{}",
+				"Failed to apply globule {} with the following error(s):\n\r{}",
 				project_relative_path.string(),
 				error_string.str()
 			));
