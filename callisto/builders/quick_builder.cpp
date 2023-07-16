@@ -76,7 +76,7 @@ namespace callisto {
 
 				if (resource_result.has_value()) {
 					spdlog::info(
-						"{} must be reinserted due to change in resource '/{}'",
+						"{} must be reinserted due to change in resource '{}'",
 						descriptor_string,
 						(fs::relative(resource_result.value().dependent_path, config.project_root.getOrThrow())).string()
 					);
