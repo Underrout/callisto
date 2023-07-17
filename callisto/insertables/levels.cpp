@@ -175,6 +175,10 @@ namespace callisto {
 			return {};
 		}
 
+		if (mwl_name.size() != 9) {
+			return {};
+		}
+
 		if (!std::all_of(mwl_name.begin() + 6, mwl_name.end(), [](const auto& e) { return std::isalnum(e); })) {
 			return {};
 		}
