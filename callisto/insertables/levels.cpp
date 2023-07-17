@@ -44,12 +44,15 @@ namespace callisto {
 				if (allow_user_input) {
 					char answer;
 					spdlog::warn(
-						"Level file '{}' (pointing to level {:X}) has malformed filename, rename to 'level {:03X}.mwl'? Y/N",
-						entry.string(), mwl_level_number.value(), mwl_level_number.value()
+						"Level file '{}' (pointing to level {:X}) has malformed filename, what should be done?\n\r"
+						"(a) Rename file to 'level {:03X}.mwl', keep pointing at level {:X}\n\r"
+						"(b) Repoint file to other level\n\r"
+						"(c) Abort",
+						entry.string(), mwl_level_number.value(), mwl_level_number.value(), mwl_level_number.value()
 					);
 					std::cin >> answer;
 					std::cin.ignore((std::numeric_limits<std::streamsize>::max)(), '\n');
-					if (answer == 'y' || answer == 'Y') {
+					if (answer == 'a') {
 						const auto target_path{ entry.parent_path() / fmt::format("level {:03X}.mwl", mwl_level_number.value()) };
 						if (fs::exists(target_path)) {
 							throw InsertionException(fmt::format(
@@ -70,6 +73,78 @@ namespace callisto {
 						spdlog::info("Successfully renamed '{}' to '{}'", entry.filename().string(), target_path.filename().string());
 						continue;
 					}
+					else if (answer == 'b') {
+						std::string s;
+						while (true) {
+							spdlog::warn(
+								"What level number should '{}' be made to point to? Enter a level number from 0-1FF or enter 'x' to abort",
+								entry.string()
+							);
+							std::getline(std::cin, s);
+							std::cin.ignore((std::numeric_limits<std::streamsize>::max)(), '\n');
+
+							if (s == "x") {
+								throw InsertionException(fmt::format(
+									"Level file '{}' (pointing to level {:X}) has malformed filename",
+									entry.string(), mwl_level_number.value()
+								));
+							}
+							else {
+								uint16_t level_number{};
+								size_t parsed{};
+								try {
+									level_number = std::stoi(s, &parsed, 16);
+								}
+								catch (...) {
+									spdlog::error("{} is not a valid level number", s);
+									continue;
+								}
+
+								if (level_number >= 0x200 || parsed != s.size()) {
+									spdlog::error("{} is not a valid level number", s);
+									continue;
+								}
+
+								const auto target_path{ entry.parent_path() / fmt::format("level {:03X}.mwl", level_number) };
+								if (fs::exists(target_path)) {
+									spdlog::error("A level file for number {:03X} already exists at '{}'", level_number, target_path.string());
+									continue;
+								}
+
+								try {
+									fs::rename(entry, target_path);
+								}
+								catch (const std::exception& e) {
+									throw InsertionException(fmt::format(
+										"Failed to rename level file '{}' to '{}' with exception:\n\r{}",
+										entry.string(), target_path.string(),
+										e.what()
+									));
+								}
+								spdlog::info("Successfully renamed '{}' to '{}'", entry.filename().string(), target_path.filename().string());
+
+								try {
+									setInternalLevelNumber(target_path, level_number);
+								}
+								catch (const std::exception& e) {
+									throw InsertionException(fmt::format(
+										"Failed to set source level number of level file '{}' to {:X} with exception:\n\r{}",
+										target_path.string(), level_number,
+										e.what()
+									));
+								}
+								spdlog::info("Successfully changed internal level number of '{}' to {:03X}", target_path.filename().string(), level_number);
+								break;
+							}
+						}
+					}
+					else {
+						throw InsertionException(fmt::format(
+							"Level file '{}' (pointing to level {:X}) has malformed filename",
+							entry.string(), mwl_level_number.value()
+						));
+					}
+					continue;
 				}
 				throw InsertionException(fmt::format(
 					"Level file '{}' (pointing to level {:X}) has malformed filename",
