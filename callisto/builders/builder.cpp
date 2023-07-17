@@ -246,6 +246,76 @@ namespace callisto {
 		writeIfDifferent(call, PathUtil::getGlobuleCallFilePath(config.project_root.getOrThrow()));
 	}
 
+	void Builder::checkCleanRom(const fs::path& clean_rom_path) {
+		if (!fs::exists(clean_rom_path)) {
+			throw InsertionException(fmt::format(
+				"No clean ROM found at '{}'", clean_rom_path.string()
+			));
+		}
+
+		if (clean_rom_path.extension() != ".smc") {
+			spdlog::warn("Your clean ROM at '{}' does not have a .smc extension", clean_rom_path.string());
+		}
+
+		const auto rom_size{ fs::file_size(clean_rom_path) };		
+		if (rom_size != CLEAN_ROM_SIZE && rom_size != CLEAN_ROM_SIZE + HEADER_SIZE) {
+			spdlog::warn("Your clean ROM at '{}' is not actually clean, as it has an incorrect size", clean_rom_path.string());
+			return;
+		}
+
+		auto checksum_location{ CHECKSUM_LOCATION };
+		auto complement_checksum_location{ CHECKSUM_COMPLEMENT_LOCATION };
+
+		if (rom_size == CLEAN_ROM_SIZE + HEADER_SIZE) {
+			checksum_location += HEADER_SIZE;
+			complement_checksum_location += HEADER_SIZE;
+		}
+
+		std::ifstream rom_file(clean_rom_path, std::ios::binary);
+
+		rom_file.seekg(checksum_location);
+		char low_checksum;
+		char high_checksum;
+		rom_file.read(&low_checksum, 1);
+		rom_file.read(&high_checksum, 1);
+		const auto checksum{ static_cast<unsigned char>(low_checksum) | static_cast<unsigned char>(high_checksum) << 8 };
+
+		rom_file.seekg(complement_checksum_location);
+		char low_complement;
+		char high_complement;
+		rom_file.read(&low_complement, 1);
+		rom_file.read(&high_complement, 1);
+		const auto complement{ static_cast<unsigned char>(low_complement) | static_cast<unsigned char>(high_complement) << 8 };
+
+		if (checksum != CLEAN_ROM_CHECKSUM || complement != CLEAN_ROM_CHECKSUM_COMPLEMENT) {
+			spdlog::warn("Your clean ROM at '{}' is not actually clean, as it has an incorrect checksum", clean_rom_path.string());
+		}
+
+		const auto rom_start{ rom_size == CLEAN_ROM_SIZE + HEADER_SIZE ? HEADER_SIZE : 0x0 };
+
+		rom_file.seekg(rom_start);
+		uint16_t sum{ 0 };
+		for (auto i{ rom_start }; i != rom_size; ++i) {
+			if (i == checksum_location || i == checksum_location + 1) {
+				rom_file.seekg(1, std::ios::cur);
+				continue;
+			}
+			else if (i == complement_checksum_location || i == complement_checksum_location + 1) {
+				sum += 0xFF;
+				rom_file.seekg(1, std::ios::cur);
+				continue;
+			}
+			
+			char byte;
+			rom_file.read(&byte, 1);
+			sum += static_cast<unsigned char>(byte);
+		}
+
+		if (sum != checksum) {
+			spdlog::warn("Your clean ROM at '{}' is not actually clean, as its checksum differs from the sum of its bytes", clean_rom_path.string());
+		}
+	}
+
 	void Builder::writeIfDifferent(const std::string& str, const fs::path& out_file) {
 		std::ifstream in_file{ out_file };
 

@@ -6,6 +6,9 @@ namespace callisto {
 
 		spdlog::info("Build started");
 
+		spdlog::info("Checking clean ROM");
+		checkCleanRom(config.clean_rom.getOrThrow());
+
 		init(config);
 
 		DependencyVector dependencies{};

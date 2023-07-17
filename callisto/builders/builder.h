@@ -42,6 +42,15 @@ namespace callisto {
 		static constexpr auto ASSEMBLING_DEFINE_NAME{ "ASSEMBLING" };
 		static constexpr auto PROFILE_DEFINE_NAME{ "PROFILE" };
 
+		static constexpr auto CHECKSUM_LOCATION{ 0x7FDE };
+		static constexpr auto CLEAN_ROM_CHECKSUM{ 0xA0DA };
+
+		static constexpr auto CHECKSUM_COMPLEMENT_LOCATION{ 0x7FDC };
+		static constexpr auto CLEAN_ROM_CHECKSUM_COMPLEMENT{ CLEAN_ROM_CHECKSUM ^ 0xFFFF };
+
+		static constexpr auto CLEAN_ROM_SIZE{ 0x80000 };
+		static constexpr auto HEADER_SIZE{ 0x200 };
+
 		using Insertables = std::vector<std::pair<Descriptor, std::shared_ptr<Insertable>>>;
 		using DependencyVector = std::vector<std::pair<Descriptor, std::pair<std::unordered_set<ResourceDependency>,
 			std::unordered_set<ConfigurationDependency>>>>;
@@ -59,6 +68,8 @@ namespace callisto {
 		static void ensureCacheStructure(const Configuration& config);
 		static void generateAssemblyLevelInformation(const Configuration& config);
 		static void generateGlobuleCallFile(const Configuration& config);
+
+		static void checkCleanRom(const fs::path& clean_rom_path);
 
 		static void writeIfDifferent(const std::string& str, const fs::path& out_file);
 
