@@ -184,7 +184,11 @@ namespace callisto {
 		}
 
 		try {
-			const auto level_number{ std::stoi(mwl_name.substr(6, 3), nullptr, 16) };
+			size_t parsed{};
+			const auto level_number{ std::stoi(mwl_name.substr(6, 3), &parsed, 16) };
+			if (parsed != 3) {
+				return {};
+			}
 			if (level_number < 0x200) {
 				return level_number;
 			}
