@@ -202,6 +202,14 @@ namespace callisto {
 	void QuickBuilder::checkProblematicLevelChanges(const fs::path& levels_path, const std::unordered_set<int>& old_level_numbers) {
 		std::unordered_set<int> new_level_numbers{};
 		
+		if (!fs::exists(levels_path)) {
+			throw InsertionException(fmt::format(
+				"Configured levels folder at '{}' does not exist, but levels were previously inserted into this ROM, "
+				"aborting build for safety, if you wish to no longer insert levels, unset the 'levels' path in your configuration",
+				levels_path.string()
+			));
+		}
+
 		for (const auto& entry : fs::directory_iterator(levels_path)) {
 			if (entry.path().extension() == ".mwl") {
 				try {
