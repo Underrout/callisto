@@ -264,6 +264,7 @@ namespace callisto {
 		}
 
 		auto current{ write_map.begin() };
+		bool one_logged{ false };
 		while (current != write_map.end()) {
 			auto& pc_offset{ current->first };
 			auto writes{ current->second };
@@ -287,6 +288,12 @@ namespace callisto {
 					written_bytes, pc_offset, conflict_size, !log_to_file) };
 				++conflicts;
 				if (log_to_file) {
+					if (one_logged) {
+						log << '\n';
+					}
+					else {
+						one_logged = true;
+					}
 					log << conflict_string;
 				}
 				else {
@@ -311,29 +318,31 @@ namespace callisto {
 		}
 	}
 
-	std::string Rebuilder::getConflictString(const ConflictVector& conflict_vector, int pc_start_offset, int conflict_size, bool limit_lines) {
+	std::string Rebuilder::getConflictString(const ConflictVector& conflict_vector, int pc_start_offset, int conflict_size, bool for_console) {
 		std::ostringstream output{};
 		const auto byte_or_bytes{ conflict_size == 1 ? "byte" : "bytes" };
+		const auto line_end{ for_console ? "\n\r" : "\n" };
 		output << fmt::format(
-			"Conflict - 0x{:X} {} at SNES: ${:06X} (unheadered), PC: 0x{:06X} (headered):\n\r",
+			"Conflict - 0x{:X} {} at SNES: ${:06X} (unheadered), PC: 0x{:06X} (headered):{}",
 			conflict_size, byte_or_bytes,
-			pcToSnes(pc_start_offset), pc_start_offset + 0x200  // idk if the + 0x200 is controversial
+			pcToSnes(pc_start_offset), pc_start_offset + 0x200,  // idk if the + 0x200 is controversial
+			line_end
 		);
 
 		for (const auto& [writer, written_bytes] : conflict_vector) {
 			output << '\t' << writer << ':';
 			int i{ 0 };
 			while (i != written_bytes.size()) {
-				if (limit_lines && i == 0x100) {
+				if (for_console && i == 0x100) {
 					output << "...";
 					break;
 				}
 				if (i % 0x10 == 0) {
-					output << "\n\r" << "\t\t";
+					output << line_end << "\t\t";
 				}
 				output << fmt::format("{:02X} ", written_bytes.at(i++));
 			}
-			output << "\n\r";
+			output << line_end;
 		}
 
 		return output.str();

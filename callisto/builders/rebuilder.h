@@ -28,7 +28,7 @@ namespace callisto {
 		static void reportConflicts(const WriteMap& write_map, const std::optional<fs::path>& log_file, 
 			Conflicts conflict_policy, std::exception_ptr conflict_exception);
 		static std::string getConflictString(const ConflictVector& conflict_vector, 
-			int pc_start_offset, int conflict_size, bool limit_lines = true);
+			int pc_start_offset, int conflict_size, bool for_console = true);
 		static bool writesAreIdentical(const Writes& writes);
 		static int pcToSnes(int address);
 		static std::vector<std::string> getWriters(const Writes& writes);
