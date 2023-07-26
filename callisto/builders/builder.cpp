@@ -201,9 +201,120 @@ namespace callisto {
 			fs::create_directories(config.project_rom.getOrThrow().parent_path());
 		}
 
-		if (config.levels.isSet()) {
+		tryConvenienceSetup(config);
+
+		if (config.levels.isSet() && fs::exists(config.levels.getOrThrow())) {
 			spdlog::info("Ensuring normalized level filenames");
 			Levels::normalizeMwls(config.levels.getOrThrow(), config.allow_user_input);
+		}
+	}
+
+	void Builder::tryConvenienceSetup(const Configuration& config) {
+		if (!config.allow_user_input || !config.clean_rom.isSet() || !fs::exists(config.clean_rom.getOrThrow())) {
+			return;
+		}
+
+		// Check if any extractables are already present
+		bool at_least_one_present{ false };
+		bool at_least_one_set{ false };
+		for (const auto& var : {
+			config.levels,
+			config.graphics,
+			config.ex_graphics,
+			config.shared_palettes,
+			config.map16,
+			config.credits,
+			config.global_exanimation,
+			config.overworld,
+			config.titlescreen
+			}) {
+			if (var.isSet()) {
+				at_least_one_set = true;
+				if (fs::exists(var.getOrThrow())) {
+					at_least_one_present = true;
+					break;
+				}
+			}
+		}
+
+		if (at_least_one_set && !at_least_one_present) {
+			PromptUtil::yesNoPrompt(
+				"Some resources which are configured to be inserted are not present, extract them from your clean ROM?",
+				[&] {
+					spdlog::info("Exporting missing resources from clean ROM");
+					convenienceSetup(config); 
+				}
+			);
+		}
+	}
+
+	void Builder::convenienceSetup(const Configuration& config) {
+		const auto temp_rom_path{ config.temporary_rom.getOrThrow() };
+
+		fs::copy(config.clean_rom.getOrThrow(), temp_rom_path, fs::copy_options::overwrite_existing);
+
+		if (config.initial_patch.isSet()) {
+			InitialPatch init_patch{ config };
+			init_patch.insert(temp_rom_path);
+		}
+
+		for (const auto& var : { config.levels, config.ex_graphics }) {
+			if (var.isSet()) {
+				try {
+					fs::create_directories(var.getOrThrow());
+					spdlog::info("Created empty folder at '{}'", var.getOrThrow().string());
+				}
+				catch (const std::exception& e) {
+					spdlog::error("Failed to create empty folder at '{}' with exception:\n\r{}", var.getOrThrow().string(), e.what());
+				}
+			}
+		}
+
+		if (config.graphics.isSet()) {
+			createFolderStructureFor(config.graphics);
+			extractables::Graphics graphics{ config, temp_rom_path };
+			graphics.extract();
+		}
+
+		if (config.shared_palettes.isSet()) {
+			createFolderStructureFor(config.shared_palettes);
+			extractables::SharedPalettes shared_palettes{ config, temp_rom_path };
+			shared_palettes.extract();
+		}
+
+		if (config.map16.isSet()) {
+			createFolderStructureFor(config.map16);
+			if (config.use_text_map16_format.getOrDefault(false)) {
+				extractables::TextMap16 text_map16{ config, temp_rom_path };
+				text_map16.extract();
+			}
+			else {
+				extractables::BinaryMap16 binary_map16{ config, temp_rom_path };
+			}
+		}
+
+		if (config.credits.isSet()) {
+			createFolderStructureFor(config.credits);
+			extractables::Credits credits{ config, temp_rom_path };
+			credits.extract();
+		}
+
+		if (config.titlescreen.isSet()) {
+			createFolderStructureFor(config.titlescreen);
+			extractables::TitleScreen title_screen{ config, temp_rom_path };
+			title_screen.extract();
+		}
+
+		if (config.overworld.isSet()) {
+			createFolderStructureFor(config.overworld);
+			extractables::Overworld overworld{ config, temp_rom_path };
+			overworld.extract();
+		}
+
+		if (config.global_exanimation.isSet()) {
+			createFolderStructureFor(config.global_exanimation);
+			extractables::GlobalExAnimation global_exanimation{ config, temp_rom_path };
+			global_exanimation.extract();
 		}
 	}
 

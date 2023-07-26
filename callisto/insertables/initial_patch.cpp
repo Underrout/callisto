@@ -38,6 +38,10 @@ namespace callisto {
 	}
 
 	void InitialPatch::insert() {
+		insert(temporary_rom_path);
+	}
+
+	void InitialPatch::insert(const fs::path& target_rom) {
 		spdlog::info(fmt::format("Applying initial patch {}", initial_patch_path.string()));
 
 		int exit_code{ bp::system(
@@ -45,14 +49,14 @@ namespace callisto {
 			"--apply",
 			initial_patch_path.string(),
 			clean_rom_path.string(),
-			temporary_rom_path.string()
+			target_rom.string()
 		) };
 
 		if (exit_code != 0) {
 			throw InsertionException(fmt::format(
-				"Failed to apply initial patch {} to temporary ROM {}",
+				"Failed to apply initial patch {} to ROM {}",
 				initial_patch_path.string(),
-				temporary_rom_path.string()
+				target_rom.string()
 			));
 		}
 		else {

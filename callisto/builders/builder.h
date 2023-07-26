@@ -6,6 +6,7 @@
 
 #include "../configuration/configuration.h"
 
+#include "../insertables/initial_patch.h"
 #include "../insertables/exgraphics.h"
 #include "../insertables/graphics.h"
 #include "../insertables/shared_palettes.h"
@@ -26,6 +27,7 @@
 #include "../descriptor.h"
 
 #include "../time_util.h"
+#include "../prompt_util.h"
 
 using json = nlohmann::json;
 
@@ -68,6 +70,15 @@ namespace callisto {
 		static void ensureCacheStructure(const Configuration& config);
 		static void generateAssemblyLevelInformation(const Configuration& config);
 		static void generateGlobuleCallFile(const Configuration& config);
+
+		static void tryConvenienceSetup(const Configuration& config);
+		static void convenienceSetup(const Configuration& config);
+
+		static inline void createFolderStructureFor(const PathConfigVariable& var) {
+			if (var.isSet()) {
+				fs::create_directories(var.getOrThrow().parent_path());
+			}
+		}
 
 		static void checkCleanRom(const fs::path& clean_rom_path);
 

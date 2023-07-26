@@ -28,5 +28,6 @@ namespace callisto {
 		InitialPatch(const Configuration& config);
 
 		void insert() override;
+		void insert(const fs::path& target_rom);
 	};
 }
