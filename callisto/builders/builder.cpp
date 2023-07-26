@@ -210,7 +210,8 @@ namespace callisto {
 	}
 
 	void Builder::tryConvenienceSetup(const Configuration& config) {
-		if (!config.allow_user_input || !config.clean_rom.isSet() || !fs::exists(config.clean_rom.getOrThrow())) {
+		if (!config.allow_user_input || !config.clean_rom.isSet() || 
+			!fs::exists(config.clean_rom.getOrThrow()) || fs::exists(config.project_rom.getOrThrow())) {
 			return;
 		}
 
