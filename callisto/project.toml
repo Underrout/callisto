@@ -1,0 +1,41 @@
+[settings]
+
+# Name of this configuration,
+# can be anything you like really
+config_name = "main"
+
+# Root directory of the project
+project_root = "{project_root}"
+
+# What conflicts callisto should check for 
+# between tools/resources during rebuilds, 
+# can be set to "none" to disable it, "hijacks" 
+# to only check for conflicts in the vanilla 
+# ROM area or "all" to check everywhere
+check_conflicts = "hijacks"
+
+# Optional log file for conflicts, if 
+# set, callisto will log conflicts to this 
+# file instead of the console after rebuilds
+conflict_log_file = "conflicts.txt"
+
+# Uncomment to use integrated text map16 format
+# instead of binary format
+use_text_map16_format = true
+
+# ROM size to expand to after applying initial patch
+rom_size = "4MB"
+
+[output]
+
+# Path for the output ROM
+# I'm using a variable here with the {} syntax, 
+# this will expand to
+#      project_rom = "build/my_hack.smc"
+project_rom = "build/{project_name}.smc"
+
+# Path for temporary ROM used during builds
+temporary_rom = "build/temp/temp.smc"
+
+# Path for BPS package output by the Package function
+bps_package = "build/package/{project_name}.bps"

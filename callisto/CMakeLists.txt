@@ -94,7 +94,7 @@ if (MSVC)
     "junction/libntfslinks/source/CharUtils.cpp")
 endif()
 
-add_executable (callisto ${CALLISTO_SOURCE_FILES} "recent_projects/recent_projects_manager.h" "cli/cli_handler.h")
+add_executable (callisto ${CALLISTO_SOURCE_FILES} "recent_projects/recent_projects_manager.h" "cli/cli_handler.h" "prompt_util.h")
 target_link_options(callisto PRIVATE ${CALLISTO_LINK_OPTIONS})
 target_compile_options(callisto PRIVATE ${CALLISTO_COMPILE_OPTIONS})
 target_compile_definitions(callisto PRIVATE ${CALLISTO_COMPILE_DEFINITIONS})
@@ -195,8 +195,34 @@ add_custom_command(TARGET callisto POST_BUILD
 
 add_custom_command(TARGET callisto POST_BUILD 
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
-    "${CMAKE_CURRENT_SOURCE_DIR}/config.toml" $<TARGET_FILE_DIR:callisto>
+    "${CMAKE_CURRENT_SOURCE_DIR}/build_order.toml" $<TARGET_FILE_DIR:callisto>
 )
+
+add_custom_command(TARGET callisto POST_BUILD 
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+    "${CMAKE_CURRENT_SOURCE_DIR}/patches.toml" $<TARGET_FILE_DIR:callisto>
+)
+
+add_custom_command(TARGET callisto POST_BUILD 
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+    "${CMAKE_CURRENT_SOURCE_DIR}/project.toml" $<TARGET_FILE_DIR:callisto>
+)
+
+add_custom_command(TARGET callisto POST_BUILD 
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+    "${CMAKE_CURRENT_SOURCE_DIR}/resources.toml" $<TARGET_FILE_DIR:callisto>
+)
+
+add_custom_command(TARGET callisto POST_BUILD 
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+    "${CMAKE_CURRENT_SOURCE_DIR}/tools.toml" $<TARGET_FILE_DIR:callisto>
+)
+
+add_custom_command(TARGET callisto POST_BUILD 
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+    "${CMAKE_CURRENT_SOURCE_DIR}/variables.toml" $<TARGET_FILE_DIR:callisto>
+)
+
 
 add_custom_command(TARGET callisto POST_BUILD 
     COMMAND ${CMAKE_COMMAND} -E copy_if_different

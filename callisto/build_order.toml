@@ -1,0 +1,29 @@
+[orders]
+build_order = [
+    "Graphics",                 # Insert GFX
+    "ExGraphics",               # Insert ExGFX
+    "Map16",                    # Insert Map16
+
+	# "TitleScreenMovement",      # Uncomment this if you're inserting title moves
+
+    "SharedPalettes",           # Insert Shared Palettes 
+    "Overworld",                # Insert Overworld
+    "TitleScreen",              # Insert Titlescren
+    "Credits",                  # Insert Credits
+    "GlobalExAnimation",        # Insert Global ExAnimation
+
+    "Patches",                  # Insert all remaining patches from the patches list that 
+                                # are not explicitly mentioned in this build order
+
+
+    "PIXI",                     # Insert custom sprites
+    "Levels",                   # Insert all levels
+
+    "PIXI",                     # Uncomment this if you're using Lunar Magic 3.31 or higher
+
+    "GPS",                      # Insert custom blocks
+    "AddMusicK",                # Insert custom music
+    "UberASM",                  # Insert UberASM code
+
+  	# "patches/some_patch.asm",   # Example of inserting a specific patch at a specific point
+]
