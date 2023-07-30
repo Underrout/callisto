@@ -41,12 +41,13 @@ namespace callisto {
 	void Globule::init() {
 		std::ostringstream temp_patch{};
 
+		temp_patch << "warnings disable W1011" << std::endl << std::endl
+			<< "warnings disable W1007" << std::endl << std::endl
+			<< "warnings disable W1008" << std::endl << std::endl
+			<< "if read1($00FFD5) == $23\nsa1rom\nendif" << std::endl << std::endl;
+
 		if (globule_path.extension() == ".asm") {
-			temp_patch << "warnings disable W1011" << std::endl << std::endl
-				<< "warnings disable W1007" << std::endl << std::endl
-				<< "warnings disable W1008" << std::endl << std::endl
-				<< "if read1($00FFD5) == $23\nsa1rom\nendif" << std::endl << std::endl
-				<< "freecode cleaned" << std::endl << std::endl;
+			temp_patch << "freecode cleaned" << std::endl << std::endl;
 
 			if (globule_header_file.has_value()) {
 				temp_patch << "incsrc " << globule_header_file.value() << std::endl << std::endl;
@@ -55,6 +56,8 @@ namespace callisto {
 			temp_patch << "incsrc \"" << globule_path.string() << '"' << std::endl;
 		}
 		else {
+			temp_patch << "freedata cleaned" << std::endl << std::endl;
+
 			auto label_name{ globule_path.stem().string() };
 			std::replace(label_name.begin(), label_name.end(), ' ', '_');
 
@@ -201,6 +204,23 @@ namespace callisto {
 			));
 		}
 
+		if (globule_path.extension() != ".asm") {
+			if (label_number > 1) {
+				throw InsertionException(fmt::format(
+					"Binary globule {} unexpectedly contains more than one label",
+					globule_name
+				));
+			}
+
+			const auto& label{ labels[0] };
+			const auto name{ std::string(label.name) };
+
+			imprint << fmt::format("{} = ${:06X}", globule_name, label.location) << std::endl;
+			imprint << fmt::format("!{} = ${:06X}", globule_name, label.location) << std::endl;
+
+			return;
+		}
+
 		for (int i{ 0 }; i != label_number; ++i) {
 			const auto& label{ labels[i] };
 			const auto name{ std::string(label.name) };
@@ -227,11 +247,10 @@ namespace callisto {
 			imprint << fmt::format("{}_{} = ${:06X}", globule_name, name, label.location) << std::endl;
 			imprint << fmt::format("!{}_{} = ${:06X}", globule_name, name, label.location) << std::endl;
 		}
-
-		imprint.close();
 	}
 
 	std::unordered_set<ResourceDependency> Globule::determineDependencies() {
+		
 		if (globule_path.extension() == ".asm") {
 			auto dependencies{ Insertable::extractDependenciesFromReport(
 				globule_path.parent_path() / ".dependencies"
@@ -239,7 +258,12 @@ namespace callisto {
 			if (globule_header_file.has_value()) {
 				dependencies.insert(ResourceDependency(globule_header_file.value(), Policy::REINSERT));
 			}
+			dependencies.insert(ResourceDependency(globule_path, Policy::REINSERT));
 			return dependencies;
+		}
+		else {
+			fs::remove(globule_path.parent_path() / ".dependencies");
+			return { ResourceDependency(globule_path, Policy::REINSERT) };
 		}
 		return {};
 	}

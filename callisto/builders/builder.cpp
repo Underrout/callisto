@@ -141,7 +141,6 @@ namespace callisto {
 		if (fs::exists(source)) {
 			fs::remove_all(target);
 			fs::copy(source, target, fs::copy_options::overwrite_existing);
-			fs::remove_all(source);
 		}
 	}
 

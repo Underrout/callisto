@@ -143,9 +143,10 @@ namespace callisto {
 	}
 
 	std::unordered_set<ResourceDependency> Patch::determineDependencies() {
-		const auto dependencies{ Insertable::extractDependenciesFromReport(
+		auto dependencies{ Insertable::extractDependenciesFromReport(
 			patch_path.parent_path() / ".dependencies"
 		) };
+		dependencies.insert(ResourceDependency(patch_path, Policy::REINSERT));
 		return dependencies;
 	}
 }
