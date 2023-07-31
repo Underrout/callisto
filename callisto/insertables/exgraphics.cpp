@@ -45,11 +45,12 @@ namespace callisto {
 		try {
 			GraphicsUtil::importProjectExGraphicsInto(config, config.temporary_rom.getOrThrow());
 		}
-		catch (const std::exception&) {
+		catch (const std::exception& e) {
 			throw InsertionException(fmt::format(
-				"Failed to insert ExGraphics from folder {} into temporary ROM {}",
+				"Failed to insert ExGraphics from folder {} into temporary ROM {} with following exception:\n\r{}",
 				project_exgraphics_folder_path.string(),
-				temporary_rom_path.string()
+				temporary_rom_path.string(),
+				e.what()
 			));
 		}
 

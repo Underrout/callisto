@@ -1,6 +1,8 @@
 #pragma once
 
 #include <filesystem>
+#include <algorithm>
+#include <execution>
 
 #include <fmt/core.h>
 #include <boost/process.hpp>
@@ -17,12 +19,19 @@
 
 #include "configuration/configuration.h"
 
+#include "prompt_util.h"
+
 namespace fs = std::filesystem;
 namespace bp = boost::process;
 
 namespace callisto {
 	class GraphicsUtil {
 	protected:
+		class VerificationException : public CallistoException {
+		public:
+			using CallistoException::CallistoException;
+		};
+
 		static constexpr auto GRAPHICS_FOLDER_NAME{ "Graphics" };
 		static constexpr auto EX_GRAPHICS_FOLDER_NAME{ "ExGraphics" };
 
@@ -32,8 +41,17 @@ namespace callisto {
 		static constexpr auto GRAPHICS_IMPORT_COMMAND{ "-ImportGFX" };
 		static constexpr auto EX_GRAPHICS_IMPORT_COMMAND{ "-ImportExGFX" };
 
-		static void exportResources(const Configuration& config, const fs::path& rom_path, bool exgfx, bool keep_symlink);
+		static void exportResources(const Configuration& config, bool exgfx);
 		static void importResources(const Configuration& config, const fs::path& rom_path, bool exgfx);
+
+		static void fixPotentialExportDiscrepancy(const fs::path& new_folder, const fs::path& old_folder, bool exgfx, bool allow_user_input);
+
+		static bool oldAndNewDiffer(const fs::path& new_folder, const fs::path& old_folder, bool exgfx);
+
+		static void verifyFilenames(const fs::path& graphics_folder, bool exgfx);
+		static void verifyFilename(const fs::path& file_path, bool exgfx);
+
+		static bool filesEqual(const fs::path& file1, const fs::path& file2);
 
 		static inline std::string getImportCommand(bool exgfx) {
 			return exgfx ? EX_GRAPHICS_IMPORT_COMMAND : GRAPHICS_IMPORT_COMMAND;

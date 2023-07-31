@@ -10,9 +10,9 @@ namespace callisto {
 		TITLE_SCREEN,
 		LEVELS,
 		SHARED_PALETTES,
-		_COUNT,  // end marker
-		
 		GRAPHICS,
-		EX_GRAPHICS
+		EX_GRAPHICS,
+
+		_COUNT,  // end marker
 	};
 }

@@ -11,7 +11,9 @@ namespace callisto {
 		{ ExtractableType::OVERWORLD, Symbol::OVERWORLD },
 		{ ExtractableType::TITLE_SCREEN, Symbol::TITLE_SCREEN },
 		{ ExtractableType::LEVELS, Symbol::LEVELS},
-		{ ExtractableType::SHARED_PALETTES, Symbol::SHARED_PALETTES }
+		{ ExtractableType::SHARED_PALETTES, Symbol::SHARED_PALETTES },
+		{ ExtractableType::GRAPHICS, Symbol::GRAPHICS },
+		{ ExtractableType::EX_GRAPHICS, Symbol::EX_GRAPHICS }
 	};
 
 	std::vector<ExtractableType> Saver::getExtractableTypes(const Configuration& config) {
@@ -59,31 +61,11 @@ namespace callisto {
 				}
 				if (descriptor.symbol == Symbol::GRAPHICS && !graphics_seen) {
 					graphics_seen = true;
-					const auto graphics_folder{ GraphicsUtil::getExportFolderPath(config, false) };
-					if (!fs::exists(graphics_folder)) {
-						// only extract graphics if there is no graphics folder, otherwise, assume that the graphics in the folder
-						// may be more up to date than the ones in the ROM and shouldn't be overwritten
-						extractables.push_back(ExtractableType::GRAPHICS);
-					}
-					else {
-						const auto link{ GraphicsUtil::getLunarMagicFolderPath(config.project_rom.getOrThrow(), false) };
-						if (!fs::exists(link)) {
-							GraphicsUtil::createSymlink(link, graphics_folder);
-						}
-					}
+					extractables.push_back(ExtractableType::GRAPHICS);
 				}
 				else if (descriptor.symbol == Symbol::EX_GRAPHICS && !exgraphics_seen) {
 					exgraphics_seen = true;
-					const auto exgraphics_folder{ GraphicsUtil::getExportFolderPath(config, true) };
-					if (!fs::exists(exgraphics_folder)) {
-						extractables.push_back(ExtractableType::EX_GRAPHICS);
-					}
-					else {
-						const auto link{ GraphicsUtil::getLunarMagicFolderPath(config.project_rom.getOrThrow(), true) };
-						if (!fs::exists(link)) {
-							GraphicsUtil::createSymlink(link, exgraphics_folder);
-						}
-					}
+					extractables.push_back(ExtractableType::EX_GRAPHICS);
 				}
 			}
 		}
@@ -200,6 +182,7 @@ namespace callisto {
 			}
 			const auto export_start{ std::chrono::high_resolution_clock::now() };
 
+			fs::copy(config.project_rom.getOrThrow(), config.temporary_rom.getOrThrow(), fs::copy_options::overwrite_existing);
 			const auto extractables{ getExtractables(config, need_extraction, rom_path) };
 
 			std::exception_ptr thread_exception{};
