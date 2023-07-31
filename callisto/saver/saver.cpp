@@ -182,7 +182,9 @@ namespace callisto {
 			}
 			const auto export_start{ std::chrono::high_resolution_clock::now() };
 
-			fs::copy(config.project_rom.getOrThrow(), config.temporary_rom.getOrThrow(), fs::copy_options::overwrite_existing);
+			const auto temporary_rom_path{ PathUtil::getTemporaryRomPath(config.temporary_folder.getOrThrow(),
+				config.output_rom.getOrThrow()) };
+			fs::copy(config.output_rom.getOrThrow(), temporary_rom_path, fs::copy_options::overwrite_existing);
 			const auto extractables{ getExtractables(config, need_extraction, rom_path) };
 
 			std::exception_ptr thread_exception{};

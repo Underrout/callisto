@@ -23,10 +23,10 @@ namespace callisto {
 		init(config);
 
 		spdlog::info("Checking whether ROM from previous build exists");
-		if (!fs::exists(config.project_rom.getOrThrow())) {
-			throw MustRebuildException(fmt::format("No ROM found at {}, must rebuild", config.project_rom.getOrThrow().string()));
+		if (!fs::exists(config.output_rom.getOrThrow())) {
+			throw MustRebuildException(fmt::format("No ROM found at {}, must rebuild", config.output_rom.getOrThrow().string()));
 		}
-		spdlog::info("ROM from previous build found at '{}'", config.project_rom.getOrThrow().string());
+		spdlog::info("ROM from previous build found at '{}'", config.output_rom.getOrThrow().string());
 
 		spdlog::info("Checking whether configured ROM size has changed");
 		checkRebuildRomSize(config);
@@ -50,6 +50,10 @@ namespace callisto {
 		spdlog::info("Checking whether any configuration changes require a rebuild");
 		checkRebuildConfigDependencies(json_dependencies, config);
 		spdlog::info("No configuration changes require a rebuild");
+
+		const auto temporary_rom_path{ PathUtil::getTemporaryRomPath(
+			config.temporary_folder.getOrThrow(), config.output_rom.getOrThrow()
+		) };
 
 		bool any_work_done{ false };
 		std::optional<Insertable::NoDependencyReportFound> failed_dependency_report;
@@ -87,12 +91,12 @@ namespace callisto {
 			if (must_reinsert) {
 				if (!any_work_done) {
 					any_work_done = true;
-					fs::copy(config.project_rom.getOrThrow(), config.temporary_rom.getOrThrow(), fs::copy_options::overwrite_existing);
+					fs::copy(config.output_rom.getOrThrow(), temporary_rom_path, fs::copy_options::overwrite_existing);
 				}
 				if (descriptor.symbol == Symbol::GLOBULE) {
 					cleanGlobule(
 						descriptor.name.value(),
-						config.temporary_rom.getOrThrow(),
+						temporary_rom_path,
 						config.project_root.getOrThrow()
 					);
 				}
@@ -160,7 +164,7 @@ namespace callisto {
 			}
 
 			cacheGlobules(config.project_root.getOrThrow());
-			Saver::writeMarkerToRom(config.temporary_rom.getOrThrow(), config);
+			Saver::writeMarkerToRom(temporary_rom_path, config);
 
 			moveTempToOutput(config);
 

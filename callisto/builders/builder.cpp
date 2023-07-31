@@ -146,14 +146,15 @@ namespace callisto {
 
 	void Builder::moveTempToOutput(const Configuration& config) {
 		spdlog::info("Moving temporary files to final output");
-		for (const auto& entry : fs::directory_iterator(config.temporary_rom.getOrThrow().parent_path())) {
+		for (const auto& entry : fs::directory_iterator(config.temporary_folder.getOrThrow())) {
 			if (fs::is_regular_file(entry)) {
 				const auto file_name{ entry.path().stem().string() };
-				const auto temporary_rom_name{ config.temporary_rom.getOrThrow().stem().string() };
+				const auto temporary_rom_name{ (PathUtil::getTemporaryRomPath(
+					config.temporary_folder.getOrThrow(), config.output_rom.getOrThrow())).stem().string() };
 				if (file_name.substr(0, temporary_rom_name.size()) == temporary_rom_name) {
 					const auto source{ entry.path() };
-					const auto target{ config.project_rom.getOrThrow().parent_path() / 
-						(config.project_rom.getOrThrow().stem().string() + entry.path().extension().string())};
+					const auto target{ config.output_rom.getOrThrow().parent_path() / 
+						(config.output_rom.getOrThrow().stem().string() + entry.path().extension().string())};
 
 					while (true) {
 						try {
@@ -193,12 +194,8 @@ namespace callisto {
 		ensureCacheStructure(config);
 		generateAssemblyLevelInformation(config);
 		generateGlobuleCallFile(config);
-		if (config.temporary_rom.isSet()) {
-			fs::create_directories(config.temporary_rom.getOrThrow().parent_path());
-		}
-		if (config.project_rom.isSet()) {
-			fs::create_directories(config.project_rom.getOrThrow().parent_path());
-		}
+		fs::create_directories(config.temporary_folder.getOrThrow());
+		fs::create_directories(config.output_rom.getOrThrow().parent_path());
 
 		tryConvenienceSetup(config);
 
@@ -210,7 +207,7 @@ namespace callisto {
 
 	void Builder::tryConvenienceSetup(const Configuration& config) {
 		if (!config.allow_user_input || !config.clean_rom.isSet() || 
-			!fs::exists(config.clean_rom.getOrThrow()) || fs::exists(config.project_rom.getOrThrow())) {
+			!fs::exists(config.clean_rom.getOrThrow()) || fs::exists(config.output_rom.getOrThrow())) {
 			return;
 		}
 
@@ -249,7 +246,8 @@ namespace callisto {
 	}
 
 	void Builder::convenienceSetup(const Configuration& config) {
-		const auto temp_rom_path{ config.temporary_rom.getOrThrow() };
+		const auto temp_rom_path{ PathUtil::getTemporaryRomPath(config.temporary_folder.getOrThrow(),
+			config.output_rom.getOrThrow())};
 
 		fs::copy(config.clean_rom.getOrThrow(), temp_rom_path, fs::copy_options::overwrite_existing);
 

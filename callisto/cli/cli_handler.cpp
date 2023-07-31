@@ -41,8 +41,8 @@ namespace callisto {
 		build_sub->callback([&] {
 			const auto config{ config_manager.getConfiguration(profile_name, true) };
 
-			if (config->project_rom.isSet() && fs::exists(config->project_rom.getOrThrow())) {
-				const auto needs_extraction{ Marker::getNeededExtractions(config->project_rom.getOrThrow(),
+			if (config->output_rom.isSet() && fs::exists(config->output_rom.getOrThrow())) {
+				const auto needs_extraction{ Marker::getNeededExtractions(config->output_rom.getOrThrow(),
 					config->project_root.getOrThrow(),
 					Saver::getExtractableTypes(*config),
 					config->use_text_map16_format.getOrDefault(false)) 
@@ -50,10 +50,10 @@ namespace callisto {
 
 				if (!needs_extraction.empty()) {
 					if (abort_on_unsaved) {
-						spdlog::error("There are unsaved resources in ROM '{}', aborting build", config->project_rom.getOrThrow().string());
+						spdlog::error("There are unsaved resources in ROM '{}', aborting build", config->output_rom.getOrThrow().string());
 						exit(2);
 					}
-					Saver::exportResources(config->project_rom.getOrThrow(), *config, true);
+					Saver::exportResources(config->output_rom.getOrThrow(), *config, true);
 				}
 			}
 
@@ -84,7 +84,7 @@ namespace callisto {
 		save_sub->callback([&] {
 			const auto config{ config_manager.getConfiguration(profile_name, true) };
 
-			Saver::exportResources(config->project_rom.getOrThrow(), *config, true);
+			Saver::exportResources(config->output_rom.getOrThrow(), *config, true);
 			exit(0);
 		});
 
@@ -99,7 +99,7 @@ namespace callisto {
 
 			bp::spawn(fmt::format(
 				"\"{}\" \"{}\"",
-				config->lunar_magic_path.getOrThrow().string(), config->project_rom.getOrThrow().string()
+				config->lunar_magic_path.getOrThrow().string(), config->output_rom.getOrThrow().string()
 			));
 			exit(0);
 		});
@@ -115,18 +115,18 @@ namespace callisto {
 
 			const auto exit_code{ bp::system(
 				config->flips_path.getOrThrow().string(), "--create", "--bps-delta", config->clean_rom.getOrThrow().string(),
-				config->project_rom.getOrThrow().string(), config->bps_package.getOrThrow().string(), bp::std_out > bp::null
+				config->output_rom.getOrThrow().string(), config->bps_package.getOrThrow().string(), bp::std_out > bp::null
 			) };
 
 			if (exit_code != 0) {
 				throw std::runtime_error(fmt::format("Failed to create package of '{}' at '{}'",
-					config->project_rom.getOrThrow().string(),
+					config->output_rom.getOrThrow().string(),
 					config->bps_package.getOrThrow().string()
 				));
 			}
 
 			spdlog::info("Successfully created package of '{}' at '{}'", 
-				config->project_rom.getOrThrow().string(), config->bps_package.getOrThrow().string());
+				config->output_rom.getOrThrow().string(), config->bps_package.getOrThrow().string());
 
 			exit(0);
 		});

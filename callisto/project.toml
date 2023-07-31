@@ -31,11 +31,11 @@ rom_size = "4MB"
 # Path for the output ROM
 # I'm using a variable here with the {} syntax, 
 # this will expand to
-#      project_rom = "build/my_hack.smc"
-project_rom = "build/{project_name}.smc"
+#      output_rom = "build/my_hack.smc"
+output_rom = "build/{project_name}.smc"
 
 # Path for temporary ROM used during builds
-temporary_rom = "build/temp/temp.smc"
+temporary_folder = "build/temp"
 
 # Path for BPS package output by the Package function
 bps_package = "build/package/{project_name}.bps"

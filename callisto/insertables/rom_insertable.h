@@ -18,7 +18,8 @@ namespace callisto {
 		const fs::path temporary_rom_path;
 
 		RomInsertable(const Configuration& config) 
-			: temporary_rom_path(registerConfigurationDependency(config.temporary_rom).getOrThrow()) {
+			: temporary_rom_path(PathUtil::getTemporaryRomPath(config.temporary_folder.getOrThrow(),
+				config.output_rom.getOrThrow())) {
 			if (!fs::exists(temporary_rom_path)) {
 				throw RomNotFoundException(fmt::format(
 					"Temporary ROM not found at {}",

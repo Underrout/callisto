@@ -19,6 +19,8 @@ namespace callisto {
 		static constexpr auto ASSEMBLY_INFO_FILE{ "info.asm" };
 		static constexpr auto USER_SETTINGS_FOLDER_NAME{ "callisto" };
 		static constexpr auto RECENT_PROJECTS_FILE{ "recent_projects.json" };
+		static constexpr auto TEMPORARY_SUFFIX{ "_temp" };
+		static constexpr auto TEMPORARY_RESOURCES_FOLDER_NAME{ "resources" };
 
 	public:
 		static fs::path normalize(const fs::path& path, const fs::path& relative_to) {
@@ -71,6 +73,17 @@ namespace callisto {
 
 		static fs::path getAssemblyInfoFilePath(const fs::path& project_root) {
 			return getCallistoDirectoryPath(project_root) / ASSEMBLY_INFO_FILE;
+		}
+
+		static fs::path getTemporaryRomPath(const fs::path& temporary_folder_path, const fs::path& output_rom_path) {
+			fs::create_directories(temporary_folder_path);
+			return temporary_folder_path / fs::path(output_rom_path.stem().string() + TEMPORARY_SUFFIX + output_rom_path.extension().string());
+		}
+
+		static fs::path getTemporaryResourcePathFor(const fs::path& temporary_folder_path, const fs::path& resource_name) {
+			const auto resource_folder_path{ temporary_folder_path / TEMPORARY_RESOURCES_FOLDER_NAME };
+			fs::create_directories(resource_folder_path);
+			return resource_folder_path / resource_name;
 		}
 	};
 }

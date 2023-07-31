@@ -36,10 +36,10 @@ namespace callisto {
 	Component TUI::getRomOnlyButton(const std::string& button_text, Closure button_func, bool is_save_button) {
 		auto option{ ButtonOption::Ascii() };
 		option.transform = [=](const EntryState& e) {
-			bool project_rom_set{ config != nullptr && config->project_rom.isSet() };
+			bool project_rom_set{ config != nullptr && config->output_rom.isSet() };
 			bool project_rom_exists{ false };
 			if (project_rom_set) {
-				project_rom_exists = fs::exists(config->project_rom.getOrThrow());
+				project_rom_exists = fs::exists(config->output_rom.getOrThrow());
 			}
 
 			auto label{ e.label };
@@ -198,8 +198,8 @@ namespace callisto {
 	}
 
 	void TUI::markerSafeguard(const std::string& title, std::function<void()> func) {
-		if (config != nullptr && config->project_rom.isSet() && fs::exists(config->project_rom.getOrThrow())) {
-			const auto needs_extraction{ Marker::getNeededExtractions(config->project_rom.getOrThrow(), 
+		if (config != nullptr && config->output_rom.isSet() && fs::exists(config->output_rom.getOrThrow())) {
+			const auto needs_extraction{ Marker::getNeededExtractions(config->output_rom.getOrThrow(), 
 				config->project_root.getOrThrow(),
 				Saver::getExtractableTypes(*config),
 				config->use_text_map16_format.getOrDefault(false)) };
@@ -207,10 +207,10 @@ namespace callisto {
 				showChoiceModal("Prompt", fmt::format(
 					"WARNING: Potentially unexported resources present in ROM\n    {}\n\n"
 					"Building anyway could lead to loss of data. Run Save before the build?",
-					config->project_rom.getOrThrow().string()
+					config->output_rom.getOrThrow().string()
 				), [=] {
 					runWithLogging(title + " (with Save)", [=] {
-						Saver::exportResources(config->project_rom.getOrThrow(), *config, true);
+						Saver::exportResources(config->output_rom.getOrThrow(), *config, true);
 						func();
 					});
 					},
@@ -377,15 +377,15 @@ namespace callisto {
 			return;
 		}
 
-		if (!config->project_rom.isSet()) {
-			showModal("Error", fmt::format("{} not set in configuration files\nCannot package ROM", config->project_rom.name));
+		if (!config->output_rom.isSet()) {
+			showModal("Error", fmt::format("{} not set in configuration files\nCannot package ROM", config->output_rom.name));
 			return;
 		}
 
-		if (!fs::exists(config->project_rom.getOrThrow())) {
+		if (!fs::exists(config->output_rom.getOrThrow())) {
 			showModal("Error", fmt::format(
 				"No ROM found at\n    {}\n\nCannot package ROM",
-				config->project_rom.getOrThrow().string())
+				config->output_rom.getOrThrow().string())
 			);
 			return;
 		}
@@ -430,7 +430,7 @@ namespace callisto {
 		try {
 			exit_code = bp::system(
 				config->flips_path.getOrThrow().string(), "--create", "--bps-delta", config->clean_rom.getOrThrow().string(),
-				config->project_rom.getOrThrow().string(), config->bps_package.getOrThrow().string(), bp::std_out > bp::null
+				config->output_rom.getOrThrow().string(), config->bps_package.getOrThrow().string(), bp::std_out > bp::null
 			);
 		}
 		catch (const std::exception& e) {
@@ -487,16 +487,16 @@ namespace callisto {
 			return;
 		}
 
-		if (!config->project_rom.isSet()) {
-			showModal("Error", fmt::format("{} not set in configuration files\nCannot save ROM", config->project_rom.name));
+		if (!config->output_rom.isSet()) {
+			showModal("Error", fmt::format("{} not set in configuration files\nCannot save ROM", config->output_rom.name));
 			return;
 		}
 
-		if (!fs::exists(config->project_rom.getOrThrow())) {
+		if (!fs::exists(config->output_rom.getOrThrow())) {
 			if (!config->clean_rom.isSet() || !fs::exists(config->clean_rom.getOrThrow())) {
 				showModal("Error", fmt::format(
 					"No ROM found at\n    {}\n\nCannot save ROM",
-					config->project_rom.getOrThrow().string())
+					config->output_rom.getOrThrow().string())
 				);
 			}
 			else {
@@ -504,7 +504,7 @@ namespace callisto {
 					"No ROM found at\n    {}\n\nSave from clean ROM instead?"
 					"\n\n(WARNING: This may overwrite previously exported files with vanilla ones,\n"
 					"only use this if you are starting a fresh project!)",
-					config->project_rom.getOrThrow().string()),
+					config->output_rom.getOrThrow().string()),
 					[=] { runWithLogging("Clean ROM Save", [=] {
 						Saver::exportResources(config->clean_rom.getOrThrow(), *config, true, false); });
 					},
@@ -514,7 +514,7 @@ namespace callisto {
 			return;
 		}
 
-		runWithLogging("ROM Save", [=] { Saver::exportResources(config->project_rom.getOrThrow(), *config, true); });
+		runWithLogging("ROM Save", [=] { Saver::exportResources(config->output_rom.getOrThrow(), *config, true); });
 	}
 
 	void TUI::editButton() {
@@ -525,15 +525,15 @@ namespace callisto {
 			return;
 		}
 
-		if (!config->project_rom.isSet()) {
-			showModal("Error", fmt::format("{} not set in configuration files\nCannot edit ROM", config->project_rom.name));
+		if (!config->output_rom.isSet()) {
+			showModal("Error", fmt::format("{} not set in configuration files\nCannot edit ROM", config->output_rom.name));
 			return;
 		}
 
-		if (!fs::exists(config->project_rom.getOrThrow())) {
+		if (!fs::exists(config->output_rom.getOrThrow())) {
 			showModal("Error", fmt::format(
 				"No ROM found at\n    {}\n\nCannot edit ROM",
-				config->project_rom.getOrThrow().string())
+				config->output_rom.getOrThrow().string())
 			);
 			return;
 		}
@@ -554,7 +554,7 @@ namespace callisto {
 		try {
 			bp::spawn(fmt::format(
 				"\"{}\" \"{}\"",
-				config->lunar_magic_path.getOrThrow().string(), config->project_rom.getOrThrow().string()
+				config->lunar_magic_path.getOrThrow().string(), config->output_rom.getOrThrow().string()
 			));
 		}
 		catch (const std::exception& e) {
@@ -636,20 +636,20 @@ namespace callisto {
 			return;
 		}
 
-		if (!config->project_rom.isSet()) {
-			showModal("Error", fmt::format("{} not set in configuration files", config->project_rom.name));
+		if (!config->output_rom.isSet()) {
+			showModal("Error", fmt::format("{} not set in configuration files", config->output_rom.name));
 			return;
 		}
 
-		if (!fs::exists(config->project_rom.getOrThrow())) {
+		if (!fs::exists(config->output_rom.getOrThrow())) {
 			showModal("Error", fmt::format("No ROM found at\n    {}\n\nCannot open in {}",
-				config->project_rom.getOrThrow().string(), emulator_to_launch)
+				config->output_rom.getOrThrow().string(), emulator_to_launch)
 			);
 			return;
 		}
 
 		try {
-			emulators.launch(emulator_to_launch, config->project_rom.getOrThrow());
+			emulators.launch(emulator_to_launch, config->output_rom.getOrThrow());
 		}
 		catch (const std::exception& e) {
 			showModal("Error", fmt::format("Failed to launch {} with exception:\n{}", emulator_to_launch, e.what()));

@@ -10,7 +10,7 @@ namespace callisto {
 			registerConfigurationDependency(config.ex_graphics, Policy::REINSERT);
 		}
 		else {
-			registerConfigurationDependency(config.project_rom, Policy::REINSERT);
+			registerConfigurationDependency(config.output_rom, Policy::REINSERT);
 		}
 
 		if (!fs::exists(project_exgraphics_folder_path)) {
@@ -43,7 +43,7 @@ namespace callisto {
 		));
 
 		try {
-			GraphicsUtil::importProjectExGraphicsInto(config, config.temporary_rom.getOrThrow());
+			GraphicsUtil::importProjectExGraphicsInto(config, temporary_rom_path);
 		}
 		catch (const std::exception& e) {
 			throw InsertionException(fmt::format(

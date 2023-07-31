@@ -94,7 +94,7 @@ namespace callisto {
 			if (project_folder.isSet()) {
 				return project_folder.getOrThrow();
 			}
-			return config.project_rom.getOrThrow().parent_path() / getLunarMagicFolderName(exgfx);
+			return config.output_rom.getOrThrow().parent_path() / getLunarMagicFolderName(exgfx);
 		}
 
 		static void createSymlink(const fs::path& link_name, const fs::path& target_name) {

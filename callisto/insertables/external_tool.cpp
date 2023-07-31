@@ -7,7 +7,7 @@ namespace callisto {
 		working_directory(tool_config.working_directory.getOrThrow()),
 		take_user_input(tool_config.takes_user_input.getOrDefault(false)),
 		pass_rom(tool_config.pass_rom.getOrDefault(true)),
-		temporary_rom(config.temporary_rom.getOrThrow()), 
+		temporary_rom(PathUtil::getTemporaryRomPath(config.temporary_folder.getOrThrow(), config.output_rom.getOrThrow())),
 		static_dependencies(tool_config.static_dependencies.getOrDefault({})),
 		dependency_report_file_path(tool_config.dependency_report_file.getOrDefault({}))
 	{
@@ -32,10 +32,10 @@ namespace callisto {
 			));
 		}
 
-		if (temporary_rom.has_value() && !fs::exists(temporary_rom.value())) {
+		if (!fs::exists(temporary_rom)) {
 			throw RomNotFoundException(fmt::format(
 				"Temporary ROM not found at {}",
-				temporary_rom.value().string()
+				temporary_rom.string()
 			));
 		}
 	}
@@ -85,13 +85,12 @@ namespace callisto {
 		fs::current_path(working_directory);
 
 		int exit_code;
-
 		if (take_user_input) {
 			exit_code = bp::system(fmt::format(
 				"\"{}\" {}{}",
 				tool_exe_path.string(),
 				tool_options,
-				pass_rom ? " \"" + temporary_rom.value().string() + '"' : ""
+				pass_rom ? " \"" + temporary_rom.string() + '"' : ""
 			), bp::std_in < stdin, bp::std_out > stdout, bp::std_err > stderr);
 		}
 		else {
@@ -99,9 +98,10 @@ namespace callisto {
 				"\"{}\" {}{}",
 				tool_exe_path.string(),
 				tool_options,
-				pass_rom ? " \"" + temporary_rom.value().string() + '"' : ""
+				pass_rom ? " \"" + temporary_rom.string() + '"' : ""
 			), bp::std_in < bp::null, bp::std_out > stdout, bp::std_err > stderr);
 		}
+
 		fs::current_path(prev_folder);
 
 		if (exit_code == 0) {

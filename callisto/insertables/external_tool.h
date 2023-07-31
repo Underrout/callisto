@@ -15,6 +15,7 @@
 #include "../configuration/configuration.h"
 #include "../dependency/policy.h"
 #include "../dependency/resource_dependency.h"
+#include "../path_util.h"
 
 namespace fs = std::filesystem;
 namespace bp = boost::process;
@@ -22,7 +23,7 @@ namespace bp = boost::process;
 namespace callisto {
 	class ExternalTool : public Insertable {
 	protected:
-		const std::optional<fs::path> temporary_rom;
+		const fs::path temporary_rom;
 		const std::string tool_name;
 		const fs::path tool_exe_path;
 		const std::string tool_options;

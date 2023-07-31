@@ -14,7 +14,9 @@ namespace callisto {
 		DependencyVector dependencies{};
 		PatchHijacksVector patch_hijacks{};
 
-		fs::copy_file(config.clean_rom.getOrThrow(), config.temporary_rom.getOrThrow(), fs::copy_options::overwrite_existing);
+		const auto temp_rom_path{ PathUtil::getTemporaryRomPath(config.temporary_folder.getOrThrow(),
+	config.output_rom.getOrThrow()) };
+		fs::copy_file(config.clean_rom.getOrThrow(), temp_rom_path, fs::copy_options::overwrite_existing);
 
 		auto insertables{ buildOrderToInsertables(config) };
 
@@ -40,7 +42,7 @@ namespace callisto {
 		Conflicts check_conflicts_policy{ determineConflictCheckSetting(config) };
 
 		if (check_conflicts_policy != Conflicts::NONE) {
-			old_rom = getRom(config.temporary_rom.getOrThrow());
+			old_rom = getRom(temp_rom_path);
 		}
 
 		if (config.initial_patch.isSet()) {
@@ -55,7 +57,7 @@ namespace callisto {
 				conflict_thread_created = true;
 				conflict_thread = std::jthread([&] {
 					try {
-						auto new_rom{ getRom(config.temporary_rom.getOrThrow()) };
+						auto new_rom{ getRom(temp_rom_path) };
 						updateWrites(old_rom, new_rom, check_conflicts_policy, write_map,
 							Descriptor(Symbol::INITIAL_PATCH).toString(config.project_root.getOrThrow()));
 						old_rom.swap(new_rom);
@@ -127,7 +129,7 @@ namespace callisto {
 					std::rethrow_exception(conflict_thread_exception);
 				}
 
-				new_rom = getRom(config.temporary_rom.getOrThrow());
+				new_rom = getRom(temp_rom_path);
 				conflict_thread = std::jthread([&old_rom, &new_rom, check_conflicts_policy, &write_map, descriptor, &config, &conflict_thread_exception] {
 					try {
 						updateWrites(old_rom, new_rom, check_conflicts_policy, write_map,
@@ -177,7 +179,7 @@ namespace callisto {
 
 		cacheGlobules(config.project_root.getOrThrow());
 
-		Saver::writeMarkerToRom(config.temporary_rom.getOrThrow(), config);
+		Saver::writeMarkerToRom(temp_rom_path, config);
 		moveTempToOutput(config);
 
 		const auto build_end{ std::chrono::high_resolution_clock::now() };
@@ -434,7 +436,8 @@ namespace callisto {
 			const auto exit_code{ bp::system(
 				config.lunar_magic_path.getOrThrow().string(),
 				"-ExpandROM",
-				config.temporary_rom.getOrThrow().string(),
+				(PathUtil::getTemporaryRomPath(config.temporary_folder.getOrThrow(),
+					config.output_rom.getOrThrow())).string(),
 				config.rom_size.getOrThrow()
 			) };
 		}

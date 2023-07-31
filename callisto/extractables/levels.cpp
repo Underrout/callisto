@@ -4,7 +4,7 @@ namespace callisto {
 	namespace extractables {
 		Levels::Levels(const Configuration& config, const fs::path& extracting_rom)
 			: LunarMagicExtractable(config, extracting_rom), levels_folder(config.levels.getOrThrow()), 
-			temp_folder(config.temporary_rom.getOrThrow().parent_path() / "Exporting") {
+			temp_folder(config.temporary_folder.getOrThrow() / "Exporting") {
 
 			fs::create_directories(temp_folder);
 

@@ -2,7 +2,8 @@
 
 namespace callisto {
 	void GraphicsUtil::exportResources(const Configuration& config, bool exgfx) {
-		const auto temporary_export_rom{ config.temporary_rom.getOrThrow() };
+		const auto temporary_export_rom{ 
+			PathUtil::getTemporaryRomPath(config.temporary_folder.getOrThrow(), config.output_rom.getOrThrow()) };
 
 		const auto command{ getExportCommand(exgfx) };
 		const auto exit_code{ callLunarMagic(config, getExportCommand(exgfx),
@@ -27,7 +28,7 @@ namespace callisto {
 			fixPotentialExportDiscrepancy(temporary_exported_folder, final_output_path, exgfx, config.allow_user_input);
 		}
 
-		const auto original_folder_proxy{ config.project_rom.getOrThrow().parent_path() / fs::path(exgfx_or_gfx) };
+		const auto original_folder_proxy{ config.output_rom.getOrThrow().parent_path() / fs::path(exgfx_or_gfx) };
 		createSymlink(original_folder_proxy, final_output_path);
 	}
 

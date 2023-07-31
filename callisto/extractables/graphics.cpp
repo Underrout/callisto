@@ -8,7 +8,7 @@ namespace callisto {
 		void Graphics::extract() {
 			spdlog::info("Exporting Graphics");
 
-			const auto keep_symlink{ extracting_rom == config.project_rom.getOrThrow() };
+			const auto keep_symlink{ extracting_rom == config.output_rom.getOrThrow() };
 
 			try {
 				GraphicsUtil::exportProjectGraphicsFrom(config, extracting_rom, keep_symlink);

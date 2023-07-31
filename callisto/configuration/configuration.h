@@ -98,8 +98,8 @@ namespace callisto {
 		StringConfigVariable check_conflicts{ {"settings", "check_conflicts"} };
 		PathConfigVariable conflict_log_file { {"settings", "conflict_log_file"} };
 
-		PathConfigVariable project_rom{ {"output", "project_rom"} };
-		PathConfigVariable temporary_rom{ {"output", "temporary_rom"} };
+		PathConfigVariable output_rom{ {"output", "output_rom"} };
+		PathConfigVariable temporary_folder{ {"output", "temporary_folder"} };
 		PathConfigVariable bps_package{ {"output", "bps_package"} };
 
 		PathConfigVariable flips_path{ {"tools", "FLIPS", "executable"} };
