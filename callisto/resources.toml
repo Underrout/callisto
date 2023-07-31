@@ -1,0 +1,12 @@
+[resources]
+initial_patch = "resources/initial_patch.bps"
+levels = "resources/levels"
+shared_palettes = "resources/shared_palettes.pal"
+map16 = "resources/all_map16"
+overworld = "resources/overworld.bps"
+titlescreen = "resources/titlescreen.bps"
+credits = "resources/credits.bps"
+global_exanimation = "resources/global_exanimation.bps"
+
+graphics = "resources/graphics"
+ex_graphics = "resources/exgraphics"
