@@ -224,4 +224,18 @@ namespace callisto {
 	void GraphicsUtil::exportProjectExGraphicsFrom(const Configuration& config, const fs::path& rom_path, bool keep_symlink) {
 		exportResources(config, true);
 	}
+
+	void GraphicsUtil::linkOutputRomToProjectGraphics(const Configuration& config, bool exgfx) {
+		const auto& target{ exgfx ? config.ex_graphics : config.graphics };
+		if (!target.isSet()) {
+			return;
+		}
+
+		const auto lunar_magic_export_folder{ getLunarMagicFolderPath(config.output_rom.getOrThrow(), exgfx) };
+		const auto project_folder{ target.getOrThrow() };
+
+		if (lunar_magic_export_folder != project_folder) {
+			createSymlink(lunar_magic_export_folder, project_folder);
+		}
+	}
 }

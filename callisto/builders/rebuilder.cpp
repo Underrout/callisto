@@ -182,6 +182,9 @@ namespace callisto {
 		Saver::writeMarkerToRom(temp_rom_path, config);
 		moveTempToOutput(config);
 
+		GraphicsUtil::linkOutputRomToProjectGraphics(config, false);
+		GraphicsUtil::linkOutputRomToProjectGraphics(config, true);
+
 		const auto build_end{ std::chrono::high_resolution_clock::now() };
 
 		if (conflict_thread_created) {

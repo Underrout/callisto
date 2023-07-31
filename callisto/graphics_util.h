@@ -130,5 +130,7 @@ namespace callisto {
 
 		static void exportProjectGraphicsFrom(const Configuration& config, const fs::path& rom_path, bool keep_symlink = true);
 		static void exportProjectExGraphicsFrom(const Configuration& config, const fs::path& rom_path, bool keep_symlink = true);
+
+		static void linkOutputRomToProjectGraphics(const Configuration& config, bool exgfx);
 	};
 }
