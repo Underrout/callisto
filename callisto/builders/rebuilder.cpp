@@ -200,6 +200,8 @@ namespace callisto {
 			}
 		}
 		
+		fs::remove_all(config.temporary_folder.getOrThrow());
+
 		spdlog::info("Build finished successfully in {}!", TimeUtil::getDurationString(build_end - build_start));
 	}
 

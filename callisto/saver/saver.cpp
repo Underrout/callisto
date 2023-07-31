@@ -224,6 +224,8 @@ namespace callisto {
 				}
 			}
 
+			fs::remove_all(config.temporary_folder.getOrThrow());
+
 			const auto export_end{ std::chrono::high_resolution_clock::now() };
 
 			spdlog::info("All resources exported successfully in {}!", TimeUtil::getDurationString(export_end - export_start));

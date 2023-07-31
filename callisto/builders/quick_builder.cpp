@@ -170,6 +170,8 @@ namespace callisto {
 			GraphicsUtil::linkOutputRomToProjectGraphics(config, false);
 			GraphicsUtil::linkOutputRomToProjectGraphics(config, true);
 
+			fs::remove_all(config.temporary_folder.getOrThrow());
+
 			const auto build_end{ std::chrono::high_resolution_clock::now() };
 
 			spdlog::info("Quickbuild finished successfully in {}!", TimeUtil::getDurationString(build_end - build_start));
