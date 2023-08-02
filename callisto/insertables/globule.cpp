@@ -50,7 +50,7 @@ namespace callisto {
 			temp_patch << "freecode cleaned" << std::endl << std::endl;
 
 			if (globule_header_file.has_value()) {
-				temp_patch << "incsrc " << globule_header_file.value() << std::endl << std::endl;
+				temp_patch << "incsrc \"" << globule_header_file.value() << '"' << std::endl << std::endl;
 			}
 
 			temp_patch << "incsrc \"" << globule_path.string() << '"' << std::endl;
