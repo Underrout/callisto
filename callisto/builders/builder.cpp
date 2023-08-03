@@ -67,7 +67,7 @@ namespace callisto {
 				config,
 				name.value(),
 				PathUtil::getGlobuleImprintDirectoryPath(config.project_root.getOrThrow()),
-				PathUtil::getGlobuleCallFilePath(config.project_root.getOrThrow()),
+				PathUtil::getCallistoAsmFilePath(config.project_root.getOrThrow()),
 				config.globules.getOrDefault({}),
 				include_paths
 			);
@@ -192,8 +192,7 @@ namespace callisto {
 	void Builder::init(const Configuration& config) {
 		spdlog::info("Initializing callisto directory");
 		ensureCacheStructure(config);
-		generateAssemblyLevelInformation(config);
-		generateGlobuleCallFile(config);
+		generateCallistoAsmFile(config);
 		fs::create_directories(config.temporary_folder.getOrThrow());
 		fs::create_directories(config.output_rom.getOrThrow().parent_path());
 
@@ -323,9 +322,12 @@ namespace callisto {
 		fs::create_directories(PathUtil::getInsertedGlobulesDirectoryPath(project_root));
 	}
 
-	void Builder::generateAssemblyLevelInformation(const Configuration& config) {
+	void Builder::generateCallistoAsmFile(const Configuration& config) {
+		const auto globule_folder{ PathUtil::getGlobuleImprintDirectoryPath(config.project_root.getOrThrow()) };
+
 		const auto info_string{ fmt::format(
 			"includeonce\n\n"
+			"warnings disable W1007\n\n"
 			"; Asar compatible file containing information about callisto, can be imported using incsrc as needed\n\n"
 			"; Define containing the name of the active profile\n"
 			"!{}_{} = \"{}\"\n\n"
@@ -336,23 +338,31 @@ namespace callisto {
 			"; Defines containing callisto's version number as individual numbers\n"
 			"!{}_{}_{} = {}\n"
 			"!{}_{}_{} = {}\n"
-			"!{}_{}_{} = {}\n",
+			"!{}_{}_{} = {}\n\n"
+			"; Define containing path to callisto's globule imprint folder\n"
+			"!{}_{} = \"{}\"\n\n"
+			"macro call_globule(globule_label)\n"
+			"\tPHB\n"
+			"\tLDA.b #<globule_label>>>16\n"
+			"\tPHA\n"
+			"\tPLB\n"
+			"\tJSL <globule_label>\n"
+			"\tPLB\n"
+			"endmacro\n\n"
+			"macro include_globule(globule_name)\n"
+			"\tincsrc \"{}\"\n"
+			"endmacro\n",
 			DEFINE_PREFIX, PROFILE_DEFINE_NAME, config.config_name.getOrThrow(),
 			DEFINE_PREFIX, ASSEMBLING_DEFINE_NAME,
 			DEFINE_PREFIX, VERSION_DEFINE_NAME, CALLISTO_VERSION_MAJOR, CALLISTO_VERSION_MINOR, CALLISTO_VERSION_PATCH,
 			DEFINE_PREFIX, VERSION_DEFINE_NAME, MAJOR_VERSION_DEFINE_NAME, CALLISTO_VERSION_MAJOR,
 			DEFINE_PREFIX, VERSION_DEFINE_NAME, MINOR_VERSION_DEFINE_NAME, CALLISTO_VERSION_MINOR,
-			DEFINE_PREFIX, VERSION_DEFINE_NAME, PATCH_VERSION_DEFINE_NAME, CALLISTO_VERSION_PATCH
+			DEFINE_PREFIX, VERSION_DEFINE_NAME, PATCH_VERSION_DEFINE_NAME, CALLISTO_VERSION_PATCH,
+			DEFINE_PREFIX, GLOBULE_FOLDER_PATH_DEFINE_NAME, globule_folder.string(),
+			(globule_folder / fs::path("<globule_name>")).string()
 		) };
 
-		writeIfDifferent(info_string, PathUtil::getAssemblyInfoFilePath(config.project_root.getOrThrow()));
-	}
-
-	void Builder::generateGlobuleCallFile(const Configuration& config) {
-		std::string call{ "includeonce\n\nmacro call(globule_label)\n\tPHB\n\t"
-			"LDA.b #<globule_label>>>16\n\tPHA\n\tPLB\n\tJSL <globule_label>\n\tPLB\nendmacro\n" };
-
-		writeIfDifferent(call, PathUtil::getGlobuleCallFilePath(config.project_root.getOrThrow()));
+		writeIfDifferent(info_string, PathUtil::getCallistoAsmFilePath(config.project_root.getOrThrow()));
 	}
 
 	void Builder::checkCleanRom(const fs::path& clean_rom_path) {

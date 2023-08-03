@@ -3,12 +3,12 @@
 namespace callisto {
 	Globule::Globule(const Configuration& config,
 		const fs::path& globule_path, const fs::path& imprint_directory,
-		const fs::path& globule_call_file,
+		const fs::path& callisto_asm_file,
 		const std::vector<fs::path>& other_globule_paths,
 		const std::vector<fs::path>& additional_include_paths) :
 		RomInsertable(config), 
 		project_relative_path(fs::relative(globule_path, registerConfigurationDependency(config.project_root).getOrThrow())),
-		globule_path(globule_path), imprint_directory(imprint_directory), globule_call_file(globule_call_file),
+		globule_path(globule_path), imprint_directory(imprint_directory), callisto_asm_file(callisto_asm_file),
 		globule_header_file(registerConfigurationDependency(config.globule_header, Policy::REINSERT).isSet() ? std::make_optional(config.globule_header.getOrThrow()) : std::nullopt)
 	{
 		if (!fs::exists(globule_path)) {
@@ -190,7 +190,8 @@ namespace callisto {
 
 		std::ofstream imprint{ imprint_directory / (globule_path.stem().string() + ".asm")};
 
-		imprint << fmt::format("incsrc \"{}\"", globule_call_file.string()) << std::endl << std::endl;
+		imprint << "warnings disable W1007\n\n";
+		imprint << fmt::format("incsrc \"{}\"", callisto_asm_file.string()) << std::endl << std::endl;
 
 		int label_number{};
 		const auto labels{ asar_getalllabels(&label_number) };
