@@ -41,14 +41,11 @@ namespace callisto {
 	void Globule::init() {
 		std::ostringstream temp_patch{};
 
-		temp_patch << "warnings disable W1011" << std::endl << std::endl
-			<< "warnings disable W1007" << std::endl << std::endl
-			<< "warnings disable W1008" << std::endl << std::endl
-			<< "if read1($00FFD5) == $23\nsa1rom\nendif" << std::endl << std::endl;
+		temp_patch << "warnings disable W1011\n"
+			<< "warnings disable W1007\n"
+			<< "if read1($00FFD5) == $23\nsa1rom\nelse\nlorom\nendif\n";
 
 		if (globule_path.extension() == ".asm") {
-			temp_patch << "freecode cleaned" << std::endl << std::endl;
-
 			if (globule_header_file.has_value()) {
 				temp_patch << "incsrc \"" << globule_header_file.value() << '"' << std::endl << std::endl;
 			}
@@ -56,7 +53,7 @@ namespace callisto {
 			temp_patch << "incsrc \"" << globule_path.string() << '"' << std::endl;
 		}
 		else {
-			temp_patch << "freedata cleaned" << std::endl << std::endl;
+			temp_patch << "freedata" << std::endl << std::endl;
 
 			auto label_name{ globule_path.stem().string() };
 			std::replace(label_name.begin(), label_name.end(), ' ', '_');
@@ -145,9 +142,21 @@ namespace callisto {
 		if (succeeded) {
 			int warning_count;
 			const auto warnings{ asar_getwarnings(&warning_count) };
+			bool missing_org_or_freespace{ false };
 			for (int i = 0; i != warning_count; ++i) {
 				spdlog::warn(warnings[i].fullerrdata);
+				if (warnings[i].errid == 1008) {
+					missing_org_or_freespace = true;
+				}
 			}
+
+			if (missing_org_or_freespace) {
+				throw InsertionException(fmt::format(
+					"Globule {} is missing a freespace command",
+					project_relative_path.string()
+				));
+			}
+
 			std::ofstream out_rom{ temporary_rom_path, std::ios::out | std::ios::binary };
 			out_rom.write(rom_bytes.data(), rom_bytes.size());
 			out_rom.close();
