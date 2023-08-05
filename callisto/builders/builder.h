@@ -43,6 +43,7 @@ namespace callisto {
 		static constexpr auto PATCH_VERSION_DEFINE_NAME{ "PATCH" };
 		static constexpr auto ASSEMBLING_DEFINE_NAME{ "ASSEMBLING" };
 		static constexpr auto PROFILE_DEFINE_NAME{ "PROFILE" };
+		static constexpr auto GLOBULE_FOLDER_PATH_DEFINE_NAME{ "GLOBULES" };
 
 		static constexpr auto CHECKSUM_LOCATION{ 0x7FDE };
 		static constexpr auto CLEAN_ROM_CHECKSUM{ 0xA0DA };
@@ -68,8 +69,7 @@ namespace callisto {
 
 		static void init(const Configuration& config);
 		static void ensureCacheStructure(const Configuration& config);
-		static void generateAssemblyLevelInformation(const Configuration& config);
-		static void generateGlobuleCallFile(const Configuration& config);
+		static void generateCallistoAsmFile(const Configuration& config);
 
 		static void tryConvenienceSetup(const Configuration& config);
 		static void convenienceSetup(const Configuration& config);

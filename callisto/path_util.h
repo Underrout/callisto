@@ -15,8 +15,7 @@ namespace callisto {
 		static constexpr auto INSERTED_GLOBULES_DIRECTORY_NAME{ "inserted_globules" };
 		static constexpr auto BUILD_REPORT_FILE_NAME{ "build_report.json" };
 		static constexpr auto LAST_ROM_SYNC_TIME_FILE_NAME{ "last_rom_sync.json" };
-		static constexpr auto GLOBULE_CALL_FILE{ "call.asm" };
-		static constexpr auto ASSEMBLY_INFO_FILE{ "info.asm" };
+		static constexpr auto ASSEMBLY_INFO_FILE{ "callisto.asm" };
 		static constexpr auto USER_SETTINGS_FOLDER_NAME{ "callisto" };
 		static constexpr auto RECENT_PROJECTS_FILE{ "recent_projects.json" };
 		static constexpr auto TEMPORARY_SUFFIX{ "_temp" };
@@ -67,11 +66,7 @@ namespace callisto {
 			return getCallistoCachePath(project_root) / INSERTED_GLOBULES_DIRECTORY_NAME;
 		}
 
-		static fs::path getGlobuleCallFilePath(const fs::path& project_root) {
-			return getCallistoCachePath(project_root) / GLOBULE_CALL_FILE;
-		}
-
-		static fs::path getAssemblyInfoFilePath(const fs::path& project_root) {
+		static fs::path getCallistoAsmFilePath(const fs::path& project_root) {
 			return getCallistoDirectoryPath(project_root) / ASSEMBLY_INFO_FILE;
 		}
 
@@ -84,6 +79,16 @@ namespace callisto {
 			const auto resource_folder_path{ temporary_folder_path / TEMPORARY_RESOURCES_FOLDER_NAME };
 			fs::create_directories(resource_folder_path);
 			return resource_folder_path / resource_name;
+		}
+
+		static inline fs::path convertToPosixPath(const fs::path& path) {
+#ifndef _WIN32
+			return path;
+#else
+			auto str_path{ path.string() };
+			std::replace(str_path.begin(), str_path.end(), '\\', '/');
+			return fs::path(str_path);
+#endif
 		}
 	};
 }

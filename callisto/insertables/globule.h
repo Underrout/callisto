@@ -33,7 +33,7 @@ namespace callisto {
 		const fs::path project_relative_path;
 		std::vector<const char*> additional_include_paths;
 		const fs::path imprint_directory;
-		const fs::path globule_call_file;
+		const fs::path callisto_asm_file;
 		std::unordered_set<std::string> other_globule_names;
 		const std::optional<fs::path> globule_header_file;
 
@@ -43,12 +43,15 @@ namespace callisto {
 
 		void fixAsarMemoryLeak() const;
 
+		void verifyWrittenBlockCoverage() const;
+		void verifyNonHijacking() const;
+
 	public:
 		static std::string globulePathToName(const fs::path& path);
 
 		Globule(const Configuration& config,
 			const fs::path& globule_path, const fs::path& imprint_directory,
-			const fs::path& globule_call_file, 
+			const fs::path& callisto_asm_file,
 			const std::vector<fs::path>& other_globule_paths,
 			const std::vector<fs::path>& additional_include_paths = {});
 
