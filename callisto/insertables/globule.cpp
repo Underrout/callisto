@@ -52,8 +52,6 @@ namespace callisto {
 			temp_patch << "incsrc \"" << PathUtil::convertToPosixPath(globule_path).string() << '"' << std::endl;
 		}
 		else {
-			temp_patch << "freedata" << std::endl << std::endl;
-
 			auto label_name{ globule_path.stem().string() };
 			std::replace(label_name.begin(), label_name.end(), ' ', '_');
 
@@ -155,6 +153,9 @@ namespace callisto {
 					project_relative_path.string()
 				));
 			}
+
+			verifyNonHijacking();
+			verifyWrittenBlockCoverage();
 
 			std::ofstream out_rom{ temporary_rom_path, std::ios::out | std::ios::binary };
 			out_rom.write(rom_bytes.data(), rom_bytes.size());
@@ -274,5 +275,55 @@ namespace callisto {
 			return { ResourceDependency(globule_path, Policy::REINSERT) };
 		}
 		return {};
+	}
+
+	void Globule::verifyWrittenBlockCoverage() const {
+		int label_count{};
+		const auto labels{ asar_getalllabels(&label_count) };
+
+		int block_count{};
+		const auto written_blocks{ asar_getwrittenblocks(&block_count) };
+		for (int i{ 0 }; i != block_count; ++i) {
+			const auto start{ written_blocks[i].snesoffset };
+
+			// this is probably imprecise and includes parts of the RATS tag, but who cares
+			const auto end{ start + written_blocks[i].numbytes };
+
+			bool is_covered{ false };
+			for (int j{ 0 }; j != label_count; ++j) {
+				// uggo but labels can have the bank byte be | $80 or not depending on how the user does things I think?
+				// not sure how this affects sa1 ROMs but I'm guessing it's a niche issue if anything (hopefully not wrong)
+				const auto location_low{ labels[j].location };
+				const auto location_high{ labels[j].location | 0x800000 };
+				if ((location_low >= start && location_low < end) || (location_high >= start && location_high < end)) {
+					is_covered = true;
+					break;
+				}
+			}
+
+			if (!is_covered) {
+				throw InsertionException(fmt::format(
+					"Globule {} contains at least one freespace block that does not contain any labels and thus cannot be cleaned up, "
+					"please ensure every freespace block in your globule contains at least one label",
+					project_relative_path.string()
+				));
+			}
+		}
+	}
+
+	void Globule::verifyNonHijacking() const {
+		int block_count{};
+		const auto written_blocks{ asar_getwrittenblocks(&block_count) };
+		for (int i{ 0 }; i != block_count; ++i) {
+			const auto start{ written_blocks[i].pcoffset };
+
+			if (start < 0x80000) {
+				throw InsertionException(fmt::format(
+					"Globule {} targets SNES address ${:06X} (unheadered), if this is not a mistake consider using a patch instead "
+					"as globules are not intended to modify original game code",
+					project_relative_path.string(), written_blocks[i].snesoffset
+				));
+			}
+		}
 	}
 }

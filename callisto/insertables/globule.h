@@ -43,6 +43,9 @@ namespace callisto {
 
 		void fixAsarMemoryLeak() const;
 
+		void verifyWrittenBlockCoverage() const;
+		void verifyNonHijacking() const;
+
 	public:
 		static std::string globulePathToName(const fs::path& path);
 
