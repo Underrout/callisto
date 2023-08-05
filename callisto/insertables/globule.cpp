@@ -119,8 +119,8 @@ namespace callisto {
 			1,
 			&patch,
 			1,
-			false,
-			true
+			true,
+			false
 		};
 
 		if (!asar_init()) {

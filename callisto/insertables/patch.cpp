@@ -76,8 +76,8 @@ namespace callisto {
 			0,
 			nullptr,
 			0,
-			false,
-			true
+			true,
+			false
 		};
 
 		if (!asar_init()) {
