@@ -1,0 +1,14 @@
+[resources]
+
+# File that is incsrc'd just prior to any module during insertion
+# May be useful for SA-1 defines and similar stuff
+module_header = "path/to/my/header.asm"
+
+
+# List of modules to insert, works exactly like the "patches" list
+modules = [
+    # resources/modules/binary/uncompressed_exgfx.bin
+    
+    # resources/modules/code/teleport.asm
+    # resources/modules/code/reset.asm
+]
