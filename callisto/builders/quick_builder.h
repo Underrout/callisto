@@ -6,7 +6,7 @@
 #include "../configuration/configuration.h"
 #include "../insertables/initial_patch.h"
 #include "must_rebuild_exception.h"
-#include "../insertables/globule.h"
+#include "../insertables/module.h"
 #include "../saver/saver.h"
 
 namespace callisto {
@@ -25,8 +25,8 @@ namespace callisto {
 		std::optional<ConfigurationDependency> checkReinsertConfigDependencies(const json& config_dependencies, const Configuration& config) const;
 		std::optional<ResourceDependency> checkReinsertResourceDependencies(const json& resource_dependencies) const;
 
-		static void cleanGlobule(const fs::path& globule_source_path, const fs::path& temporary_rom_path, const fs::path& project_root);
-		static void copyGlobule(const fs::path& globule_source_path, const fs::path& project_root);
+		static void cleanModule(const fs::path& module_source_path, const fs::path& temporary_rom_path, const fs::path& project_root);
+		static void copyModule(const fs::path& module_source_path, const fs::path& project_root);
 
 		static bool hijacksGoneBad(const std::vector<std::pair<size_t, size_t>>& old_hijacks, 
 			const std::vector<std::pair<size_t, size_t>>& new_hijacks);

@@ -28,7 +28,7 @@ namespace callisto {
 
 	private:
 		static constexpr std::array VALID_STATIC_BUILD_ORDER_SYMBOLS{
-			"Globules", "Graphics", "ExGraphics", "Map16", "TitleScreenMovement", "SharedPalettes",
+			"Modules", "Graphics", "ExGraphics", "Map16", "TitleScreenMovement", "SharedPalettes",
 			"Overworld", "TitleScreen", "Credits", "GlobalExAnimation", 
 			"Patches", "Levels"
 		};
@@ -60,9 +60,9 @@ namespace callisto {
 		bool verifyBuildOrder(const toml::array& build_order, const std::map<std::string, std::string>& user_variables) const;
 		bool isValidStaticBuildOrderSymbol(const std::string& symbol) const;
 		bool isValidPatchSymbol(const fs::path& patch_path) const;
-		bool isValidGlobuleSymbol(const fs::path& globule_path) const;
-		void verifyPatchGlobuleExclusivity();
-		void verifyGlobuleExclusivity();
+		bool isValidModuleSymbol(const fs::path& module_path) const;
+		void verifyPatchModuleExclusivity();
+		void verifyModuleExclusivity();
 		void verifyPatchUniqueness();
 		void finalizeBuildOrder();
 
@@ -72,7 +72,7 @@ namespace callisto {
 			const std::map<std::string, std::string>& user_variable_map);
 		bool trySet(BoolConfigVariable& variable, const toml::value& table, ConfigurationLevel level);
 
-		std::unordered_set<fs::path> getExplicitGlobules() const;
+		std::unordered_set<fs::path> getExplicitModules() const;
 		std::unordered_set<fs::path> getExplicitPatches() const;
 
 		std::vector<Descriptor> symbolToDescriptor(const std::string &symbol) const;
@@ -120,9 +120,9 @@ namespace callisto {
 		PathConfigVariable global_exanimation{ {"resources", "global_exanimation"} };
 
 		ExtendablePathVectorConfigVariable patches{ {"resources", "patches"} };
-		ExtendablePathVectorConfigVariable globules{ {"resources", "globules"} };
+		ExtendablePathVectorConfigVariable modules{ {"resources", "modules"} };
 
-		PathConfigVariable globule_header{ {"resources", "globule_header"} };
+		PathConfigVariable module_header{ {"resources", "module_header"} };
 
 		BuildOrder build_order{};
 

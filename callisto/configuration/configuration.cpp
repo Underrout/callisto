@@ -18,13 +18,13 @@ namespace callisto {
 		finalizeBuildOrder();
 	}
 
-	void Configuration::verifyPatchGlobuleExclusivity() {
-		if (patches.isSet() && globules.isSet()) {
+	void Configuration::verifyPatchModuleExclusivity() {
+		if (patches.isSet() && modules.isSet()) {
 			for (const auto& patch : patches.getOrThrow()) {
-				for (const auto& globule : globules.getOrThrow()) {
-					if (patch == globule) {
+				for (const auto& module : modules.getOrThrow()) {
+					if (patch == module) {
 						throw ConfigException(fmt::format(
-							"{} cannot be used as a globule and patch at the same time",
+							"{} cannot be used as a module and patch at the same time",
 							patch.string()
 						));
 					}
@@ -33,14 +33,14 @@ namespace callisto {
 		}
 	}
 
-	void Configuration::verifyGlobuleExclusivity() {
-		if (globules.isSet()) {
+	void Configuration::verifyModuleExclusivity() {
+		if (modules.isSet()) {
 			std::unordered_set<std::string> seen_file_names{};
-			for (const auto& globule : globules.getOrThrow()) {
-				const auto file_name{ globule.filename().string() };
+			for (const auto& module : modules.getOrThrow()) {
+				const auto file_name{ module.filename().string() };
 				if (seen_file_names.count(file_name) != 0) {
 					throw ConfigException(fmt::format(
-						"Multiple globules called {} exist, but globule names must be unique",
+						"Multiple modules called {} exist, but module names must be unique",
 						file_name
 					));
 				}
@@ -69,8 +69,8 @@ namespace callisto {
 	}
 
 	void Configuration::finalizeBuildOrder() {
-		verifyGlobuleExclusivity();
-		verifyPatchGlobuleExclusivity();
+		verifyModuleExclusivity();
+		verifyPatchModuleExclusivity();
 		verifyPatchUniqueness();
 
 		for (const auto& symbol : _build_order.getOrDefault({})) {
@@ -120,20 +120,20 @@ namespace callisto {
 		}
 	}
 
-	std::unordered_set<fs::path> Configuration::getExplicitGlobules() const {
-		std::unordered_set<fs::path> explicit_globules{};
+	std::unordered_set<fs::path> Configuration::getExplicitModules() const {
+		std::unordered_set<fs::path> explicit_modules{};
 
 		for (const auto& entry : _build_order.getOrDefault({})) {
 			const auto path{ PathUtil::normalize(entry, project_root.getOrThrow()) };
-			for (const auto& globule : globules.getOrDefault({})) {
-				if (path == globule) {
-					explicit_globules.insert(path);
+			for (const auto& module : modules.getOrDefault({})) {
+				if (path == module) {
+					explicit_modules.insert(path);
 					break;
 				}
 			}
 		}
 
-		return explicit_globules;
+		return explicit_modules;
 	}
 
 	std::unordered_set<fs::path> Configuration::getExplicitPatches() const {
@@ -393,9 +393,9 @@ namespace callisto {
 		trySet(global_exanimation, config_file, level, root, user_variables);
 
 		patches.trySet(config_file, level, root, user_variables);
-		globules.trySet(config_file, level, root, user_variables);
+		modules.trySet(config_file, level, root, user_variables);
 
-		trySet(globule_header, config_file, level, root, user_variables);
+		trySet(module_header, config_file, level, root, user_variables);
 
 		for (auto& [_, tool] : generic_tool_configurations) {
 			trySet(tool.executable, config_file, level, tool.working_directory, user_variables);
@@ -436,7 +436,7 @@ namespace callisto {
 			}
 			const auto path{ PathUtil::normalize(as_string, project_root.getOrThrow()) };
 
-			if (isValidPatchSymbol(path) || isValidGlobuleSymbol(path)) {
+			if (isValidPatchSymbol(path) || isValidModuleSymbol(path)) {
 				continue;
 			}
 
@@ -445,7 +445,7 @@ namespace callisto {
 				"Invalid symbol in build order",
 				{
 					fmt::format(
-						"Valid symbols are paths that appear in the resources.patches or resources.globules lists, "
+						"Valid symbols are paths that appear in the resources.patches or resources.modules lists, "
 						"the name of any tool appearing in the tools.generic table or any of the "
 						"following: {}",
 						fmt::join(VALID_STATIC_BUILD_ORDER_SYMBOLS, ", ")
@@ -470,13 +470,13 @@ namespace callisto {
 		return false;
 	}
 
-	bool Configuration::isValidGlobuleSymbol(const fs::path& globule_path) const {
-		if (!globules.isSet()) {
+	bool Configuration::isValidModuleSymbol(const fs::path& module_path) const {
+		if (!modules.isSet()) {
 			return false;
 		}
 
-		for (const auto& globule : globules.getOrThrow()) {
-			if (globule_path == globule) {
+		for (const auto& module : modules.getOrThrow()) {
+			if (module_path == module) {
 				return true;
 			}
 		}
@@ -538,19 +538,19 @@ namespace callisto {
 				return {};
 			}
 		}
-		else if (symbol == "Globules") {
-			if (globules.isSet()) {
-				std::vector<Descriptor> globule_descriptors{};
+		else if (symbol == "Modules") {
+			if (modules.isSet()) {
+				std::vector<Descriptor> module_descriptors{};
 
-				const auto explicit_globules{ getExplicitGlobules() };
+				const auto explicit_modules{ getExplicitModules() };
 
-				for (const auto& globule : globules.getOrDefault({})) {
-					if (explicit_globules.count(globule) == 0) {
-						globule_descriptors.emplace_back(Symbol::GLOBULE, globule.string());
+				for (const auto& module : modules.getOrDefault({})) {
+					if (explicit_modules.count(module) == 0) {
+						module_descriptors.emplace_back(Symbol::MODULE, module.string());
 					}
 				}
 
-				return globule_descriptors;
+				return module_descriptors;
 			}
 
 			return {};
@@ -562,8 +562,8 @@ namespace callisto {
 			if (isValidPatchSymbol(PathUtil::normalize(symbol, project_root.getOrThrow()))) {
 				return { Descriptor(Symbol::PATCH, PathUtil::normalize(symbol, project_root.getOrThrow()).string()) };
 			}
-			if (isValidGlobuleSymbol(PathUtil::normalize(symbol, project_root.getOrThrow()))) {
-				return { Descriptor(Symbol::GLOBULE, PathUtil::normalize(symbol, project_root.getOrThrow()).string()) };
+			if (isValidModuleSymbol(PathUtil::normalize(symbol, project_root.getOrThrow()))) {
+				return { Descriptor(Symbol::MODULE, PathUtil::normalize(symbol, project_root.getOrThrow()).string()) };
 			}
 			for (const auto& [name, config] : generic_tool_configurations) {
 				if (symbol == name) {

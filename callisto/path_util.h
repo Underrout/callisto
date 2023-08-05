@@ -11,8 +11,8 @@ namespace callisto {
 	private:
 		static constexpr auto CALLISTO_DIRECTORY_NAME{ ".callisto" };
 		static constexpr auto CACHE_DIRECTORY_NAME{ ".cache" };
-		static constexpr auto GLOBULES_IMPRINT_DIRECTORY_NAME{ "globules" };
-		static constexpr auto INSERTED_GLOBULES_DIRECTORY_NAME{ "inserted_globules" };
+		static constexpr auto MODULES_IMPRINT_DIRECTORY_NAME{ "modules" };
+		static constexpr auto INSERTED_MODULES_DIRECTORY_NAME{ "inserted_modules" };
 		static constexpr auto BUILD_REPORT_FILE_NAME{ "build_report.json" };
 		static constexpr auto LAST_ROM_SYNC_TIME_FILE_NAME{ "last_rom_sync.json" };
 		static constexpr auto ASSEMBLY_INFO_FILE{ "callisto.asm" };
@@ -58,12 +58,12 @@ namespace callisto {
 			return getCallistoCachePath(project_root) / LAST_ROM_SYNC_TIME_FILE_NAME;
 		}
 
-		static fs::path getGlobuleImprintDirectoryPath(const fs::path& project_root) {
-			return getCallistoDirectoryPath(project_root) / GLOBULES_IMPRINT_DIRECTORY_NAME;
+		static fs::path getModuleImprintDirectoryPath(const fs::path& project_root) {
+			return getCallistoDirectoryPath(project_root) / MODULES_IMPRINT_DIRECTORY_NAME;
 		}
 
-		static fs::path getInsertedGlobulesDirectoryPath(const fs::path& project_root) {
-			return getCallistoCachePath(project_root) / INSERTED_GLOBULES_DIRECTORY_NAME;
+		static fs::path getInsertedModulesDirectoryPath(const fs::path& project_root) {
+			return getCallistoCachePath(project_root) / INSERTED_MODULES_DIRECTORY_NAME;
 		}
 
 		static fs::path getCallistoAsmFilePath(const fs::path& project_root) {

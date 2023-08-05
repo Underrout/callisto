@@ -1,20 +1,20 @@
-#include "globule.h"
+#include "module.h"
 
 namespace callisto {
-	Globule::Globule(const Configuration& config,
-		const fs::path& globule_path, const fs::path& imprint_directory,
+	Module::Module(const Configuration& config,
+		const fs::path& module_path, const fs::path& imprint_directory,
 		const fs::path& callisto_asm_file,
-		const std::vector<fs::path>& other_globule_paths,
+		const std::vector<fs::path>& other_module_paths,
 		const std::vector<fs::path>& additional_include_paths) :
 		RomInsertable(config), 
-		project_relative_path(fs::relative(globule_path, registerConfigurationDependency(config.project_root).getOrThrow())),
-		globule_path(globule_path), imprint_directory(imprint_directory), callisto_asm_file(callisto_asm_file),
-		globule_header_file(registerConfigurationDependency(config.globule_header, Policy::REINSERT).isSet() ? std::make_optional(config.globule_header.getOrThrow()) : std::nullopt)
+		project_relative_path(fs::relative(module_path, registerConfigurationDependency(config.project_root).getOrThrow())),
+		module_path(module_path), imprint_directory(imprint_directory), callisto_asm_file(callisto_asm_file),
+		module_header_file(registerConfigurationDependency(config.module_header, Policy::REINSERT).isSet() ? std::make_optional(config.module_header.getOrThrow()) : std::nullopt)
 	{
-		if (!fs::exists(globule_path)) {
+		if (!fs::exists(module_path)) {
 			throw ResourceNotFoundException(fmt::format(
-				"Globule {} does not exist",
-				globule_path.string()
+				"Module {} does not exist",
+				module_path.string()
 			));
 		}
 
@@ -33,29 +33,29 @@ namespace callisto {
 		return copy;
 			});
 
-		for (const auto& other_globule_path : other_globule_paths) {
-			other_globule_names.insert(globulePathToName(other_globule_path));
+		for (const auto& other_module_path : other_module_paths) {
+			other_module_names.insert(modulePathToName(other_module_path));
 		}
 	}
 
-	void Globule::init() {
+	void Module::init() {
 		std::ostringstream temp_patch{};
 
 		temp_patch << "warnings disable W1011\n"
 			<< "if read1($00FFD5) == $23\nsa1rom\nelse\nlorom\nendif\n";
 
-		if (globule_path.extension() == ".asm") {
-			if (globule_header_file.has_value()) {
-				temp_patch << "incsrc \"" << PathUtil::convertToPosixPath(globule_header_file.value()).string() << '"' << std::endl << std::endl;
+		if (module_path.extension() == ".asm") {
+			if (module_header_file.has_value()) {
+				temp_patch << "incsrc \"" << PathUtil::convertToPosixPath(module_header_file.value()).string() << '"' << std::endl << std::endl;
 			}
 
-			temp_patch << "incsrc \"" << PathUtil::convertToPosixPath(globule_path).string() << '"' << std::endl;
+			temp_patch << "incsrc \"" << PathUtil::convertToPosixPath(module_path).string() << '"' << std::endl;
 		}
 		else {
-			auto label_name{ globule_path.stem().string() };
+			auto label_name{ module_path.stem().string() };
 			std::replace(label_name.begin(), label_name.end(), ' ', '_');
 
-			temp_patch << fmt::format("incbin \"{}\" -> {}", PathUtil::convertToPosixPath(globule_path).string(), label_name) << std::endl;
+			temp_patch << fmt::format("incbin \"{}\" -> {}", PathUtil::convertToPosixPath(module_path).string(), label_name) << std::endl;
 		}
 
 		patch_string = temp_patch.str();
@@ -63,14 +63,14 @@ namespace callisto {
 
 	// TODO this whole thing is pretty much the same as the Patch.insert() method, probably merge 
 	//      them into a single static method or something later
-	void Globule::insert() {
+	void Module::insert() {
 		const auto prev_folder{ fs::current_path() };
-		fs::current_path(globule_path.parent_path());
+		fs::current_path(module_path.parent_path());
 
 		// delete potential previous dependency report
-		fs::remove(globule_path.parent_path() / ".dependencies");
+		fs::remove(module_path.parent_path() / ".dependencies");
 
-		spdlog::info(fmt::format("Inserting globule {}", project_relative_path.string()));
+		spdlog::info(fmt::format("Inserting module {}", project_relative_path.string()));
 
 		memoryfile patch;
 		patch.path = "temp.asm";
@@ -87,10 +87,10 @@ namespace callisto {
 		int unheadered_rom_size{ rom_size - header_size };
 
 		spdlog::debug(fmt::format(
-			"Applying globule {} to temporary ROM {}:\n\r"
+			"Applying module {} to temporary ROM {}:\n\r"
 			"\tROM size:\t\t{}\n\r"
 			"\tROM header size:\t\t{}\n\r",
-			globule_path.string(),
+			module_path.string(),
 			temporary_rom_path.string(),
 			rom_size,
 			header_size
@@ -149,7 +149,7 @@ namespace callisto {
 
 			if (missing_org_or_freespace) {
 				throw InsertionException(fmt::format(
-					"Globule {} is missing a freespace command",
+					"Module {} is missing a freespace command",
 					project_relative_path.string()
 				));
 			}
@@ -160,7 +160,7 @@ namespace callisto {
 			std::ofstream out_rom{ temporary_rom_path, std::ios::out | std::ios::binary };
 			out_rom.write(rom_bytes.data(), rom_bytes.size());
 			out_rom.close();
-			spdlog::info(fmt::format("Successfully applied globule {}!", project_relative_path.string()));
+			spdlog::info(fmt::format("Successfully applied module {}!", project_relative_path.string()));
 
 			emitImprintFile();
 
@@ -180,52 +180,52 @@ namespace callisto {
 
 			fs::current_path(prev_folder);
 			throw InsertionException(fmt::format(
-				"Failed to apply globule {} with the following error(s):\n\r{}",
+				"Failed to apply module {} with the following error(s):\n\r{}",
 				project_relative_path.string(),
 				error_string.str()
 			));
 		}
 	}
 
-	std::string Globule::globulePathToName(const fs::path& path) {
+	std::string Module::modulePathToName(const fs::path& path) {
 		auto prefix{ path.stem().string() };
 		std::replace(prefix.begin(), prefix.end(), ' ', '_');
 
 		return prefix;
 	}
 
-	void Globule::emitImprintFile() const {
+	void Module::emitImprintFile() const {
 		fs::create_directories(imprint_directory);
 
-		std::ofstream imprint{ imprint_directory / (globule_path.stem().string() + ".asm")};
+		std::ofstream imprint{ imprint_directory / (module_path.stem().string() + ".asm")};
 
 		imprint <<  fmt::format("incsrc \"{}\"", PathUtil::convertToPosixPath(callisto_asm_file).string()) << std::endl << std::endl;
 
 		int label_number{};
 		const auto labels{ asar_getalllabels(&label_number) };
 
-		const auto globule_name{ globulePathToName(globule_path) };
+		const auto module_name{ modulePathToName(module_path) };
 
 		if (label_number == 0) {
 			throw InsertionException(fmt::format(
-				"Globule {} contains no labels, this will cause a freespace leak, please ensure your globule contains at least one label",
-				globule_name
+				"Module {} contains no labels, this will cause a freespace leak, please ensure your module contains at least one label",
+				module_name
 			));
 		}
 
-		if (globule_path.extension() != ".asm") {
+		if (module_path.extension() != ".asm") {
 			if (label_number > 1) {
 				throw InsertionException(fmt::format(
-					"Binary globule {} unexpectedly contains more than one label",
-					globule_name
+					"Binary module {} unexpectedly contains more than one label",
+					module_name
 				));
 			}
 
 			const auto& label{ labels[0] };
 			const auto name{ std::string(label.name) };
 
-			imprint << fmt::format("{} = ${:06X}", globule_name, label.location) << std::endl;
-			imprint << fmt::format("!{} = ${:06X}", globule_name, label.location) << std::endl;
+			imprint << fmt::format("{} = ${:06X}", module_name, label.location) << std::endl;
+			imprint << fmt::format("!{} = ${:06X}", module_name, label.location) << std::endl;
 
 			return;
 		}
@@ -245,39 +245,39 @@ namespace callisto {
 			}
 
 			const auto underscore_idx{ name.find('_', 0) };
-			if (other_globule_names.count(name) != 0 || 
-				(underscore_idx != -1 && other_globule_names.count(name.substr(0, underscore_idx)) != 0)) {
-				if (name.substr(0, underscore_idx) != globule_name) {
-					// label belongs to imported globule, skip it
+			if (other_module_names.count(name) != 0 || 
+				(underscore_idx != -1 && other_module_names.count(name.substr(0, underscore_idx)) != 0)) {
+				if (name.substr(0, underscore_idx) != module_name) {
+					// label belongs to imported module, skip it
 					continue;
 				}
 			}
 
-			imprint << fmt::format("{}_{} = ${:06X}", globule_name, name, label.location) << std::endl;
-			imprint << fmt::format("!{}_{} = ${:06X}", globule_name, name, label.location) << std::endl;
+			imprint << fmt::format("{}_{} = ${:06X}", module_name, name, label.location) << std::endl;
+			imprint << fmt::format("!{}_{} = ${:06X}", module_name, name, label.location) << std::endl;
 		}
 	}
 
-	std::unordered_set<ResourceDependency> Globule::determineDependencies() {
+	std::unordered_set<ResourceDependency> Module::determineDependencies() {
 		
-		if (globule_path.extension() == ".asm") {
+		if (module_path.extension() == ".asm") {
 			auto dependencies{ Insertable::extractDependenciesFromReport(
-				globule_path.parent_path() / ".dependencies"
+				module_path.parent_path() / ".dependencies"
 			) };
-			if (globule_header_file.has_value()) {
-				dependencies.insert(ResourceDependency(globule_header_file.value(), Policy::REINSERT));
+			if (module_header_file.has_value()) {
+				dependencies.insert(ResourceDependency(module_header_file.value(), Policy::REINSERT));
 			}
-			dependencies.insert(ResourceDependency(globule_path, Policy::REINSERT));
+			dependencies.insert(ResourceDependency(module_path, Policy::REINSERT));
 			return dependencies;
 		}
 		else {
-			fs::remove(globule_path.parent_path() / ".dependencies");
-			return { ResourceDependency(globule_path, Policy::REINSERT) };
+			fs::remove(module_path.parent_path() / ".dependencies");
+			return { ResourceDependency(module_path, Policy::REINSERT) };
 		}
 		return {};
 	}
 
-	void Globule::verifyWrittenBlockCoverage() const {
+	void Module::verifyWrittenBlockCoverage() const {
 		int label_count{};
 		const auto labels{ asar_getalllabels(&label_count) };
 
@@ -303,15 +303,15 @@ namespace callisto {
 
 			if (!is_covered) {
 				throw InsertionException(fmt::format(
-					"Globule {} contains at least one freespace block that does not contain any labels and thus cannot be cleaned up, "
-					"please ensure every freespace block in your globule contains at least one label",
+					"Module {} contains at least one freespace block that does not contain any labels and thus cannot be cleaned up, "
+					"please ensure every freespace block in your module contains at least one label",
 					project_relative_path.string()
 				));
 			}
 		}
 	}
 
-	void Globule::verifyNonHijacking() const {
+	void Module::verifyNonHijacking() const {
 		int block_count{};
 		const auto written_blocks{ asar_getwrittenblocks(&block_count) };
 		for (int i{ 0 }; i != block_count; ++i) {
@@ -319,8 +319,8 @@ namespace callisto {
 
 			if (start < 0x80000) {
 				throw InsertionException(fmt::format(
-					"Globule {} targets SNES address ${:06X} (unheadered), if this is not a mistake consider using a patch instead "
-					"as globules are not intended to modify original game code",
+					"Module {} targets SNES address ${:06X} (unheadered), if this is not a mistake consider using a patch instead "
+					"as modules are not intended to modify original game code",
 					project_relative_path.string(), written_blocks[i].snesoffset
 				));
 			}

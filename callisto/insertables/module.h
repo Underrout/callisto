@@ -23,19 +23,19 @@
 namespace fs = std::filesystem;
 
 namespace callisto {
-	class Globule : public RomInsertable {
+	class Module : public RomInsertable {
 	protected:
 		static constexpr auto MAX_ROM_SIZE = 16 * 1024 * 1024;
 
 		std::string patch_string{};
 
-		const fs::path globule_path;
+		const fs::path module_path;
 		const fs::path project_relative_path;
 		std::vector<const char*> additional_include_paths;
 		const fs::path imprint_directory;
 		const fs::path callisto_asm_file;
-		std::unordered_set<std::string> other_globule_names;
-		const std::optional<fs::path> globule_header_file;
+		std::unordered_set<std::string> other_module_names;
+		const std::optional<fs::path> module_header_file;
 
 		void emitImprintFile() const;
 
@@ -47,12 +47,12 @@ namespace callisto {
 		void verifyNonHijacking() const;
 
 	public:
-		static std::string globulePathToName(const fs::path& path);
+		static std::string modulePathToName(const fs::path& path);
 
-		Globule(const Configuration& config,
-			const fs::path& globule_path, const fs::path& imprint_directory,
+		Module(const Configuration& config,
+			const fs::path& module_path, const fs::path& imprint_directory,
 			const fs::path& callisto_asm_file,
-			const std::vector<fs::path>& other_globule_paths,
+			const std::vector<fs::path>& other_module_paths,
 			const std::vector<fs::path>& additional_include_paths = {});
 
 		void init() override;

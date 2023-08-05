@@ -177,7 +177,7 @@ namespace callisto {
 			removeBuildReport(config.project_root.getOrThrow());
 		}
 
-		cacheGlobules(config.project_root.getOrThrow());
+		cacheModules(config.project_root.getOrThrow());
 
 		Saver::writeMarkerToRom(temp_rom_path, config);
 		moveTempToOutput(config);

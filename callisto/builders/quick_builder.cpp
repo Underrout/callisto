@@ -93,8 +93,8 @@ namespace callisto {
 					any_work_done = true;
 					fs::copy(config.output_rom.getOrThrow(), temporary_rom_path, fs::copy_options::overwrite_existing);
 				}
-				if (descriptor.symbol == Symbol::GLOBULE) {
-					cleanGlobule(
+				if (descriptor.symbol == Symbol::MODULE) {
+					cleanModule(
 						descriptor.name.value(),
 						temporary_rom_path,
 						config.project_root.getOrThrow()
@@ -145,8 +145,8 @@ namespace callisto {
 				}
 			}
 			else {
-				if (descriptor.symbol == Symbol::GLOBULE) {
-					copyGlobule(descriptor.name.value(), config.project_root.getOrThrow());
+				if (descriptor.symbol == Symbol::MODULE) {
+					copyModule(descriptor.name.value(), config.project_root.getOrThrow());
 				}
 
 				spdlog::info("{} already up to date", descriptor.toString(config.project_root.getOrThrow()));
@@ -163,7 +163,7 @@ namespace callisto {
 				removeBuildReport(config.project_root.getOrThrow());
 			}
 
-			cacheGlobules(config.project_root.getOrThrow());
+			cacheModules(config.project_root.getOrThrow());
 			Saver::writeMarkerToRom(temporary_rom_path, config);
 
 			moveTempToOutput(config);
@@ -322,24 +322,24 @@ namespace callisto {
 		return {};
 	}
 
-	void QuickBuilder::cleanGlobule(const fs::path& globule_source_path, const fs::path& temporary_rom_path, const fs::path& project_root) {
-		const auto imprint_file{ PathUtil::getInsertedGlobulesDirectoryPath(project_root) / 
-			(globule_source_path.stem().string() + ".asm")
+	void QuickBuilder::cleanModule(const fs::path& module_source_path, const fs::path& temporary_rom_path, const fs::path& project_root) {
+		const auto imprint_file{ PathUtil::getInsertedModulesDirectoryPath(project_root) / 
+			(module_source_path.stem().string() + ".asm")
 		};
 
 		if (!fs::exists(imprint_file)) {
 			throw MustRebuildException(fmt::format(
-				"Cannot clean globule {} as its imprint is missing, must rebuild",
-				globule_source_path.string()
+				"Cannot clean module {} as its imprint is missing, must rebuild",
+				module_source_path.string()
 			));
 		}
 
 		std::string patch_path{ (boost::filesystem::temp_directory_path() / boost::filesystem::unique_path().string()).string() };
 		std::ofstream temp_patch{ patch_path };
 
-		std::ifstream globule_imprint{ imprint_file };
+		std::ifstream module_imprint{ imprint_file };
 		std::string line;
-		while (std::getline(globule_imprint, line)) {
+		while (std::getline(module_imprint, line)) {
 			const auto equal_index{ line.find('=') };
 			if (equal_index != -1) {
 				const auto address{ line.substr(equal_index + 1) };
@@ -388,8 +388,8 @@ namespace callisto {
 
 		if (succeeded) {
 			spdlog::debug(
-				"Successfully cleaned globule {}",
-				globule_source_path.string()
+				"Successfully cleaned module {}",
+				module_source_path.string()
 			);
 			std::ofstream out_rom{ temporary_rom_path, std::ios::out | std::ios::binary };
 			out_rom.write(rom_bytes.data(), rom_bytes.size());
@@ -397,24 +397,24 @@ namespace callisto {
 		}
 		else {
 			throw MustRebuildException(fmt::format(
-				"Failed to clean globule {}, must rebuild",
-				globule_source_path.string()
+				"Failed to clean module {}, must rebuild",
+				module_source_path.string()
 			));
 		}
 	}
 
-	void QuickBuilder::copyGlobule(const fs::path& globule_source_path, const fs::path& project_root) {
-		const auto imprint_name{ (globule_source_path.stem().string() + ".asm") };
-		const auto imprint_file{ PathUtil::getInsertedGlobulesDirectoryPath(project_root) / imprint_name };
+	void QuickBuilder::copyModule(const fs::path& module_source_path, const fs::path& project_root) {
+		const auto imprint_name{ (module_source_path.stem().string() + ".asm") };
+		const auto imprint_file{ PathUtil::getInsertedModulesDirectoryPath(project_root) / imprint_name };
 
 		if (!fs::exists(imprint_file)) {
 			throw MustRebuildException(fmt::format(
-				"Imprint of globule {} is missing, must rebuild",
-				globule_source_path.string()
+				"Imprint of module {} is missing, must rebuild",
+				module_source_path.string()
 			));
 		}
 
-		const auto target{ PathUtil::getGlobuleImprintDirectoryPath(project_root) / imprint_name };
+		const auto target{ PathUtil::getModuleImprintDirectoryPath(project_root) / imprint_name };
 		fs::copy_file(imprint_file, target, fs::copy_options::overwrite_existing);
 	}
 
