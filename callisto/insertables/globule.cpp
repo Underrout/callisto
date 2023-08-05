@@ -42,15 +42,14 @@ namespace callisto {
 		std::ostringstream temp_patch{};
 
 		temp_patch << "warnings disable W1011\n"
-			<< "warnings disable W1007\n"
 			<< "if read1($00FFD5) == $23\nsa1rom\nelse\nlorom\nendif\n";
 
 		if (globule_path.extension() == ".asm") {
 			if (globule_header_file.has_value()) {
-				temp_patch << "incsrc \"" << globule_header_file.value() << '"' << std::endl << std::endl;
+				temp_patch << "incsrc \"" << PathUtil::convertToPosixPath(globule_header_file.value()).string() << '"' << std::endl << std::endl;
 			}
 
-			temp_patch << "incsrc \"" << globule_path.string() << '"' << std::endl;
+			temp_patch << "incsrc \"" << PathUtil::convertToPosixPath(globule_path).string() << '"' << std::endl;
 		}
 		else {
 			temp_patch << "freedata" << std::endl << std::endl;
@@ -58,7 +57,7 @@ namespace callisto {
 			auto label_name{ globule_path.stem().string() };
 			std::replace(label_name.begin(), label_name.end(), ' ', '_');
 
-			temp_patch << fmt::format("incbin \"{}\" -> {}", globule_path.string(), label_name) << std::endl;
+			temp_patch << fmt::format("incbin \"{}\" -> {}", PathUtil::convertToPosixPath(globule_path).string(), label_name) << std::endl;
 		}
 
 		patch_string = temp_patch.str();
@@ -199,8 +198,7 @@ namespace callisto {
 
 		std::ofstream imprint{ imprint_directory / (globule_path.stem().string() + ".asm")};
 
-		imprint << "warnings disable W1007\n\n";
-		imprint << fmt::format("incsrc \"{}\"", callisto_asm_file.string()) << std::endl << std::endl;
+		imprint <<  fmt::format("incsrc \"{}\"", PathUtil::convertToPosixPath(callisto_asm_file).string()) << std::endl << std::endl;
 
 		int label_number{};
 		const auto labels{ asar_getalllabels(&label_number) };

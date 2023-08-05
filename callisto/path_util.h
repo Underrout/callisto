@@ -80,5 +80,15 @@ namespace callisto {
 			fs::create_directories(resource_folder_path);
 			return resource_folder_path / resource_name;
 		}
+
+		static inline fs::path convertToPosixPath(const fs::path& path) {
+#ifndef _WIN32
+			return path;
+#else
+			auto str_path{ path.string() };
+			std::replace(str_path.begin(), str_path.end(), '\\', '/');
+			return fs::path(str_path);
+#endif
+		}
 	};
 }

@@ -327,7 +327,6 @@ namespace callisto {
 
 		const auto info_string{ fmt::format(
 			"includeonce\n\n"
-			"warnings disable W1007\n\n"
 			"; Asar compatible file containing information about callisto, can be imported using incsrc as needed\n\n"
 			"; Define containing the name of the active profile\n"
 			"!{}_{} = \"{}\"\n\n"
@@ -350,7 +349,7 @@ namespace callisto {
 			"\tPLB\n"
 			"endmacro\n\n"
 			"macro include_globule(globule_name)\n"
-			"\tincsrc \"{}\"\n"
+			"\tincsrc \"!{}_{}/<globule_name>\"\n"
 			"endmacro\n",
 			DEFINE_PREFIX, PROFILE_DEFINE_NAME, config.config_name.getOrThrow(),
 			DEFINE_PREFIX, ASSEMBLING_DEFINE_NAME,
@@ -358,8 +357,8 @@ namespace callisto {
 			DEFINE_PREFIX, VERSION_DEFINE_NAME, MAJOR_VERSION_DEFINE_NAME, CALLISTO_VERSION_MAJOR,
 			DEFINE_PREFIX, VERSION_DEFINE_NAME, MINOR_VERSION_DEFINE_NAME, CALLISTO_VERSION_MINOR,
 			DEFINE_PREFIX, VERSION_DEFINE_NAME, PATCH_VERSION_DEFINE_NAME, CALLISTO_VERSION_PATCH,
-			DEFINE_PREFIX, GLOBULE_FOLDER_PATH_DEFINE_NAME, globule_folder.string(),
-			(globule_folder / fs::path("<globule_name>")).string()
+			DEFINE_PREFIX, GLOBULE_FOLDER_PATH_DEFINE_NAME, PathUtil::convertToPosixPath(globule_folder).string(),
+			DEFINE_PREFIX, GLOBULE_FOLDER_PATH_DEFINE_NAME
 		) };
 
 		writeIfDifferent(info_string, PathUtil::getCallistoAsmFilePath(config.project_root.getOrThrow()));
