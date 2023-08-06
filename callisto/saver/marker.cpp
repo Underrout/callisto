@@ -98,8 +98,8 @@ namespace callisto {
 			0,
 			&patch,
 			1,
-			false,
-			true
+			true,
+			false
 		};
 
 		const bool succeeded{ asar_patch_ex(&params) };
