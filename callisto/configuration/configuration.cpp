@@ -19,10 +19,10 @@ namespace callisto {
 	}
 
 	void Configuration::verifyPatchModuleExclusivity() {
-		if (patches.isSet() && modules.isSet()) {
+		if (patches.isSet() && !module_configurations.empty()) {
 			for (const auto& patch : patches.getOrThrow()) {
-				for (const auto& module : modules.getOrThrow()) {
-					if (patch == module) {
+				for (const auto& [_, module_configuration] : module_configurations) {
+					if (patch == module_configuration.input_path.getOrThrow()) {
 						throw ConfigException(fmt::format(
 							"{} cannot be used as a module and patch at the same time",
 							patch.string()
@@ -34,18 +34,33 @@ namespace callisto {
 	}
 
 	void Configuration::verifyModuleExclusivity() {
-		if (modules.isSet()) {
-			std::unordered_set<std::string> seen_file_names{};
-			for (const auto& module : modules.getOrThrow()) {
-				const auto file_name{ module.filename().string() };
-				if (seen_file_names.count(file_name) != 0) {
+		if (!module_configurations.empty()) {
+			std::unordered_set<std::string> seen_output_paths{};
+			std::unordered_set<fs::path> seen_input_paths{};
+			for (const auto& [_, module_configuration] : module_configurations) {
+				const auto input_path{ module_configuration.input_path.getOrThrow() };
+				if (seen_input_paths.contains(input_path)) {
 					throw ConfigException(fmt::format(
-						"Multiple modules called {} exist, but module names must be unique",
-						file_name
+						"Module '{}' appears in module list(s) multiple times, but modules are only allowed to appear exactly once",
+						input_path.string()
 					));
 				}
 				else {
-					seen_file_names.insert(file_name);
+					seen_input_paths.insert(input_path);
+				}
+
+				const auto output_paths{ module_configuration.real_output_paths.getOrThrow() };
+				for (const auto& output_path : output_paths) {
+					if (seen_output_paths.contains(output_path.string())) {
+						// TODO potentially don't throw in this case and allow bundling of multiple modules into single file for convenience
+						throw ConfigException(fmt::format(
+							"Multiple modules with output path '{}' exist, but module output paths must be unique",
+							output_path.string()
+						));
+					}
+					else {
+						seen_output_paths.insert(output_path.string());
+					}
 				}
 			}
 		}
@@ -111,7 +126,19 @@ namespace callisto {
 		return res;
 	}
 
-	std::variant<std::monostate, std::string, bool> Configuration::getByKey(const std::string& key) const {
+	bool Configuration::trySet(ExtendablePathVectorConfigVariable& variable, const toml::value& table, 
+		ConfigurationLevel level, const fs::path& relative_to, const std::map<std::string, std::string>& user_variables) {
+
+		bool res{ variable.trySet(table, level, relative_to, user_variables) };
+
+		if (res) {
+			key_val_map[variable.name] = variable.getOrThrow();
+		}
+
+		return res;
+	}
+
+	Configuration::ConfigValueType Configuration::getByKey(const std::string& key) const {
 		if (key_val_map.find(key) != key_val_map.end()) {
 			return key_val_map.at(key);
 		}
@@ -125,8 +152,8 @@ namespace callisto {
 
 		for (const auto& entry : _build_order.getOrDefault({})) {
 			const auto path{ PathUtil::normalize(entry, project_root.getOrThrow()) };
-			for (const auto& module : modules.getOrDefault({})) {
-				if (path == module) {
+			for (const auto& [_, module_configuration] : module_configurations) {
+				if (path == module_configuration.input_path.getOrThrow()) {
 					explicit_modules.insert(path);
 					break;
 				}
@@ -340,7 +367,7 @@ namespace callisto {
 	void Configuration::fillInConfiguration(const ParsedConfigFileMap& config_file_map, const UserVariableMap& user_variable_map) {
 		for (int i = 0; i != static_cast<int>(ConfigurationLevel::_COUNT); ++i) {
 			const auto config_level{ static_cast<ConfigurationLevel>(i) };
-			fillOneConfigurationLevel(config_file_map.at(config_level), config_level, 
+			fillOneConfigurationLevel(config_file_map.at(config_level), config_level,
 				user_variable_map.at(config_level));
 		}
 	}
@@ -365,7 +392,7 @@ namespace callisto {
 		trySet(use_text_map16_format, config_file, level);
 
 		trySet(clean_rom, config_file, level, root, user_variables);
-		
+
 		trySet(output_rom, config_file, level, root, user_variables);
 		trySet(temporary_folder, config_file, level, root, user_variables);
 		trySet(bps_package, config_file, level, root, user_variables);
@@ -376,7 +403,7 @@ namespace callisto {
 		trySet(conflict_log_file, config_file, level, root, user_variables);
 
 		trySet(flips_path, config_file, level, root, user_variables);
-		
+
 		trySet(lunar_magic_path, config_file, level, root, user_variables);
 		trySet(lunar_magic_level_import_flags, config_file, level, user_variables);
 
@@ -393,7 +420,57 @@ namespace callisto {
 		trySet(global_exanimation, config_file, level, root, user_variables);
 
 		patches.trySet(config_file, level, root, user_variables);
-		modules.trySet(config_file, level, root, user_variables);
+
+		std::optional<toml::array> modules_array;
+		try {
+			auto& resources_table{ toml::find(config_file, "resources") };
+			modules_array = toml::find<toml::array>(resources_table, "modules");
+		}
+		catch (const std::out_of_range&) {
+			// nothing to do
+		}
+
+		if (modules_array.has_value()) {
+			if (modules_seen[level]) {
+				throw TomlException(modules_array.value(),
+					"Multiple module lists at same configuration level",
+					{},
+					"Multiple module lists at the same configuration level are not allowed"
+				);
+			}
+			else {
+				modules_seen[level] = true;
+			}
+
+			const auto real_module_output_path{ PathUtil::getUserModuleDirectoryPath(project_root.getOrThrow()) };
+
+			for (const auto& entry : modules_array.value()) {
+				fs::path input_path{ PathUtil::normalize(toml::find<std::string>(entry, "input_path"), project_root.getOrThrow()) };
+				ModuleConfiguration module_configuration{ module_count++ };
+
+				module_configuration.input_path.trySet(config_file, level, project_root, user_variables);
+				if (!trySet(module_configuration.real_output_paths, config_file, level, real_module_output_path, user_variables)) {
+					// fill in default which is top level of module imprint directory + filename of module + .asm
+					module_configuration.real_output_paths.forceSet({ real_module_output_path / fs::path(input_path.stem().string() + ".asm") }, level);
+					key_val_map.insert({ module_configuration.real_output_paths.name, module_configuration.real_output_paths.getOrThrow() });
+				}
+				else {
+					const auto prefix{ real_module_output_path.string() };
+					for (const auto& output_path : module_configuration.real_output_paths.getOrThrow()) {
+						if (output_path.string().substr(0, prefix.size()) != prefix) {
+							// checking if the output path does not have our folder as a prefix
+							throw TomlException(entry,
+								"Module output outside top-level module output directory",
+								{},
+								"Module output paths may not leave the top directory (via ../ and similar)"
+							);
+						}
+					}
+				}
+
+				module_configurations.insert({ input_path, module_configuration });
+			}
+		}
 
 		trySet(module_header, config_file, level, root, user_variables);
 
@@ -471,12 +548,12 @@ namespace callisto {
 	}
 
 	bool Configuration::isValidModuleSymbol(const fs::path& module_path) const {
-		if (!modules.isSet()) {
+		if (module_configurations.empty()) {
 			return false;
 		}
 
-		for (const auto& module : modules.getOrThrow()) {
-			if (module_path == module) {
+		for (const auto& [_, module_configuration] : module_configurations) {
+			if (module_path == module_configuration.input_path.getOrThrow()) {
 				return true;
 			}
 		}
@@ -539,21 +616,17 @@ namespace callisto {
 			}
 		}
 		else if (symbol == "Modules") {
-			if (modules.isSet()) {
-				std::vector<Descriptor> module_descriptors{};
+			std::vector<Descriptor> module_descriptors{};
 
-				const auto explicit_modules{ getExplicitModules() };
+			const auto explicit_modules{ getExplicitModules() };
 
-				for (const auto& module : modules.getOrDefault({})) {
-					if (explicit_modules.count(module) == 0) {
-						module_descriptors.emplace_back(Symbol::MODULE, module.string());
-					}
+			for (const auto& [_, module_configuration] : module_configurations) {
+				if (!explicit_modules.contains(module_configuration.input_path.getOrThrow())) {
+					module_descriptors.emplace_back(Symbol::MODULE, module_configuration.input_path.getOrThrow().string());
 				}
-
-				return module_descriptors;
 			}
 
-			return {};
+			return module_descriptors;
 		}
 		else if (symbol == "Levels") {
 			return { Descriptor(Symbol::LEVELS) };

@@ -106,6 +106,11 @@ namespace callisto {
 				}
 				else {
 					patch_hijacks.push_back({});
+
+					if (descriptor.symbol == Symbol::MODULE) {
+						const auto& inserted_addresses{ static_pointer_cast<Module>(insertable)->getModuleAddresses() };
+						module_addresses.insert(inserted_addresses.begin(), inserted_addresses.end());
+					}
 				}
 
 				if (!failed_dependency_report.has_value()) {

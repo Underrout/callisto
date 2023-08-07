@@ -94,7 +94,7 @@ if (MSVC)
     "junction/libntfslinks/source/CharUtils.cpp")
 endif()
 
-add_executable (callisto ${CALLISTO_SOURCE_FILES} "recent_projects/recent_projects_manager.h" "cli/cli_handler.h" "prompt_util.h")
+add_executable (callisto ${CALLISTO_SOURCE_FILES} "recent_projects/recent_projects_manager.h" "cli/cli_handler.h" "prompt_util.h"  "configuration/module_configuration.h")
 target_link_options(callisto PRIVATE ${CALLISTO_LINK_OPTIONS})
 target_compile_options(callisto PRIVATE ${CALLISTO_COMPILE_OPTIONS})
 target_compile_definitions(callisto PRIVATE ${CALLISTO_COMPILE_DEFINITIONS})
@@ -175,11 +175,19 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(fmt)
 
+FetchContent_Declare(
+        ordered_map
+        GIT_REPOSITORY https://github.com/Tessil/ordered-map.git
+        GIT_TAG v1.1.0
+)
+FetchContent_MakeAvailable(ordered_map)
+
 target_link_libraries(callisto PRIVATE nlohmann_json::nlohmann_json)
 target_link_libraries(callisto PUBLIC CLI11::CLI11)
 target_link_libraries(callisto PUBLIC toml11::toml11)
 target_link_libraries(callisto PUBLIC spdlog::spdlog)
 target_link_libraries(callisto PRIVATE Boost::system Boost::filesystem Boost::thread Boost::program_options)
+target_link_libraries(callisto PUBLIC ordered_map)
 target_link_libraries(callisto PRIVATE fmt::fmt)
 target_link_libraries(callisto PUBLIC platform_folders)
 target_link_libraries(callisto
@@ -237,4 +245,3 @@ add_custom_command(TARGET callisto POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
     "${CMAKE_CURRENT_SOURCE_DIR}/LICENSE" $<TARGET_FILE_DIR:callisto>
 )
-

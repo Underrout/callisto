@@ -57,9 +57,11 @@ namespace callisto {
 		using Insertables = std::vector<std::pair<Descriptor, std::shared_ptr<Insertable>>>;
 		using DependencyVector = std::vector<std::pair<Descriptor, std::pair<std::unordered_set<ResourceDependency>,
 			std::unordered_set<ConfigurationDependency>>>>;
+
+		std::unordered_set<int> module_addresses{};
 	
-		static Insertables buildOrderToInsertables(const Configuration& config);
-		static std::shared_ptr<Insertable> descriptorToInsertable(const Descriptor& descriptor, const Configuration& config);
+		Insertables buildOrderToInsertables(const Configuration& config);
+		std::shared_ptr<Insertable> descriptorToInsertable(const Descriptor& descriptor, const Configuration& config);
 
 		static json createBuildReport(const Configuration& config, const json& dependency_report);
 		static void writeBuildReport(const fs::path& project_root, const json& j);

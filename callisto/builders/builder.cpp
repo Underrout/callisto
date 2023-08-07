@@ -66,9 +66,8 @@ namespace callisto {
 			return std::make_shared<Module>(
 				config,
 				name.value(),
-				PathUtil::getModuleImprintDirectoryPath(config.project_root.getOrThrow()),
 				PathUtil::getCallistoAsmFilePath(config.project_root.getOrThrow()),
-				config.modules.getOrDefault({}),
+				module_addresses,
 				include_paths
 			);
 		}
@@ -123,6 +122,16 @@ namespace callisto {
 			}
 		}
 
+		std::map<std::string, std::vector<std::string>> module_output_map{};
+		for (const auto& [input_path, module_config] : config.module_configurations) {
+			std::vector<std::string> module_outputs{};
+			for (const auto& output_path : module_config.real_output_paths.getOrThrow()) {
+				module_outputs.push_back(output_path.string());
+			}
+			module_output_map.insert({ input_path.string(), module_outputs });
+		}
+		report["module_outputs"] = module_output_map;
+
 		return report;
 	}
 
@@ -135,12 +144,12 @@ namespace callisto {
 
 	void Builder::cacheModules(const fs::path& project_root) {
 		spdlog::info("Caching modules");
-		const auto source{ PathUtil::getModuleImprintDirectoryPath(project_root) };
-		const auto target{ PathUtil::getInsertedModulesDirectoryPath(project_root) };
+		const auto source{ PathUtil::getUserModuleDirectoryPath(project_root) };
+		const auto target{ PathUtil::getModuleOldSymbolsDirectoryPath(project_root) };
 		fs::create_directories(target);
 		if (fs::exists(source)) {
 			fs::remove_all(target);
-			fs::copy(source, target, fs::copy_options::overwrite_existing);
+			fs::copy(source, target, fs::copy_options::overwrite_existing | fs::copy_options::recursive);
 		}
 	}
 
@@ -317,13 +326,16 @@ namespace callisto {
 
 	void Builder::ensureCacheStructure(const Configuration& config) {
 		const auto project_root{ config.project_root.getOrThrow() };
-		fs::remove_all(PathUtil::getModuleImprintDirectoryPath(project_root));
-		fs::create_directories(PathUtil::getModuleImprintDirectoryPath(project_root));
-		fs::create_directories(PathUtil::getInsertedModulesDirectoryPath(project_root));
+
+		fs::remove_all(PathUtil::getUserModuleDirectoryPath(project_root));
+
+		fs::create_directories(PathUtil::getModuleCleanupDirectoryPath(project_root));
+		fs::create_directories(PathUtil::getModuleOldSymbolsDirectoryPath(project_root));
+		fs::create_directories(PathUtil::getUserModuleDirectoryPath(project_root));
 	}
 
 	void Builder::generateCallistoAsmFile(const Configuration& config) {
-		const auto module_folder{ PathUtil::getModuleImprintDirectoryPath(config.project_root.getOrThrow()) };
+		const auto module_folder{ PathUtil::getUserModuleDirectoryPath(config.project_root.getOrThrow()) };
 
 		const auto info_string{ fmt::format(
 			"includeonce\n\n"

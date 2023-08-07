@@ -47,9 +47,10 @@ namespace callisto {
 			return dependencies;
 		}
 
-		const StringConfigVariable& registerConfigurationDependency(const StringConfigVariable& config_variable, Policy policy = Policy::REBUILD) {
+		template<typename T, typename V>
+		const ConfigVariable<T, V>& registerConfigurationDependency(const ConfigVariable<T, V>& config_variable, Policy policy = Policy::REBUILD) {
 			if (config_variable.isSet()) {
-				std::variant<std::monostate, std::string, bool> variant;
+				std::variant<std::monostate, std::string, bool, std::vector<fs::path>> variant;
 				if (config_variable.isSet()) {
 					variant = config_variable.getOrThrow();
 				}
@@ -65,29 +66,12 @@ namespace callisto {
 			return config_variable;
 		}
 
-		const PathConfigVariable& registerConfigurationDependency(const PathConfigVariable& config_variable, Policy policy = Policy::REBUILD) {
+		template<typename T>
+		const ConfigVariable<T, fs::path>& registerConfigurationDependency(const ConfigVariable<T, fs::path>& config_variable, Policy policy = Policy::REBUILD) {
 			if (config_variable.isSet()) {
-				std::variant<std::monostate, std::string, bool> variant;
+				std::variant<std::monostate, std::string, bool, std::vector<fs::path>> variant;
 				if (config_variable.isSet()) {
 					variant = config_variable.getOrThrow().string();
-				}
-				else {
-					variant = std::monostate();
-				}
-				configuration_dependencies.insert(
-					ConfigurationDependency(
-						config_variable.name, variant,
-						policy
-					));
-			}
-			return config_variable;
-		}
-
-		const BoolConfigVariable& registerConfigurationDependency(const BoolConfigVariable& config_variable, Policy policy = Policy::REBUILD) {
-			if (config_variable.isSet()) {
-				std::variant<std::monostate, std::string, bool> variant;
-				if (config_variable.isSet()) {
-					variant = config_variable.getOrThrow();
 				}
 				else {
 					variant = std::monostate();

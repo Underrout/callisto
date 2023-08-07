@@ -25,34 +25,54 @@ namespace fs = std::filesystem;
 namespace callisto {
 	class Module : public RomInsertable {
 	protected:
-		static constexpr auto MAX_ROM_SIZE = 16 * 1024 * 1024;
+		static constexpr auto PLACEHOLDER_LABEL{ "PLACEHOLDER " };
+		static constexpr auto MAX_ROM_SIZE{ 16 * 1024 * 1024 };
 
 		std::string patch_string{};
 
-		const fs::path module_path;
+		std::unordered_set<size_t> our_module_addresses{};
+
+		const fs::path input_path;
+		const std::vector<fs::path> output_paths;
+
+		const fs::path real_module_folder_location;
+		const fs::path cleanup_folder_location;
+
 		const fs::path project_relative_path;
+
 		std::vector<const char*> additional_include_paths;
-		const fs::path imprint_directory;
+
 		const fs::path callisto_asm_file;
-		std::unordered_set<std::string> other_module_names;
+		std::unordered_set<int> other_module_addresses;
 		const std::optional<fs::path> module_header_file;
 
-		void emitImprintFile() const;
+		void emitOutputFiles() const;
+		void emitOutputFile(const fs::path& output_path) const;
+		void emitPlainAddressFile() const;
 
 		std::unordered_set<ResourceDependency> determineDependencies() override;
 
 		void fixAsarMemoryLeak() const;
 
+		void recordOurAddresses();
 		void verifyWrittenBlockCoverage() const;
 		void verifyNonHijacking() const;
 
 	public:
 		static std::string modulePathToName(const fs::path& path);
 
+		const std::unordered_set<size_t>& getModuleAddresses() const {
+			return our_module_addresses;
+		}
+
+		const std::vector<fs::path>& getOutputPaths() const {
+			return output_paths;
+		};
+
 		Module(const Configuration& config,
-			const fs::path& module_path, const fs::path& imprint_directory,
+			const fs::path& input_path,
 			const fs::path& callisto_asm_file,
-			const std::vector<fs::path>& other_module_paths,
+			const std::unordered_set<int>& other_module_addresses,
 			const std::vector<fs::path>& additional_include_paths = {});
 
 		void init() override;

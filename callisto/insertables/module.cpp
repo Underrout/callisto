@@ -2,19 +2,25 @@
 
 namespace callisto {
 	Module::Module(const Configuration& config,
-		const fs::path& module_path, const fs::path& imprint_directory,
+		const fs::path& input_path,
 		const fs::path& callisto_asm_file,
-		const std::vector<fs::path>& other_module_paths,
+		const std::unordered_set<int>& other_module_addresses,
 		const std::vector<fs::path>& additional_include_paths) :
 		RomInsertable(config), 
-		project_relative_path(fs::relative(module_path, registerConfigurationDependency(config.project_root).getOrThrow())),
-		module_path(module_path), imprint_directory(imprint_directory), callisto_asm_file(callisto_asm_file),
-		module_header_file(registerConfigurationDependency(config.module_header, Policy::REINSERT).isSet() ? std::make_optional(config.module_header.getOrThrow()) : std::nullopt)
+		input_path(input_path),
+		output_paths(registerConfigurationDependency(config.module_configurations.at(input_path).real_output_paths, Policy::REINSERT).getOrThrow()),
+		project_relative_path(fs::relative(input_path, registerConfigurationDependency(config.project_root).getOrThrow())),
+		callisto_asm_file(callisto_asm_file),
+		real_module_folder_location(PathUtil::getUserModuleDirectoryPath(config.project_root.getOrThrow())),
+		cleanup_folder_location(PathUtil::getModuleCleanupDirectoryPath(config.project_root.getOrThrow())),
+		other_module_addresses(other_module_addresses),
+		module_header_file(registerConfigurationDependency(config.module_header, Policy::REINSERT).isSet() ? 
+			std::make_optional(config.module_header.getOrThrow()) : std::nullopt)
 	{
-		if (!fs::exists(module_path)) {
+		if (!fs::exists(input_path)) {
 			throw ResourceNotFoundException(fmt::format(
 				"Module {} does not exist",
-				module_path.string()
+				input_path.string()
 			));
 		}
 
@@ -22,6 +28,10 @@ namespace callisto {
 			throw ToolNotFoundException(
 				"Asar library file not found, did you forget to copy it alongside callisto?"
 			);
+		}
+
+		for (const auto& output_path : output_paths) {
+			fs::create_directories(output_path.parent_path());
 		}
 
 		this->additional_include_paths.reserve(additional_include_paths.size());
@@ -32,10 +42,6 @@ namespace callisto {
 		std::strcpy(copy, path.string().c_str());
 		return copy;
 			});
-
-		for (const auto& other_module_path : other_module_paths) {
-			other_module_names.insert(modulePathToName(other_module_path));
-		}
 	}
 
 	void Module::init() {
@@ -44,18 +50,15 @@ namespace callisto {
 		temp_patch << "warnings disable W1011\n"
 			<< "if read1($00FFD5) == $23\nsa1rom\nelse\nlorom\nendif\n";
 
-		if (module_path.extension() == ".asm") {
+		if (input_path.extension() == ".asm") {
 			if (module_header_file.has_value()) {
 				temp_patch << "incsrc \"" << PathUtil::convertToPosixPath(module_header_file.value()).string() << '"' << std::endl << std::endl;
 			}
 
-			temp_patch << "incsrc \"" << PathUtil::convertToPosixPath(module_path).string() << '"' << std::endl;
+			temp_patch << "incsrc \"" << PathUtil::convertToPosixPath(input_path).string() << '"' << std::endl;
 		}
 		else {
-			auto label_name{ module_path.stem().string() };
-			std::replace(label_name.begin(), label_name.end(), ' ', '_');
-
-			temp_patch << fmt::format("incbin \"{}\" -> {}", PathUtil::convertToPosixPath(module_path).string(), label_name) << std::endl;
+			temp_patch << fmt::format("incbin \"{}\" -> {}", PathUtil::convertToPosixPath(input_path).string(), PLACEHOLDER_LABEL) << std::endl;
 		}
 
 		patch_string = temp_patch.str();
@@ -65,10 +68,10 @@ namespace callisto {
 	//      them into a single static method or something later
 	void Module::insert() {
 		const auto prev_folder{ fs::current_path() };
-		fs::current_path(module_path.parent_path());
+		fs::current_path(input_path.parent_path());
 
 		// delete potential previous dependency report
-		fs::remove(module_path.parent_path() / ".dependencies");
+		fs::remove(input_path.parent_path() / ".dependencies");
 
 		spdlog::info(fmt::format("Inserting module {}", project_relative_path.string()));
 
@@ -90,7 +93,7 @@ namespace callisto {
 			"Applying module {} to temporary ROM {}:\n\r"
 			"\tROM size:\t\t{}\n\r"
 			"\tROM header size:\t\t{}\n\r",
-			module_path.string(),
+			input_path.string(),
 			temporary_rom_path.string(),
 			rom_size,
 			header_size
@@ -154,6 +157,7 @@ namespace callisto {
 				));
 			}
 
+			recordOurAddresses();
 			verifyNonHijacking();
 			verifyWrittenBlockCoverage();
 
@@ -162,7 +166,8 @@ namespace callisto {
 			out_rom.close();
 			spdlog::info(fmt::format("Successfully applied module {}!", project_relative_path.string()));
 
-			emitImprintFile();
+			emitOutputFiles();
+			emitPlainAddressFile();
 
 			fs::current_path(prev_folder);
 		}
@@ -194,17 +199,23 @@ namespace callisto {
 		return prefix;
 	}
 
-	void Module::emitImprintFile() const {
-		fs::create_directories(imprint_directory);
+	void Module::emitOutputFiles() const {
+		for (const auto& output_path : output_paths) {
+			emitOutputFile(output_path);
+		}
+	}
 
-		std::ofstream imprint{ imprint_directory / (module_path.stem().string() + ".asm")};
+	void Module::emitOutputFile(const fs::path& output_path) const {
+		std::ofstream real_output_file{ output_path };
 
-		imprint <<  fmt::format("incsrc \"{}\"", PathUtil::convertToPosixPath(callisto_asm_file).string()) << std::endl << std::endl;
+		real_output_file << "includeonce\n\n";
+
+		real_output_file << fmt::format("incsrc \"{}\"\n\n", PathUtil::convertToPosixPath(callisto_asm_file).string());
 
 		int label_number{};
 		const auto labels{ asar_getalllabels(&label_number) };
 
-		const auto module_name{ modulePathToName(module_path) };
+		const auto module_name{ modulePathToName(output_path) };
 
 		if (label_number == 0) {
 			throw InsertionException(fmt::format(
@@ -213,7 +224,7 @@ namespace callisto {
 			));
 		}
 
-		if (module_path.extension() != ".asm") {
+		if (input_path.extension() != ".asm") {
 			if (label_number > 1) {
 				throw InsertionException(fmt::format(
 					"Binary module {} unexpectedly contains more than one label",
@@ -224,57 +235,73 @@ namespace callisto {
 			const auto& label{ labels[0] };
 			const auto name{ std::string(label.name) };
 
-			imprint << fmt::format("{} = ${:06X}", module_name, label.location) << std::endl;
-			imprint << fmt::format("!{} = ${:06X}", module_name, label.location) << std::endl;
-
-			return;
+			real_output_file << fmt::format("{} = ${:06X}", module_name, label.location) << std::endl;
+			real_output_file << fmt::format("!{} = ${:06X}", module_name, label.location) << std::endl;
 		}
+		else {
+			for (int i{ 0 }; i != label_number; ++i) {
+				const auto& label{ labels[i] };
+				const auto name{ std::string(label.name) };
 
-		for (int i{ 0 }; i != label_number; ++i) {
-			const auto& label{ labels[i] };
-			const auto name{ std::string(label.name) };
+				if (name.at(0) == ':') {
+					// it's a relative label (+, -, ++, ...), skip it
+					continue;
+				}
 
-			if (name.at(0) == ':') {
-				// it's a relative label (+, -, ++, ...), skip it
-				continue;
-			}
+				if (name.find('.') != std::string::npos) {
+					// it's a struct field (Struct.field), skip it
+					continue;
+				}
 
-			if (name.find('.') != std::string::npos) {
-				// it's a struct field (Struct.field), skip it
-				continue;
-			}
-
-			const auto underscore_idx{ name.find('_', 0) };
-			if (other_module_names.count(name) != 0 || 
-				(underscore_idx != -1 && other_module_names.count(name.substr(0, underscore_idx)) != 0)) {
-				if (name.substr(0, underscore_idx) != module_name) {
+				if (other_module_addresses.contains(label.location)) {
 					// label belongs to imported module, skip it
 					continue;
 				}
-			}
 
-			imprint << fmt::format("{}_{} = ${:06X}", module_name, name, label.location) << std::endl;
-			imprint << fmt::format("!{}_{} = ${:06X}", module_name, name, label.location) << std::endl;
+				real_output_file << fmt::format("{}_{} = ${:06X}", module_name, name, label.location) << std::endl;
+				real_output_file << fmt::format("!{}_{} = ${:06X}", module_name, name, label.location) << std::endl;
+			}
+		}
+	}
+
+	void Module::emitPlainAddressFile() const {
+		const auto cleanup_file_path{ 
+			cleanup_folder_location / ((project_relative_path.parent_path() / project_relative_path.stem()).string() + ".addr")};
+
+		fs::create_directories(cleanup_file_path.parent_path());
+
+		std::ofstream cleanup_file{ cleanup_file_path };
+
+		for (const auto& address : our_module_addresses) {
+			cleanup_file << fmt::format("{}\n", address);
 		}
 	}
 
 	std::unordered_set<ResourceDependency> Module::determineDependencies() {
-		
-		if (module_path.extension() == ".asm") {
+		if (input_path.extension() == ".asm") {
 			auto dependencies{ Insertable::extractDependenciesFromReport(
-				module_path.parent_path() / ".dependencies"
+				input_path.parent_path() / ".dependencies"
 			) };
 			if (module_header_file.has_value()) {
 				dependencies.insert(ResourceDependency(module_header_file.value(), Policy::REINSERT));
 			}
-			dependencies.insert(ResourceDependency(module_path, Policy::REINSERT));
+			dependencies.insert(ResourceDependency(input_path, Policy::REINSERT));
 			return dependencies;
 		}
 		else {
-			fs::remove(module_path.parent_path() / ".dependencies");
-			return { ResourceDependency(module_path, Policy::REINSERT) };
+			fs::remove(input_path.parent_path() / ".dependencies");
+			return { ResourceDependency(input_path, Policy::REINSERT) };
 		}
 		return {};
+	}
+
+	void Module::recordOurAddresses() {
+		int label_count{};
+		const auto labels{ asar_getalllabels(&label_count) };
+
+		for (int i{ 0 }; i != label_count; ++i) {
+			our_module_addresses.insert(labels[i].location);
+		}
 	}
 
 	void Module::verifyWrittenBlockCoverage() const {

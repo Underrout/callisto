@@ -79,6 +79,11 @@ namespace callisto {
 
 	bool ExtendablePathVectorConfigVariable::trySet(const toml::value& table, ConfigurationLevel level,
 		const PathConfigVariable& relative_to, const std::map<std::string, std::string>& user_variables) {
+		return trySet(table, level, relative_to.getOrThrow(), user_variables);
+	}
+
+	bool ExtendablePathVectorConfigVariable::trySet(const toml::value& table, ConfigurationLevel level,
+		const fs::path& relative_to, const std::map<std::string, std::string>& user_variables) {
 		const auto toml_array{ getTomlValue(table) };
 
 		if (toml_array.has_value()) {
@@ -89,7 +94,7 @@ namespace callisto {
 
 			for (const auto& entry : toml::get<toml::array>(toml_array.value())) {
 				const auto formatted{ formatUserVariables(entry, user_variables) };
-				const auto full_path{ PathUtil::normalize(formatted, relative_to.getOrThrow()) };
+				const auto full_path{ PathUtil::normalize(formatted, relative_to) };
 				converted.push_back(full_path);
 				as_strings.push_back(full_path.string());
 			}
