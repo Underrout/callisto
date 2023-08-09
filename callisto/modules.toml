@@ -5,10 +5,11 @@
 module_header = "path/to/my/header.asm"
 
 
-# List of modules to insert, works exactly like the "patches" list
+# List of modules to insert
 modules = [
-    # resources/modules/binary/uncompressed_exgfx.bin
-    
-    # resources/modules/code/teleport.asm
-    # resources/modules/code/reset.asm
+    # { input_path = "resources/modules/binary/uncompressed_exgfx.bin" },
+    # { input_path = "resources/modules/code/teleport.asm" },
+
+    # { input_path = "resources/modules/binary/large_table.asm", output_paths = [ "binaries/my_large_table.asm", "other/random/place.asm" ] },
+    # { input_path = "resources/modules/code/reset.asm", output_paths = [ "code/reset.asm", "code/also/accessible/here.asm"] }
 ]
