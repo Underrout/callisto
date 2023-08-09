@@ -9,9 +9,11 @@
 #include <boost/range.hpp>
 #include <toml.hpp>
 #include <fmt/core.h>
+#include <tsl/ordered_map.h>
 
 #include "tool_configuration.h"
 #include "emulator_configuration.h"
+#include "module_configuration.h"
 #include "config_variable.h"
 #include "config_exception.h"
 #include "../path_util.h"
@@ -25,15 +27,19 @@ namespace callisto {
 		using ConfigFileMap = std::map<ConfigurationLevel, std::vector<fs::path>>;
 		using VariableFileMap = std::map<ConfigurationLevel, fs::path>;
 		using BuildOrder = std::vector<Descriptor>;
+		using ConfigValueType = std::variant<std::monostate, std::string, bool, std::vector<fs::path>>;
 
 	private:
 		static constexpr std::array VALID_STATIC_BUILD_ORDER_SYMBOLS{
-			"Globules", "Graphics", "ExGraphics", "Map16", "TitleScreenMovement", "SharedPalettes",
+			"Modules", "Graphics", "ExGraphics", "Map16", "TitleScreenMovement", "SharedPalettes",
 			"Overworld", "TitleScreen", "Credits", "GlobalExAnimation", 
 			"Patches", "Levels"
 		};
 
-		std::map<std::string, std::variant<std::monostate, std::string, bool>> key_val_map{};
+		size_t module_count{ 0 };
+		std::map<ConfigurationLevel, bool> modules_seen{};
+
+		std::map<std::string, ConfigValueType> key_val_map{};
 
 		StringVectorConfigVariable _build_order{ {"orders", "build_order"} };
 
@@ -60,9 +66,9 @@ namespace callisto {
 		bool verifyBuildOrder(const toml::array& build_order, const std::map<std::string, std::string>& user_variables) const;
 		bool isValidStaticBuildOrderSymbol(const std::string& symbol) const;
 		bool isValidPatchSymbol(const fs::path& patch_path) const;
-		bool isValidGlobuleSymbol(const fs::path& globule_path) const;
-		void verifyPatchGlobuleExclusivity();
-		void verifyGlobuleExclusivity();
+		bool isValidModuleSymbol(const fs::path& module_path) const;
+		void verifyPatchModuleExclusivity();
+		void verifyModuleExclusivity();
 		void verifyPatchUniqueness();
 		void finalizeBuildOrder();
 
@@ -71,8 +77,10 @@ namespace callisto {
 		bool trySet(PathConfigVariable& variable, const toml::value& table, ConfigurationLevel level, const PathConfigVariable& relative_to,
 			const std::map<std::string, std::string>& user_variable_map);
 		bool trySet(BoolConfigVariable& variable, const toml::value& table, ConfigurationLevel level);
+		bool trySet(ExtendablePathVectorConfigVariable& variable, const toml::value& table, ConfigurationLevel level,
+			const fs::path& relative_to, const std::map<std::string, std::string>& user_variables);
 
-		std::unordered_set<fs::path> getExplicitGlobules() const;
+		std::unordered_set<fs::path> getExplicitModules() const;
 		std::unordered_set<fs::path> getExplicitPatches() const;
 
 		std::vector<Descriptor> symbolToDescriptor(const std::string &symbol) const;
@@ -84,7 +92,7 @@ namespace callisto {
 		Configuration(const ConfigFileMap& config_file_map, const VariableFileMap& variable_file_map,
 			const fs::path& callisto_root_directory, bool allow_user_input = true);
 
-		std::variant<std::monostate, std::string, bool> getByKey(const std::string& key) const;
+		ConfigValueType getByKey(const std::string& key) const;
 
 		const bool allow_user_input;
 
@@ -120,9 +128,9 @@ namespace callisto {
 		PathConfigVariable global_exanimation{ {"resources", "global_exanimation"} };
 
 		ExtendablePathVectorConfigVariable patches{ {"resources", "patches"} };
-		ExtendablePathVectorConfigVariable globules{ {"resources", "globules"} };
+		tsl::ordered_map<fs::path, ModuleConfiguration> module_configurations{};
 
-		PathConfigVariable globule_header{ {"resources", "globule_header"} };
+		PathConfigVariable module_header{ {"resources", "module_header"} };
 
 		BuildOrder build_order{};
 

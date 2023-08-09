@@ -18,13 +18,13 @@ namespace callisto {
 		finalizeBuildOrder();
 	}
 
-	void Configuration::verifyPatchGlobuleExclusivity() {
-		if (patches.isSet() && globules.isSet()) {
+	void Configuration::verifyPatchModuleExclusivity() {
+		if (patches.isSet() && !module_configurations.empty()) {
 			for (const auto& patch : patches.getOrThrow()) {
-				for (const auto& globule : globules.getOrThrow()) {
-					if (patch == globule) {
+				for (const auto& [_, module_configuration] : module_configurations) {
+					if (patch == module_configuration.input_path.getOrThrow()) {
 						throw ConfigException(fmt::format(
-							"{} cannot be used as a globule and patch at the same time",
+							"{} cannot be used as a module and patch at the same time",
 							patch.string()
 						));
 					}
@@ -33,19 +33,34 @@ namespace callisto {
 		}
 	}
 
-	void Configuration::verifyGlobuleExclusivity() {
-		if (globules.isSet()) {
-			std::unordered_set<std::string> seen_file_names{};
-			for (const auto& globule : globules.getOrThrow()) {
-				const auto file_name{ globule.filename().string() };
-				if (seen_file_names.count(file_name) != 0) {
+	void Configuration::verifyModuleExclusivity() {
+		if (!module_configurations.empty()) {
+			std::unordered_set<std::string> seen_output_paths{};
+			std::unordered_set<fs::path> seen_input_paths{};
+			for (const auto& [_, module_configuration] : module_configurations) {
+				const auto input_path{ module_configuration.input_path.getOrThrow() };
+				if (seen_input_paths.contains(input_path)) {
 					throw ConfigException(fmt::format(
-						"Multiple globules called {} exist, but globule names must be unique",
-						file_name
+						"Module '{}' appears in module list(s) multiple times, but modules are only allowed to appear exactly once",
+						input_path.string()
 					));
 				}
 				else {
-					seen_file_names.insert(file_name);
+					seen_input_paths.insert(input_path);
+				}
+
+				const auto output_paths{ module_configuration.real_output_paths.getOrThrow() };
+				for (const auto& output_path : output_paths) {
+					if (seen_output_paths.contains(output_path.string())) {
+						// TODO potentially don't throw in this case and allow bundling of multiple modules into single file for convenience
+						throw ConfigException(fmt::format(
+							"Multiple modules with output path '{}' exist, but module output paths must be unique",
+							output_path.string()
+						));
+					}
+					else {
+						seen_output_paths.insert(output_path.string());
+					}
 				}
 			}
 		}
@@ -69,8 +84,8 @@ namespace callisto {
 	}
 
 	void Configuration::finalizeBuildOrder() {
-		verifyGlobuleExclusivity();
-		verifyPatchGlobuleExclusivity();
+		verifyModuleExclusivity();
+		verifyPatchModuleExclusivity();
 		verifyPatchUniqueness();
 
 		for (const auto& symbol : _build_order.getOrDefault({})) {
@@ -111,7 +126,19 @@ namespace callisto {
 		return res;
 	}
 
-	std::variant<std::monostate, std::string, bool> Configuration::getByKey(const std::string& key) const {
+	bool Configuration::trySet(ExtendablePathVectorConfigVariable& variable, const toml::value& table, 
+		ConfigurationLevel level, const fs::path& relative_to, const std::map<std::string, std::string>& user_variables) {
+
+		bool res{ variable.trySet(table, level, relative_to, user_variables) };
+
+		if (res) {
+			key_val_map[variable.name] = variable.getOrThrow();
+		}
+
+		return res;
+	}
+
+	Configuration::ConfigValueType Configuration::getByKey(const std::string& key) const {
 		if (key_val_map.find(key) != key_val_map.end()) {
 			return key_val_map.at(key);
 		}
@@ -120,20 +147,20 @@ namespace callisto {
 		}
 	}
 
-	std::unordered_set<fs::path> Configuration::getExplicitGlobules() const {
-		std::unordered_set<fs::path> explicit_globules{};
+	std::unordered_set<fs::path> Configuration::getExplicitModules() const {
+		std::unordered_set<fs::path> explicit_modules{};
 
 		for (const auto& entry : _build_order.getOrDefault({})) {
 			const auto path{ PathUtil::normalize(entry, project_root.getOrThrow()) };
-			for (const auto& globule : globules.getOrDefault({})) {
-				if (path == globule) {
-					explicit_globules.insert(path);
+			for (const auto& [_, module_configuration] : module_configurations) {
+				if (path == module_configuration.input_path.getOrThrow()) {
+					explicit_modules.insert(path);
 					break;
 				}
 			}
 		}
 
-		return explicit_globules;
+		return explicit_modules;
 	}
 
 	std::unordered_set<fs::path> Configuration::getExplicitPatches() const {
@@ -340,7 +367,7 @@ namespace callisto {
 	void Configuration::fillInConfiguration(const ParsedConfigFileMap& config_file_map, const UserVariableMap& user_variable_map) {
 		for (int i = 0; i != static_cast<int>(ConfigurationLevel::_COUNT); ++i) {
 			const auto config_level{ static_cast<ConfigurationLevel>(i) };
-			fillOneConfigurationLevel(config_file_map.at(config_level), config_level, 
+			fillOneConfigurationLevel(config_file_map.at(config_level), config_level,
 				user_variable_map.at(config_level));
 		}
 	}
@@ -365,7 +392,7 @@ namespace callisto {
 		trySet(use_text_map16_format, config_file, level);
 
 		trySet(clean_rom, config_file, level, root, user_variables);
-		
+
 		trySet(output_rom, config_file, level, root, user_variables);
 		trySet(temporary_folder, config_file, level, root, user_variables);
 		trySet(bps_package, config_file, level, root, user_variables);
@@ -376,7 +403,7 @@ namespace callisto {
 		trySet(conflict_log_file, config_file, level, root, user_variables);
 
 		trySet(flips_path, config_file, level, root, user_variables);
-		
+
 		trySet(lunar_magic_path, config_file, level, root, user_variables);
 		trySet(lunar_magic_level_import_flags, config_file, level, user_variables);
 
@@ -393,9 +420,59 @@ namespace callisto {
 		trySet(global_exanimation, config_file, level, root, user_variables);
 
 		patches.trySet(config_file, level, root, user_variables);
-		globules.trySet(config_file, level, root, user_variables);
 
-		trySet(globule_header, config_file, level, root, user_variables);
+		std::optional<toml::array> modules_array;
+		try {
+			auto& resources_table{ toml::find(config_file, "resources") };
+			modules_array = toml::find<toml::array>(resources_table, "modules");
+		}
+		catch (const std::out_of_range&) {
+			// nothing to do
+		}
+
+		if (modules_array.has_value()) {
+			if (modules_seen[level]) {
+				throw TomlException(modules_array.value(),
+					"Multiple module lists at same configuration level",
+					{},
+					"Multiple module lists at the same configuration level are not allowed"
+				);
+			}
+			else {
+				modules_seen[level] = true;
+			}
+
+			const auto real_module_output_path{ PathUtil::getUserModuleDirectoryPath(project_root.getOrThrow()) };
+
+			for (const auto& entry : modules_array.value()) {
+				fs::path input_path{ PathUtil::normalize(toml::find<std::string>(entry, "input_path"), project_root.getOrThrow()) };
+				ModuleConfiguration module_configuration{ module_count++ };
+
+				module_configuration.input_path.trySet(config_file, level, project_root, user_variables);
+				if (!trySet(module_configuration.real_output_paths, config_file, level, real_module_output_path, user_variables)) {
+					// fill in default which is top level of module imprint directory + filename of module + .asm
+					module_configuration.real_output_paths.forceSet({ real_module_output_path / fs::path(input_path.stem().string() + ".asm") }, level);
+					key_val_map.insert({ module_configuration.real_output_paths.name, module_configuration.real_output_paths.getOrThrow() });
+				}
+				else {
+					const auto prefix{ real_module_output_path.string() };
+					for (const auto& output_path : module_configuration.real_output_paths.getOrThrow()) {
+						if (output_path.string().substr(0, prefix.size()) != prefix) {
+							// checking if the output path does not have our folder as a prefix
+							throw TomlException(entry,
+								"Module output outside top-level module output directory",
+								{},
+								"Module output paths may not leave the top directory (via ../ and similar)"
+							);
+						}
+					}
+				}
+
+				module_configurations.insert({ input_path, module_configuration });
+			}
+		}
+
+		trySet(module_header, config_file, level, root, user_variables);
 
 		for (auto& [_, tool] : generic_tool_configurations) {
 			trySet(tool.executable, config_file, level, tool.working_directory, user_variables);
@@ -436,7 +513,7 @@ namespace callisto {
 			}
 			const auto path{ PathUtil::normalize(as_string, project_root.getOrThrow()) };
 
-			if (isValidPatchSymbol(path) || isValidGlobuleSymbol(path)) {
+			if (isValidPatchSymbol(path) || isValidModuleSymbol(path)) {
 				continue;
 			}
 
@@ -445,7 +522,7 @@ namespace callisto {
 				"Invalid symbol in build order",
 				{
 					fmt::format(
-						"Valid symbols are paths that appear in the resources.patches or resources.globules lists, "
+						"Valid symbols are paths that appear in the resources.patches or resources.modules lists, "
 						"the name of any tool appearing in the tools.generic table or any of the "
 						"following: {}",
 						fmt::join(VALID_STATIC_BUILD_ORDER_SYMBOLS, ", ")
@@ -470,13 +547,13 @@ namespace callisto {
 		return false;
 	}
 
-	bool Configuration::isValidGlobuleSymbol(const fs::path& globule_path) const {
-		if (!globules.isSet()) {
+	bool Configuration::isValidModuleSymbol(const fs::path& module_path) const {
+		if (module_configurations.empty()) {
 			return false;
 		}
 
-		for (const auto& globule : globules.getOrThrow()) {
-			if (globule_path == globule) {
+		for (const auto& [_, module_configuration] : module_configurations) {
+			if (module_path == module_configuration.input_path.getOrThrow()) {
 				return true;
 			}
 		}
@@ -538,22 +615,18 @@ namespace callisto {
 				return {};
 			}
 		}
-		else if (symbol == "Globules") {
-			if (globules.isSet()) {
-				std::vector<Descriptor> globule_descriptors{};
+		else if (symbol == "Modules") {
+			std::vector<Descriptor> module_descriptors{};
 
-				const auto explicit_globules{ getExplicitGlobules() };
+			const auto explicit_modules{ getExplicitModules() };
 
-				for (const auto& globule : globules.getOrDefault({})) {
-					if (explicit_globules.count(globule) == 0) {
-						globule_descriptors.emplace_back(Symbol::GLOBULE, globule.string());
-					}
+			for (const auto& [_, module_configuration] : module_configurations) {
+				if (!explicit_modules.contains(module_configuration.input_path.getOrThrow())) {
+					module_descriptors.emplace_back(Symbol::MODULE, module_configuration.input_path.getOrThrow().string());
 				}
-
-				return globule_descriptors;
 			}
 
-			return {};
+			return module_descriptors;
 		}
 		else if (symbol == "Levels") {
 			return { Descriptor(Symbol::LEVELS) };
@@ -562,8 +635,8 @@ namespace callisto {
 			if (isValidPatchSymbol(PathUtil::normalize(symbol, project_root.getOrThrow()))) {
 				return { Descriptor(Symbol::PATCH, PathUtil::normalize(symbol, project_root.getOrThrow()).string()) };
 			}
-			if (isValidGlobuleSymbol(PathUtil::normalize(symbol, project_root.getOrThrow()))) {
-				return { Descriptor(Symbol::GLOBULE, PathUtil::normalize(symbol, project_root.getOrThrow()).string()) };
+			if (isValidModuleSymbol(PathUtil::normalize(symbol, project_root.getOrThrow()))) {
+				return { Descriptor(Symbol::MODULE, PathUtil::normalize(symbol, project_root.getOrThrow()).string()) };
 			}
 			for (const auto& [name, config] : generic_tool_configurations) {
 				if (symbol == name) {

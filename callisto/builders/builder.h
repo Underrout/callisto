@@ -20,7 +20,7 @@
 #include "../insertables/text_map16.h"
 #include "../insertables/external_tool.h"
 #include "../insertables/patch.h"
-#include "../insertables/globule.h"
+#include "../insertables/module.h"
 
 #include "../insertable.h"
 #include "../saver/saver.h"
@@ -43,7 +43,7 @@ namespace callisto {
 		static constexpr auto PATCH_VERSION_DEFINE_NAME{ "PATCH" };
 		static constexpr auto ASSEMBLING_DEFINE_NAME{ "ASSEMBLING" };
 		static constexpr auto PROFILE_DEFINE_NAME{ "PROFILE" };
-		static constexpr auto GLOBULE_FOLDER_PATH_DEFINE_NAME{ "GLOBULES" };
+		static constexpr auto MODULE_FOLDER_PATH_DEFINE_NAME{ "MODULES" };
 
 		static constexpr auto CHECKSUM_LOCATION{ 0x7FDE };
 		static constexpr auto CLEAN_ROM_CHECKSUM{ 0xA0DA };
@@ -57,14 +57,16 @@ namespace callisto {
 		using Insertables = std::vector<std::pair<Descriptor, std::shared_ptr<Insertable>>>;
 		using DependencyVector = std::vector<std::pair<Descriptor, std::pair<std::unordered_set<ResourceDependency>,
 			std::unordered_set<ConfigurationDependency>>>>;
+
+		std::unordered_set<int> module_addresses{};
 	
-		static Insertables buildOrderToInsertables(const Configuration& config);
-		static std::shared_ptr<Insertable> descriptorToInsertable(const Descriptor& descriptor, const Configuration& config);
+		Insertables buildOrderToInsertables(const Configuration& config);
+		std::shared_ptr<Insertable> descriptorToInsertable(const Descriptor& descriptor, const Configuration& config);
 
 		static json createBuildReport(const Configuration& config, const json& dependency_report);
 		static void writeBuildReport(const fs::path& project_root, const json& j);
 
-		static void cacheGlobules(const fs::path& project_root);
+		static void cacheModules(const fs::path& project_root);
 		static void moveTempToOutput(const Configuration& config);
 
 		static void init(const Configuration& config);

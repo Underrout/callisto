@@ -106,6 +106,11 @@ namespace callisto {
 				}
 				else {
 					patch_hijacks.push_back({});
+
+					if (descriptor.symbol == Symbol::MODULE) {
+						const auto& inserted_addresses{ static_pointer_cast<Module>(insertable)->getModuleAddresses() };
+						module_addresses.insert(inserted_addresses.begin(), inserted_addresses.end());
+					}
 				}
 
 				if (!failed_dependency_report.has_value()) {
@@ -177,7 +182,7 @@ namespace callisto {
 			removeBuildReport(config.project_root.getOrThrow());
 		}
 
-		cacheGlobules(config.project_root.getOrThrow());
+		cacheModules(config.project_root.getOrThrow());
 
 		Saver::writeMarkerToRom(temp_rom_path, config);
 		moveTempToOutput(config);

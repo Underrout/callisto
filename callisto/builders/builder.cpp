@@ -59,16 +59,15 @@ namespace callisto {
 				include_paths
 			);
 		} 
-		else if (symbol == Symbol::GLOBULE) {
+		else if (symbol == Symbol::MODULE) {
 			const auto callisto_directory{ PathUtil::getCallistoDirectoryPath(config.project_root.getOrThrow()) };
 			std::vector<fs::path> include_paths{ callisto_directory };
 
-			return std::make_shared<Globule>(
+			return std::make_shared<Module>(
 				config,
 				name.value(),
-				PathUtil::getGlobuleImprintDirectoryPath(config.project_root.getOrThrow()),
 				PathUtil::getCallistoAsmFilePath(config.project_root.getOrThrow()),
-				config.globules.getOrDefault({}),
+				module_addresses,
 				include_paths
 			);
 		}
@@ -123,6 +122,16 @@ namespace callisto {
 			}
 		}
 
+		std::map<std::string, std::vector<std::string>> module_output_map{};
+		for (const auto& [input_path, module_config] : config.module_configurations) {
+			std::vector<std::string> module_outputs{};
+			for (const auto& output_path : module_config.real_output_paths.getOrThrow()) {
+				module_outputs.push_back(output_path.string());
+			}
+			module_output_map.insert({ input_path.string(), module_outputs });
+		}
+		report["module_outputs"] = module_output_map;
+
 		return report;
 	}
 
@@ -133,14 +142,14 @@ namespace callisto {
 		build_report.close();
 	}
 
-	void Builder::cacheGlobules(const fs::path& project_root) {
-		spdlog::info("Caching globules");
-		const auto source{ PathUtil::getGlobuleImprintDirectoryPath(project_root) };
-		const auto target{ PathUtil::getInsertedGlobulesDirectoryPath(project_root) };
+	void Builder::cacheModules(const fs::path& project_root) {
+		spdlog::info("Caching modules");
+		const auto source{ PathUtil::getUserModuleDirectoryPath(project_root) };
+		const auto target{ PathUtil::getModuleOldSymbolsDirectoryPath(project_root) };
 		fs::create_directories(target);
 		if (fs::exists(source)) {
 			fs::remove_all(target);
-			fs::copy(source, target, fs::copy_options::overwrite_existing);
+			fs::copy(source, target, fs::copy_options::overwrite_existing | fs::copy_options::recursive);
 		}
 	}
 
@@ -317,13 +326,16 @@ namespace callisto {
 
 	void Builder::ensureCacheStructure(const Configuration& config) {
 		const auto project_root{ config.project_root.getOrThrow() };
-		fs::remove_all(PathUtil::getGlobuleImprintDirectoryPath(project_root));
-		fs::create_directories(PathUtil::getGlobuleImprintDirectoryPath(project_root));
-		fs::create_directories(PathUtil::getInsertedGlobulesDirectoryPath(project_root));
+
+		fs::remove_all(PathUtil::getUserModuleDirectoryPath(project_root));
+
+		fs::create_directories(PathUtil::getModuleCleanupDirectoryPath(project_root));
+		fs::create_directories(PathUtil::getModuleOldSymbolsDirectoryPath(project_root));
+		fs::create_directories(PathUtil::getUserModuleDirectoryPath(project_root));
 	}
 
 	void Builder::generateCallistoAsmFile(const Configuration& config) {
-		const auto globule_folder{ PathUtil::getGlobuleImprintDirectoryPath(config.project_root.getOrThrow()) };
+		const auto module_folder{ PathUtil::getUserModuleDirectoryPath(config.project_root.getOrThrow()) };
 
 		const auto info_string{ fmt::format(
 			"includeonce\n\n"
@@ -338,18 +350,18 @@ namespace callisto {
 			"!{}_{}_{} = {}\n"
 			"!{}_{}_{} = {}\n"
 			"!{}_{}_{} = {}\n\n"
-			"; Define containing path to callisto's globule imprint folder\n"
+			"; Define containing path to callisto's module imprint folder\n"
 			"!{}_{} = \"{}\"\n\n"
-			"macro call_globule(globule_label)\n"
+			"macro call_module(module_label)\n"
 			"\tPHB\n"
-			"\tLDA.b #<globule_label>>>16\n"
+			"\tLDA.b #<module_label>>>16\n"
 			"\tPHA\n"
 			"\tPLB\n"
-			"\tJSL <globule_label>\n"
+			"\tJSL <module_label>\n"
 			"\tPLB\n"
 			"endmacro\n\n"
-			"macro include_globule(globule_name)\n"
-			"\tincsrc \"!{}_{}/<globule_name>\"\n"
+			"macro include_module(module_name)\n"
+			"\tincsrc \"!{}_{}/<module_name>\"\n"
 			"endmacro\n",
 			DEFINE_PREFIX, PROFILE_DEFINE_NAME, config.config_name.getOrThrow(),
 			DEFINE_PREFIX, ASSEMBLING_DEFINE_NAME,
@@ -357,8 +369,8 @@ namespace callisto {
 			DEFINE_PREFIX, VERSION_DEFINE_NAME, MAJOR_VERSION_DEFINE_NAME, CALLISTO_VERSION_MAJOR,
 			DEFINE_PREFIX, VERSION_DEFINE_NAME, MINOR_VERSION_DEFINE_NAME, CALLISTO_VERSION_MINOR,
 			DEFINE_PREFIX, VERSION_DEFINE_NAME, PATCH_VERSION_DEFINE_NAME, CALLISTO_VERSION_PATCH,
-			DEFINE_PREFIX, GLOBULE_FOLDER_PATH_DEFINE_NAME, PathUtil::convertToPosixPath(globule_folder).string(),
-			DEFINE_PREFIX, GLOBULE_FOLDER_PATH_DEFINE_NAME
+			DEFINE_PREFIX, MODULE_FOLDER_PATH_DEFINE_NAME, PathUtil::convertToPosixPath(module_folder).string(),
+			DEFINE_PREFIX, MODULE_FOLDER_PATH_DEFINE_NAME
 		) };
 
 		writeIfDifferent(info_string, PathUtil::getCallistoAsmFilePath(config.project_root.getOrThrow()));

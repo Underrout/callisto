@@ -21,8 +21,11 @@ using json = nlohmann::json;
 
 namespace callisto {
 	class ConfigurationDependency {
+	public:
+		using ValueType = std::variant<std::monostate, std::string, bool, std::vector<fs::path>>;
+
 	protected:
-		std::variant<std::monostate, std::string, bool> getValue(const json& j) {
+		ValueType getValue(const json& j) {
 			if (j["value"].is_null()) {
 				return {};
 			}
@@ -33,16 +36,23 @@ namespace callisto {
 				else if (j["value"].is_boolean()) {
 					return { j["value"].get<bool>() };
 				}
+				else if (j["value"].is_array()) {
+					std::vector<fs::path> paths{};
+					for (const auto& v : j["value"]) {
+						paths.push_back(v.get<std::string>());
+					}
+					return paths;
+				}
 			}
 		}
 
 	public:
 		const std::string config_keys;
-		const std::variant<std::monostate, std::string, bool> value;
+		const ValueType value;
 		const Policy policy;
 
 		ConfigurationDependency(const std::string& config_keys, 
-		const std::variant<std::monostate, std::string, bool> value, Policy policy)
+		const ValueType value, Policy policy)
 			: config_keys(config_keys), value(value), policy(policy) {}
 
 		ConfigurationDependency(const json& j) 
@@ -56,8 +66,15 @@ namespace callisto {
 				if (std::holds_alternative<std::string>(value)) {
 					j["value"] = std::get<std::string>(value);
 				}
-				else {
+				else if (std::holds_alternative<bool>(value)) {
 					j["value"] = std::get<bool>(value);
+				}
+				else if (std::holds_alternative<std::vector<fs::path>>(value)) {
+					j["value"] = std::vector<std::string>();
+
+					for (const auto& path : std::get<std::vector<fs::path>>(value)) {
+						j["value"].push_back(path.string());
+					}
 				}
 			}
 			else {

@@ -8,6 +8,7 @@
 #include <functional>
 #include <iostream>
 #include <sstream>
+#include <variant>
 
 #include <spdlog/spdlog.h>
 #include <toml.hpp>
@@ -24,10 +25,11 @@ namespace callisto {
 	template<typename T, typename V>
 	class ConfigVariable {
 	public:
-		const std::string name;
+		// TODO make this not public/not mutable probably
+		std::string name{};
+		const std::vector<std::variant<std::string, size_t>> keys;
 	
 	protected:
-		const std::vector<std::string> keys;
 		std::unordered_map<ConfigurationLevel, V> values{};
 
 		std::optional<toml::value> getTomlValue(const toml::value& table) const {
@@ -35,12 +37,17 @@ namespace callisto {
 
 			try {
 				for (const auto& key : keys) {
-					value = std::ref(toml::find(value.get(), key));
+					if (std::holds_alternative<std::string>(key)) {
+						value = std::ref(toml::find(value.get(), std::get<std::string>(key)));
+					}
+					else {
+						value = std::ref(toml::get<toml::array>(value.get())[std::get<size_t>(key)]);
+					}
 				}
 			}
 			catch (const std::out_of_range&) {
 				// at least one of the keys was not present
-				return std::nullopt;
+				return {};
 			}
 
 			return value.get();
@@ -197,13 +204,27 @@ namespace callisto {
 			}
 		}
 
+		void forceSet(const V& value, ConfigurationLevel level) {
+			values.insert({ level, value });
+		}
+
 		bool isSet() const {
 			return !values.empty();
 		}
 
-		ConfigVariable(const std::vector<std::string>& keys) : keys(keys), 
-			name(std::accumulate(keys.begin(), keys.end(), std::string(), 
-				[](const auto& s1, const auto& s2) { return s1.empty() ? s2 : s1 + '.' + s2; })) {}
+		ConfigVariable(const std::vector<std::variant<std::string, size_t>>& keys) : keys(keys) {
+			for (const auto& key : keys) {
+				if (std::holds_alternative<std::string>(key)) {
+					if (!name.empty()) {
+						name += '.';
+					}
+					name += std::get<std::string>(key);
+				}
+				else {
+					name += '[' + std::to_string(std::get<size_t>(key)) + ']';
+				}
+			}
+		}
 	};
 
 	class PathConfigVariable : public ConfigVariable<toml::string, fs::path> {
@@ -250,6 +271,9 @@ namespace callisto {
 	class ExtendablePathVectorConfigVariable : public ConfigVariable<toml::array, std::vector<fs::path>> {
 	public:
 		bool trySet(const toml::value& table, ConfigurationLevel level, const PathConfigVariable& relative_to,
+			const std::map<std::string, std::string>& user_variables);
+
+		bool trySet(const toml::value& table, ConfigurationLevel level, const fs::path& relative_to,
 			const std::map<std::string, std::string>& user_variables);
 
 		std::vector<fs::path> getOrThrow() const override;

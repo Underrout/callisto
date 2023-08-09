@@ -10,9 +10,14 @@ namespace callisto {
 	class PathUtil {
 	private:
 		static constexpr auto CALLISTO_DIRECTORY_NAME{ ".callisto" };
+
 		static constexpr auto CACHE_DIRECTORY_NAME{ ".cache" };
-		static constexpr auto GLOBULES_IMPRINT_DIRECTORY_NAME{ "globules" };
-		static constexpr auto INSERTED_GLOBULES_DIRECTORY_NAME{ "inserted_globules" };
+
+		static constexpr auto MODULES_DIRECTORY_NAME{ "modules" };
+		static constexpr auto MODULES_CLEANUP_DIRECTORY_NAME{ "cleanup" };
+		static constexpr auto MODULES_OLD_DIRECTORY_NAME{ "old" };
+		static constexpr auto MODULES_CURRENT_DIRECTORY_NAME{ "current" };
+
 		static constexpr auto BUILD_REPORT_FILE_NAME{ "build_report.json" };
 		static constexpr auto LAST_ROM_SYNC_TIME_FILE_NAME{ "last_rom_sync.json" };
 		static constexpr auto ASSEMBLY_INFO_FILE{ "callisto.asm" };
@@ -58,12 +63,20 @@ namespace callisto {
 			return getCallistoCachePath(project_root) / LAST_ROM_SYNC_TIME_FILE_NAME;
 		}
 
-		static fs::path getGlobuleImprintDirectoryPath(const fs::path& project_root) {
-			return getCallistoDirectoryPath(project_root) / GLOBULES_IMPRINT_DIRECTORY_NAME;
+		static fs::path getModuleCacheDirectoryPath(const fs::path& project_root) {
+			return getCallistoCachePath(project_root) / MODULES_DIRECTORY_NAME;
 		}
 
-		static fs::path getInsertedGlobulesDirectoryPath(const fs::path& project_root) {
-			return getCallistoCachePath(project_root) / INSERTED_GLOBULES_DIRECTORY_NAME;
+		static fs::path getModuleOldSymbolsDirectoryPath(const fs::path& project_root) {
+			return getModuleCacheDirectoryPath(project_root) / MODULES_OLD_DIRECTORY_NAME;
+		}
+
+		static fs::path getModuleCleanupDirectoryPath(const fs::path& project_root) {
+			return getModuleCacheDirectoryPath(project_root) / MODULES_CLEANUP_DIRECTORY_NAME;
+		}
+
+		static fs::path getUserModuleDirectoryPath(const fs::path& project_root) {
+			return getCallistoDirectoryPath(project_root) / MODULES_DIRECTORY_NAME;
 		}
 
 		static fs::path getCallistoAsmFilePath(const fs::path& project_root) {

@@ -14,7 +14,7 @@ namespace callisto {
 		GLOBAL_EX_ANIMATION,
 		LEVELS,
 		PATCH,
-		GLOBULE,
+		MODULE,
 		EXTERNAL_TOOL
 	};
 }

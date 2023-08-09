@@ -76,7 +76,7 @@ list(APPEND CALLISTO_SOURCE_FILES
  "insertables/binary_map16.h" "insertables/binary_map16.cpp" "insertables/text_map16.h" "insertables/text_map16.cpp" 
     "insertables/external_tool.h" "insertables/external_tool.cpp" "insertables/patch.h" "insertables/patch.cpp"
 "configuration/config_exception.h" "configuration/config_variable.cpp" "configuration/config_variable.h" "configuration/configuration.h"
-"configuration/configuration_level.h" "configuration/configuration.cpp" "configuration/tool_configuration.h" "configuration/emulator_configuration.h" "insertables/globule.h"  "insertables/globule.cpp" "configuration/configuration_manager.h" "configuration/configuration_manager.cpp" 
+"configuration/configuration_level.h" "configuration/configuration.cpp" "configuration/tool_configuration.h" "configuration/emulator_configuration.h" "insertables/module.h"  "insertables/module.cpp" "configuration/configuration_manager.h" "configuration/configuration_manager.cpp" 
 "dependency/resource_dependency.h" "dependency/dependency_exception.h" "builders/builder.h" "builders/builder.cpp" "builders/rebuilder.h" "path_util.h" "builders/rebuilder.cpp" "symbol.h"
 "human_map16/arrays.h" "human_map16/data_error.h" "human_map16/filesystem_error.h" "human_map16/from_map16.cpp"
 "human_map16/header_error.h" "human_map16/human_map16_exception.h" "human_map16/human_readable_map16.cpp" "human_map16/human_readable_map16.h"
@@ -94,7 +94,7 @@ if (MSVC)
     "junction/libntfslinks/source/CharUtils.cpp")
 endif()
 
-add_executable (callisto ${CALLISTO_SOURCE_FILES} "recent_projects/recent_projects_manager.h" "cli/cli_handler.h" "prompt_util.h")
+add_executable (callisto ${CALLISTO_SOURCE_FILES} "recent_projects/recent_projects_manager.h" "cli/cli_handler.h" "prompt_util.h"  "configuration/module_configuration.h")
 target_link_options(callisto PRIVATE ${CALLISTO_LINK_OPTIONS})
 target_compile_options(callisto PRIVATE ${CALLISTO_COMPILE_OPTIONS})
 target_compile_definitions(callisto PRIVATE ${CALLISTO_COMPILE_DEFINITIONS})
@@ -175,11 +175,19 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(fmt)
 
+FetchContent_Declare(
+        ordered_map
+        GIT_REPOSITORY https://github.com/Tessil/ordered-map.git
+        GIT_TAG v1.1.0
+)
+FetchContent_MakeAvailable(ordered_map)
+
 target_link_libraries(callisto PRIVATE nlohmann_json::nlohmann_json)
 target_link_libraries(callisto PUBLIC CLI11::CLI11)
 target_link_libraries(callisto PUBLIC toml11::toml11)
 target_link_libraries(callisto PUBLIC spdlog::spdlog)
 target_link_libraries(callisto PRIVATE Boost::system Boost::filesystem Boost::thread Boost::program_options)
+target_link_libraries(callisto PUBLIC ordered_map)
 target_link_libraries(callisto PRIVATE fmt::fmt)
 target_link_libraries(callisto PUBLIC platform_folders)
 target_link_libraries(callisto
@@ -223,6 +231,10 @@ add_custom_command(TARGET callisto POST_BUILD
     "${CMAKE_CURRENT_SOURCE_DIR}/variables.toml" $<TARGET_FILE_DIR:callisto>
 )
 
+add_custom_command(TARGET callisto POST_BUILD 
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+    "${CMAKE_CURRENT_SOURCE_DIR}/modules.toml" $<TARGET_FILE_DIR:callisto>
+)
 
 add_custom_command(TARGET callisto POST_BUILD 
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
@@ -233,4 +245,3 @@ add_custom_command(TARGET callisto POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
     "${CMAKE_CURRENT_SOURCE_DIR}/LICENSE" $<TARGET_FILE_DIR:callisto>
 )
-

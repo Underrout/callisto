@@ -1,0 +1,15 @@
+[resources]
+
+# File that is incsrc'd just prior to any module during insertion
+# May be useful for SA-1 defines and similar stuff
+module_header = "path/to/my/header.asm"
+
+
+# List of modules to insert
+modules = [
+    # { input_path = "resources/modules/binary/uncompressed_exgfx.bin" },
+    # { input_path = "resources/modules/code/teleport.asm" },
+
+    # { input_path = "resources/modules/binary/large_table.asm", output_paths = [ "binaries/my_large_table.asm", "other/random/place.asm" ] },
+    # { input_path = "resources/modules/code/reset.asm", output_paths = [ "code/reset.asm", "code/also/accessible/here.asm"] }
+]
