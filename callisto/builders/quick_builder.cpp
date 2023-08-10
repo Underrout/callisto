@@ -181,7 +181,7 @@ namespace callisto {
 			spdlog::info("Quickbuild finished successfully in {}!", TimeUtil::getDurationString(build_end - build_start));
 		}
 		else {
-			spdlog::info("Everything already up to date!");
+			spdlog::info("Everything already up to date, no work for me to do -.-");
 		}
 	}
 

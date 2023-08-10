@@ -455,7 +455,13 @@ namespace callisto {
 			return;
 		}
 
-		markerSafeguard("Rebuild", [=] { Rebuilder rebuilder{}; rebuilder.build(*config); });
+		markerSafeguard("Rebuild", [=] { 
+			Rebuilder rebuilder{}; 
+			rebuilder.build(*config);
+#ifdef _WIN32
+			lunar_magic_wrapper.reloadRom(config->output_rom.getOrThrow());
+#endif
+		});
 	}
 
 	void TUI::quickbuildButton() {
@@ -476,6 +482,9 @@ namespace callisto {
 				Rebuilder rebuilder{};
 				rebuilder.build(*config);
 			}
+#ifdef _WIN32
+			lunar_magic_wrapper.reloadRom(config->output_rom.getOrThrow());
+#endif
 		});
 	}
 
@@ -552,10 +561,16 @@ namespace callisto {
 		}
 
 		try {
+#ifndef _WIN32
 			bp::spawn(fmt::format(
 				"\"{}\" \"{}\"",
 				config->lunar_magic_path.getOrThrow().string(), config->output_rom.getOrThrow().string()
 			));
+#else
+			if (lunar_magic_wrapper.bringToFront() == LunarMagicWrapper::Result::NO_INSTANCE) {
+				lunar_magic_wrapper.openLunarMagic(callisto_executable, config->lunar_magic_path.getOrThrow(), config->output_rom.getOrThrow());
+			}
+#endif
 		}
 		catch (const std::exception& e) {
 			showModal("Error", fmt::format("Failed to launch Lunar Magic with exception:\n{}", e.what()));
