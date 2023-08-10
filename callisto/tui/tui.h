@@ -31,6 +31,8 @@
 
 #include "../path_util.h"
 
+#include "../lunar_magic/lunar_magic_wrapper.h"
+
 using namespace ftxui;
 
 namespace fs = std::filesystem;
@@ -40,6 +42,10 @@ namespace callisto {
 	class TUI {
 	protected:
 		RecentProjectsManager recent_projects;
+
+#ifdef _WIN32
+		LunarMagicWrapper lunar_magic_wrapper{};
+#endif
 
 		ConfigurationManager config_manager;
 		std::shared_ptr<Configuration> config;

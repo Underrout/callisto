@@ -39,6 +39,6 @@ namespace callisto {
 		static void expandRom(const Configuration& config);
 
 	public:
-		void build(const Configuration& config) override;
+		void build(const Configuration& config);
 	};
 }
