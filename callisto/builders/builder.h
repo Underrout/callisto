@@ -87,8 +87,5 @@ namespace callisto {
 		static void writeIfDifferent(const std::string& str, const fs::path& out_file);
 
 		static void removeBuildReport(const fs::path& project_root);
-
-	public:
-		virtual void build(const Configuration& config) = 0;
 	};
 }
