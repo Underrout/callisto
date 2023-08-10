@@ -15,7 +15,7 @@ namespace callisto {
 		build_report.close();
 	}
 
-	void QuickBuilder::build(const Configuration& config) {
+	QuickBuilder::Result QuickBuilder::build(const Configuration& config) {
 		const auto build_start{ std::chrono::high_resolution_clock::now() };
 
 		spdlog::info("Quick Build started");
@@ -179,9 +179,11 @@ namespace callisto {
 			const auto build_end{ std::chrono::high_resolution_clock::now() };
 
 			spdlog::info("Quickbuild finished successfully in {}!", TimeUtil::getDurationString(build_end - build_start));
+			return Result::SUCCESS;
 		}
 		else {
 			spdlog::info("Everything already up to date, no work for me to do -.-");
+			return Result::NO_WORK;
 		}
 	}
 

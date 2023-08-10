@@ -11,6 +11,11 @@
 
 namespace callisto {
 	class QuickBuilder : public Builder {
+	public:
+		enum class Result {
+			SUCCESS,
+			NO_WORK
+		};
 	protected:
 		static constexpr auto MAX_ROM_SIZE = 16 * 1024 * 1024;
 
@@ -32,7 +37,7 @@ namespace callisto {
 			const std::vector<std::pair<size_t, size_t>>& new_hijacks);
 
 	public:
-		void build(const Configuration& config) override;
+		Result build(const Configuration& config);
 
 		QuickBuilder(const fs::path& project_root);
 	};

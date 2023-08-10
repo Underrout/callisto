@@ -458,9 +458,7 @@ namespace callisto {
 		markerSafeguard("Rebuild", [=] { 
 			Rebuilder rebuilder{}; 
 			rebuilder.build(*config);
-#ifdef _WIN32
 			lunar_magic_wrapper.reloadRom(config->output_rom.getOrThrow());
-#endif
 		});
 	}
 
@@ -475,16 +473,17 @@ namespace callisto {
 		markerSafeguard("Quickbuild", [=] {
 			try {
 				QuickBuilder quick_builder{ config->project_root.getOrThrow() };
-				quick_builder.build(*config);
+				const auto result{ quick_builder.build(*config) };
+				if (result == QuickBuilder::Result::SUCCESS) {
+					lunar_magic_wrapper.reloadRom(config->output_rom.getOrThrow());
+				}
 			}
 			catch (const MustRebuildException& e) {
 				spdlog::info("Quickbuild cannot continue due to the following reason, rebuilding ROM:\n\r{}", e.what());
 				Rebuilder rebuilder{};
 				rebuilder.build(*config);
+				lunar_magic_wrapper.reloadRom(config->output_rom.getOrThrow());
 			}
-#ifdef _WIN32
-			lunar_magic_wrapper.reloadRom(config->output_rom.getOrThrow());
-#endif
 		});
 	}
 
@@ -561,16 +560,7 @@ namespace callisto {
 		}
 
 		try {
-#ifndef _WIN32
-			bp::spawn(fmt::format(
-				"\"{}\" \"{}\"",
-				config->lunar_magic_path.getOrThrow().string(), config->output_rom.getOrThrow().string()
-			));
-#else
-			if (lunar_magic_wrapper.bringToFront() == LunarMagicWrapper::Result::NO_INSTANCE) {
-				lunar_magic_wrapper.openLunarMagic(callisto_executable, config->lunar_magic_path.getOrThrow(), config->output_rom.getOrThrow());
-			}
-#endif
+			lunar_magic_wrapper.bringToFrontOrOpen(callisto_executable, config->lunar_magic_path.getOrThrow(), config->output_rom.getOrThrow());
 		}
 		catch (const std::exception& e) {
 			showModal("Error", fmt::format("Failed to launch Lunar Magic with exception:\n{}", e.what()));
@@ -578,6 +568,7 @@ namespace callisto {
 	}
 
 	Component TUI::wrapMenuInEventCatcher(Component full_menu) {
+
 		return CatchEvent(full_menu, [&](Event event) {
 			if (event.is_mouse()) {
 				return true;

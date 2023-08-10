@@ -1,8 +1,7 @@
-#ifdef _WIN32
-
 #include "lunar_magic_wrapper.h"
 
 namespace callisto {
+#ifdef _WIN32
 	std::pair<HWND, uint16_t> LunarMagicWrapper::extractHandleAndVerificationCode(const std::string& lm_string) {
 		const auto colon{ lm_string.find(':') };
 
@@ -14,24 +13,7 @@ namespace callisto {
 
 		return { hwnd, verification_code };
 	}
-
-	void LunarMagicWrapper::setUpSharedMemory() {
-		shared_memory_name = determineSharedMemoryName();
-
-		shared_memory_object = bi::shared_memory_object(
-			bi::create_only,
-			shared_memory_name.data(),
-			bi::read_write
-		);
-
-		shared_memory_object.truncate(sizeof(SharedMemory));
-
-		mapped_region = bi::mapped_region(shared_memory_object, bi::read_write);
-
-		void* addr = mapped_region.get_address();
-
-		shared_memory = new (addr) SharedMemory;
-	}
+#endif
 
 	fs::path LunarMagicWrapper::getUsertoolbarPath(const fs::path& lunar_magic_path) {
 		return lunar_magic_path.parent_path() / LM_USERTOOLBAR_FILE;
@@ -46,27 +28,27 @@ namespace callisto {
 		return process;
 	}
 
-	bp::child LunarMagicWrapper::launchInjectedLunarMagic(const fs::path& callisto_path, const fs::path& lunar_magic_path, const fs::path& rom_to_open) {
+	void LunarMagicWrapper::launchInjectedLunarMagic(const fs::path& callisto_path, const fs::path& lunar_magic_path, const fs::path& rom_to_open) {
 		const auto usertoolbar_path{ getUsertoolbarPath(lunar_magic_path) };
-		appendInjectionStringToUsertoolbar(callisto_path, usertoolbar_path);
+
+		ProcessInfo process_info{};
+
+		appendInjectionStringToUsertoolbar(process_info.getSharedMemoryName(), callisto_path, usertoolbar_path);
 
 		auto lunar_magic{ launchLunarMagic(lunar_magic_path, rom_to_open) };
 
-		return lunar_magic;
+		lunar_magic_processes.emplace_back(std::move(lunar_magic), std::move(process_info));
 	}
 
-	std::string LunarMagicWrapper::determineSharedMemoryName() {
-		return fmt::format(SHARED_MEMORY_NAME, std::chrono::high_resolution_clock::now().time_since_epoch().count());
-	}
-
-	void LunarMagicWrapper::appendInjectionStringToUsertoolbar(const fs::path& callisto_path, const fs::path& usertoolbar_path){
+	void LunarMagicWrapper::appendInjectionStringToUsertoolbar(const std::string& shared_memory_name, const fs::path& callisto_path, const fs::path& usertoolbar_path){
 		const auto injection_string{ fmt::format(
 			LM_USERBAR_TEXT, CALLISTO_MAGIC_MARKER, callisto_path.string(), shared_memory_name, usertoolbar_path.string()) };
 
 		spdlog::debug("Adding injection string to Lunar Magic's usertoolbar.txt at {}:\n\r{}", usertoolbar_path.string(), injection_string);
 
+		const auto file_exists{ fs::exists(usertoolbar_path) };
 		std::ofstream stream{ usertoolbar_path, std::ios_base::out | std::ios_base::app };
-		if (fs::exists(usertoolbar_path)) {
+		if (file_exists) {
 			stream << '\n';
 		}
 		stream << injection_string;
@@ -77,13 +59,21 @@ namespace callisto {
 		std::ostringstream out{};
 		std::ifstream usertoolbar_file{ usertoolbar_path };
 		std::string line;
+		bool first{ true };
 		while (std::getline(usertoolbar_file, line)) {
 			if (line == CALLISTO_MAGIC_MARKER) {
 				spdlog::debug("Magic marker line found");
 				break;
 			}
 
-			out << line << std::endl;
+			if (first) {
+				first = false;
+			}
+			else {
+				out << std::endl;
+			}
+
+			out << line;
 		}
 		usertoolbar_file.close();
 
@@ -100,87 +90,126 @@ namespace callisto {
 		}
 	}
 
-	bool LunarMagicWrapper::tryPopulateFromSharedMemory() {
-		spdlog::debug("Attempting to populate Lunar Magic info from shared memory");
-		
-		bi::scoped_lock<bi::interprocess_mutex>(shared_memory->mutex);
+	void LunarMagicWrapper::cleanClosedInstances() {
+		auto it{ lunar_magic_processes.begin() };
+		while (it != lunar_magic_processes.end()) {
+			if (!it->first.running()) {
+				it = lunar_magic_processes.erase(it);
+			}
+			else {
+				++it;
+			}
+		}
+	}
 
-		if (!shared_memory->set) {
-			spdlog::debug("No shared memory set yet");
-			return false;
+	LunarMagicWrapper::LunarMagicProcessVector::iterator LunarMagicWrapper::getLunarMagicWithRomOpen(const fs::path& desired_rom) {
+		cleanClosedInstances();
+
+		auto it{ lunar_magic_processes.begin() };
+		while (it != lunar_magic_processes.end()) {
+			const auto open_rom{ it->second.getCurrentLunarMagicRomPath() };
+			if (open_rom.has_value() && open_rom.value() == desired_rom) {
+				return it;
+			}
+			++it;
 		}
 
-		verification_code = shared_memory->verification_code;
-		lm_message_window = (HWND)shared_memory->hwnd;
-		current_rom = shared_memory->current_rom;
-
-		spdlog::debug(
-			"Shared memory was set, received:\n\r"
-			"verification_code = {:X}\n\r"
-			"lm_hwnd = {:X}\n\r"
-			"current_rom = {}",
-			verification_code.value(),
-			(uint32_t)lm_message_window.value(),
-			current_rom.string()
-		);
-
-		return true;
-	}
-
-	void LunarMagicWrapper::tearDownSharedMemory() {
-		bi::shared_memory_object::remove(shared_memory_name.data());
-	}
-
-	bool LunarMagicWrapper::isRunning() {
-		return lunar_magic_process.has_value() && lunar_magic_process.value().running();
-	}
-
-	LunarMagicWrapper::LunarMagicWrapper() {
-		setUpSharedMemory();
+		return lunar_magic_processes.end();
 	}
 
 	void LunarMagicWrapper::openLunarMagic(const fs::path& callisto_path, const fs::path& lunar_magic_path, const fs::path& rom_to_open) {
-		bi::scoped_lock<bi::interprocess_mutex>(shared_memory->mutex);
-		shared_memory->set = false;
-		shared_memory->usertoolbar_needs_cleaning = true;
-
-		lunar_magic_process = launchInjectedLunarMagic(callisto_path, lunar_magic_path, rom_to_open);
+		launchInjectedLunarMagic(callisto_path, lunar_magic_path, rom_to_open);
 	}
 
 	LunarMagicWrapper::Result LunarMagicWrapper::reloadRom(const fs::path& rom_to_reload) {
 		spdlog::debug("Attempting to reload ROM {}", rom_to_reload.string());
 
-		if (!isRunning()) {
-			spdlog::debug("Not reloading as no Lunar Magic instance running currently");
+#ifdef _WIN32
+		cleanClosedInstances();
+
+		if (lunar_magic_processes.empty()) {
+			spdlog::debug("Not reloading as no Lunar Magic instances running currently");
 			return Result::NO_INSTANCE;
 		}
 
-		if (!tryPopulateFromSharedMemory()) {
-			return Result::FAILURE;
+		bool reloaded_at_least_one{ false };
+		for (auto& [lm_process, process_info] : lunar_magic_processes) {
+			const auto current_rom{ process_info.getCurrentLunarMagicRomPath() };
+			if (!current_rom.has_value()) {
+				spdlog::debug("Unable to get current ROM of Lunar Magic process, skipping it");
+				continue;
+			}
+
+			if (rom_to_reload != current_rom.value()) {
+				spdlog::debug("Current ROM {} does not match ROM to reload {}, not reloading", current_rom.value().string(), rom_to_reload.string());
+				continue;
+			}
+
+			const auto lm_message_window{ process_info.getLunarMagicMessageWindowHandle() };
+			if (!lm_message_window.has_value()) {
+				spdlog::debug("Unable to get Lunar Magic message window handle for this process, skipping it");
+				continue;
+			}
+
+			const auto verification_code{ process_info.getLunarMagicVerificationCode() };
+			if (!verification_code.has_value()) {
+				spdlog::debug("Unable to get Lunar Magic verification code for this process, skipping it");
+				continue;
+			}
+
+			const auto result{ SendMessage(lm_message_window.value(), LM_MESSAGE_ID, 0, (verification_code.value() << 16) | LM_REQUEST_TYPE) };
+			reloaded_at_least_one = true;
 		}
 
-		if (rom_to_reload != current_rom) {
-			spdlog::debug("Current ROM {} does not match ROM to reload {}, not reloading", current_rom.string(), rom_to_reload.string());
+		if (reloaded_at_least_one) {
+			spdlog::info("Successfully reloaded ROM in Lunar Magic for you ^0^");
+			return Result::SUCCESS;
+		}
+		else {
 			return Result::NOT_PERFORMED;
 		}
 
-		const auto result{ SendMessage(lm_message_window.value(), LM_MESSAGE_ID, 0, (verification_code.value() << 16) | LM_REQUEST_TYPE) };
-
-		spdlog::info("Successfully reloaded ROM in Lunar Magic for you ^0^");
-
 		// LM seems to say nothing about the return value of the message, so I'm just ignoring it I guess
+#else
+		spdlog::info("Automatic ROM reloading is not supported on operating systems other than Windows, "
+			"please reload your ROM in Lunar Magic manually if you have it open!");
+#endif
+		return Result::SUCCESS;
 	}
 
-	LunarMagicWrapper::Result LunarMagicWrapper::bringToFront() {
+	void LunarMagicWrapper::bringToFrontOrOpen(const fs::path& callisto_path, const fs::path& lunar_magic_path, const fs::path& rom_to_open) {
 		spdlog::debug("Attempting to bring Lunar Magic window to front");
 
-		if (!isRunning()) {
-			return Result::NO_INSTANCE;
+#ifdef _WIN32
+		auto existing_instance{ getLunarMagicWithRomOpen(rom_to_open) };
+
+		if (existing_instance == lunar_magic_processes.end()) {
+			openLunarMagic(callisto_path, lunar_magic_path, rom_to_open);
+			return;
 		}
 
-		// TODO implement this
+		const auto potential_lm_window_handle{ existing_instance->second.getLunarMagicMessageWindowHandle() };
+		if (!potential_lm_window_handle.has_value()) {
+			spdlog::debug("Failed to get window handle of Lunar Magic message window, cannot bring window to front");
+			return;
+		}
 
-		return Result::SUCCESS;
+		const auto lm_main_window{ GetParent(potential_lm_window_handle.value()) };
+
+		ShowWindow(lm_main_window, SW_RESTORE);
+		SetForegroundWindow(lm_main_window);
+
+		spdlog::debug("Successfully brought main Lunar Magic window to front!");
+#else
+		auto existing_instance{ getLunarMagicWithRomOpen(rom_to_open) };
+
+		if (existing_instance == lunar_magic_processes.end()) {
+			openLunarMagic(callisto_path, lunar_magic_path, rom_to_open);
+		}
+		else {
+			spdlog::info("Bringing Lunar Magic window to top is only supported on Windows, please manually locate your Lunar Magic window!");
+		}
+#endif
 	}
 
 	void LunarMagicWrapper::communicate(const fs::path& current_rom, 
@@ -197,7 +226,7 @@ namespace callisto {
 		bi::mapped_region mapped_region{ shared_memory_object, bi::read_write };
 
 		void* addr{ mapped_region.get_address() };
-		auto shared_memory{ static_cast<SharedMemory*>(addr) };
+		auto shared_memory{ static_cast<ProcessInfo::SharedMemory*>(addr) };
 
 		spdlog::debug("Successfully set up writeable shared memory");
 
@@ -229,5 +258,3 @@ namespace callisto {
 		spdlog::debug("Successfully communicated with main callisto instance, exiting now!");
 	}
 }
-
-#endif
