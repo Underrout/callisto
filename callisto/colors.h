@@ -10,7 +10,7 @@ namespace callisto {
 			constexpr auto SUCCESS{ fmt::fg(fmt::color::light_green) | fmt::emphasis::bold };
 			constexpr auto PARTIAL_SUCCESS{ fmt::fg(fmt::color::light_green) };
 			constexpr auto NOTIFICATION{ fmt::fg(fmt::color::yellow) };
-			constexpr auto EXCEPTION{ fmt::fg(fmt::color::red) | fmt::emphasis::bold };
+			constexpr auto EXCEPTION{ fmt::fg(fmt::color::red) };
 			constexpr auto WARNING{ fmt::fg(fmt::color::orange) };
 			constexpr auto MISC{ fmt::fg(fmt::color::cyan) };
 		}
