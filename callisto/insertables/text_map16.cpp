@@ -9,6 +9,7 @@ namespace callisto {
 
 		if (!fs::exists(map16_folder_path)) {
 			throw ResourceNotFoundException(fmt::format(
+				colors::build::EXCEPTION,
 				"Map16 folder not found at {}",
 				map16_folder_path.string()
 			));
@@ -21,7 +22,7 @@ namespace callisto {
 
 	fs::path TextMap16::generateTemporaryMap16File() const
 	{
-		spdlog::info("Generating Map16 file");
+		spdlog::info(fmt::format(colors::build::REMARK, "Generating Map16 file"));
 		spdlog::debug(fmt::format(
 			"Generating temporary map16 file from map16 folder {}",
 			map16_folder_path.string(),
@@ -36,8 +37,8 @@ namespace callisto {
 		}
 		catch (HumanMap16Exception& e) {
 			fs::current_path(current_path);
-			spdlog::error(e.get_detailed_error_message());
-			throw InsertionException("Failed to convert map16 folder to file");
+			throw InsertionException(fmt::format(colors::build::EXCEPTION, "Failed to convert map16 folder to file with following exception:\n\r{}",
+				e.get_detailed_error_message()));
 		}
 
 		fs::current_path(current_path);
@@ -51,6 +52,7 @@ namespace callisto {
 		}
 		catch (const fs::filesystem_error&) {
 			spdlog::warn(fmt::format(
+				colors::build::WARNING,
 				"WARNING: Failed to delete temporary Map16 file {}",
 				getTemporaryMap16FilePath().string()
 			));

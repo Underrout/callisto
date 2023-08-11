@@ -6,6 +6,7 @@ namespace callisto {
 	{
 		if (!fs::exists(title_moves_path)) {
 			throw ResourceNotFoundException(fmt::format(
+				colors::build::EXCEPTION,
 				"Title Moves savestate not found at {}",
 				title_moves_path.string()
 			));
@@ -19,7 +20,7 @@ namespace callisto {
 	}
 
 	void TitleMoves::insert() {
-		spdlog::info("Inserting Title Moves");
+		spdlog::info(fmt::format(colors::build::REMARK, "Inserting Title Moves"));
 		spdlog::debug(fmt::format(
 			"Inserting Title Moves from {} into temporary ROM at {}",
 			title_moves_path.string(),
@@ -33,10 +34,11 @@ namespace callisto {
 		};
 
 		if (exit_code == 0) {
-			spdlog::info("Successfully inserted Title Moves!");
+			spdlog::info(fmt::format(colors::build::PARTIAL_SUCCESS, "Successfully inserted Title Moves!"));
 		}
 		else {
 			throw InsertionException(fmt::format(
+				colors::build::EXCEPTION,
 				"Failed to insert Title Moves from {} into temporary ROM at {}",
 				title_moves_path.string(),
 				temporary_rom_path.string()

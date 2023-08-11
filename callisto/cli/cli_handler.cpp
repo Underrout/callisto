@@ -6,7 +6,7 @@ namespace callisto {
 		ConfigurationManager config_manager{ callisto_directory };
 
 		spdlog::set_level(spdlog::level::info);
-		spdlog::set_pattern("[%^%l%$] %v");
+		spdlog::set_pattern("%v");
 
 		CLI::App app;
 		app.require_subcommand(1, 1);

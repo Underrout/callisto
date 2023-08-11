@@ -15,6 +15,7 @@ namespace callisto {
 
 		if (!fs::exists(project_graphics_folder_path)) {
 			throw ResourceNotFoundException(fmt::format(
+				colors::build::EXCEPTION,
 				"Graphics folder not found at {}",
 				project_graphics_folder_path.string()
 			));
@@ -32,10 +33,10 @@ namespace callisto {
 
 	void Graphics::insert() {
 		if (!fs::exists(project_graphics_folder_path)) {
-			throw InsertionException(fmt::format("No Graphics folder found at {}", project_graphics_folder_path.string()));
+			throw InsertionException(fmt::format(colors::build::EXCEPTION, "No Graphics folder found at {}", project_graphics_folder_path.string()));
 		}
 
-		spdlog::info("Inserting Graphics");
+		spdlog::info(fmt::format(colors::build::REMARK, "Inserting Graphics"));
 		spdlog::debug(fmt::format(
 			"Inserting Graphics from folder {} into temporary ROM {}",
 			project_graphics_folder_path.string(),
@@ -47,6 +48,7 @@ namespace callisto {
 		}
 		catch (const std::exception& e) {
 			throw InsertionException(fmt::format(
+				colors::build::EXCEPTION,
 				"Failed to insert Graphics from folder {} into temporary ROM {} with following exception:\n\r{}",
 				project_graphics_folder_path.string(),
 				temporary_rom_path.string(),
@@ -54,7 +56,7 @@ namespace callisto {
 			));
 		}
 
-		spdlog::info("Successfully inserted Graphics!");
+		spdlog::info(fmt::format(colors::build::PARTIAL_SUCCESS, "Successfully inserted Graphics!"));
 		spdlog::debug(fmt::format(
 			"Successfully inserted Graphics from folder {} into temporary ROM {}",
 			project_graphics_folder_path.string(),

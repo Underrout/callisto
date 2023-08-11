@@ -8,6 +8,8 @@
 #include "dependency/policy.h"
 #include "dependency/resource_dependency.h"
 
+#include "colors.h"
+
 namespace callisto {
 	class Insertable {
 	public:
@@ -22,6 +24,7 @@ namespace callisto {
 		static std::unordered_set<ResourceDependency> extractDependenciesFromReport(const fs::path& dependency_report_file_path) {
 			if (!fs::exists(dependency_report_file_path)) {
 				throw NoDependencyReportFound(fmt::format(
+					colors::build::NOTIFICATION,
 					"No dependency report found at {}",
 					dependency_report_file_path.string()
 				));

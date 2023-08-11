@@ -19,6 +19,7 @@ namespace callisto {
 
 		if (!fs::exists(flips_path)) {
 			throw ToolNotFoundException(fmt::format(
+				colors::build::EXCEPTION,
 				"FLIPS not found at {}",
 				flips_path.string()
 			));
@@ -26,6 +27,7 @@ namespace callisto {
 
 		if (!fs::exists(clean_rom_path)) {
 			throw NotFoundException(fmt::format(
+				colors::build::EXCEPTION,
 				"Clean ROM not found at {}",
 				clean_rom_path.string()
 			));
@@ -43,6 +45,7 @@ namespace callisto {
 	void FlipsInsertable::checkPatchExists() const {
 		if (!fs::exists(bps_patch_path)) {
 			throw ResourceNotFoundException(fmt::format(
+				colors::build::EXCEPTION,
 				"{} BPS patch not found at {}",
 				getResourceName(),
 				bps_patch_path.string()
@@ -96,6 +99,7 @@ namespace callisto {
 		}
 		else {
 			throw InsertionException(fmt::format(
+				colors::build::EXCEPTION,
 				"Failed to create temporary {} ROM at {} "
 				"from BPS patch at {} using the clean ROM from {}",
 				getResourceName(),
@@ -114,6 +118,7 @@ namespace callisto {
 		}
 		catch (const fs::filesystem_error&) {
 			spdlog::warn(fmt::format(
+				colors::build::WARNING,
 				"Failed to delete temporary {} ROM {}",
 				getResourceName(),
 				temporary_patch_path.string()
@@ -134,7 +139,7 @@ namespace callisto {
 	}
 
 	void FlipsInsertable::insert() {
-		spdlog::info(fmt::format("Inserting {}", getResourceName()));
+		spdlog::info(fmt::format(colors::build::REMARK, "Inserting {}", getResourceName()));
 		spdlog::debug(fmt::format(
 			"Inserting {} from BPS patch {} into temporary ROM {}",
 			getResourceName(),
@@ -151,7 +156,7 @@ namespace callisto {
 		deleteTemporaryPatchedRom(temporary_patched_rom_path);
 
 		if (transfer_result == 0) {
-			spdlog::info(fmt::format("Successfully inserted {}!", getResourceName()));
+			spdlog::info(fmt::format(colors::build::PARTIAL_SUCCESS, "Successfully inserted {}!", getResourceName()));
 			spdlog::debug(fmt::format(
 				"Successfully transferred {} from {} to temporary ROM {}",
 				getResourceName(),
@@ -161,6 +166,7 @@ namespace callisto {
 		}
 		else {
 			throw InsertionException(fmt::format(
+				colors::build::EXCEPTION,
 				"Failed to transfer {} from {} to temporary ROM {}",
 				getResourceName(),
 				temporary_patched_rom_path.string(),

@@ -72,7 +72,7 @@ list(APPEND CALLISTO_SOURCE_FILES
 "insertables/rom_insertable.h" "insertables/shared_palettes.h" "insertables/shared_palettes.cpp" 
 "insertables/flips_insertable.h" "insertables/flips_insertable.cpp" "insertables/overworld.h" 
  "insertables/title_screen.h"  "insertables/global_exanimation.h" "insertables/credits.h" 
- "insertables/title_moves.h" "insertables/title_moves.cpp"   
+ "insertables/title_moves.h" "insertables/title_moves.cpp" "colors.h"
  "insertables/binary_map16.h" "insertables/binary_map16.cpp" "insertables/text_map16.h" "insertables/text_map16.cpp" 
     "insertables/external_tool.h" "insertables/external_tool.cpp" "insertables/patch.h" "insertables/patch.cpp"
 "configuration/config_exception.h" "configuration/config_variable.cpp" "configuration/config_variable.h" "configuration/configuration.h"

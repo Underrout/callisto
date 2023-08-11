@@ -8,7 +8,7 @@ namespace callisto {
 		screen.SetCursor(ftxui::Screen::Cursor{ .shape = ftxui::Screen::Cursor::Shape::Hidden });
 
 		spdlog::set_level(spdlog::level::off);
-		spdlog::set_pattern("[%^%l%$] %v");
+		spdlog::set_pattern("%v");
 	}
 
 	Component TUI::getConfigOnlyButton(const std::string& button_text, Closure button_func) {

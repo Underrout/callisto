@@ -21,6 +21,8 @@
 
 #include "prompt_util.h"
 
+#include "colors.h"
+
 namespace fs = std::filesystem;
 namespace bp = boost::process;
 

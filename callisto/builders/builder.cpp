@@ -80,12 +80,12 @@ namespace callisto {
 			);
 		}
 		else {
-			throw ConfigException("Unknown build order symbol");
+			throw ConfigException(fmt::format(colors::build::EXCEPTION, "Unknown build order symbol"));
 		}
 	}
 
 	json Builder::createBuildReport(const Configuration& config, const json& dependency_report) {
-		spdlog::info("Creating build report");
+		spdlog::info(fmt::format(colors::build::MISC, "Creating build report"));
 		json report{};
 		report["dependencies"] = dependency_report;
 		report["file_format_version"] = BUILD_REPORT_VERSION;
@@ -115,6 +115,7 @@ namespace callisto {
 				}
 				catch (const std::exception& e) {
 					throw InsertionException(fmt::format(
+						colors::build::EXCEPTION,
 						"Failed to determine source level number of level file '{}' with exception:\n\r{}",
 						entry.path().string(), e.what()
 					));
@@ -136,14 +137,14 @@ namespace callisto {
 	}
 
 	void Builder::writeBuildReport(const fs::path& project_root, const json& j) {
-		spdlog::info("Writing build report");
+		spdlog::info(fmt::format(colors::build::MISC, "Writing build report"));
 		std::ofstream build_report{ PathUtil::getBuildReportPath(project_root) };
 		build_report << std::setw(4) << j << std::endl;
 		build_report.close();
 	}
 
 	void Builder::cacheModules(const fs::path& project_root) {
-		spdlog::info("Caching modules");
+		spdlog::info(fmt::format(colors::build::MISC, "Caching modules"));
 		const auto source{ PathUtil::getUserModuleDirectoryPath(project_root) };
 		const auto target{ PathUtil::getModuleOldSymbolsDirectoryPath(project_root) };
 		fs::create_directories(target);
@@ -154,7 +155,7 @@ namespace callisto {
 	}
 
 	void Builder::moveTempToOutput(const Configuration& config) {
-		spdlog::info("Moving temporary files to final output");
+		spdlog::info(fmt::format(colors::build::MISC, "Moving temporary files to final output"));
 		for (const auto& entry : fs::directory_iterator(config.temporary_folder.getOrThrow())) {
 			if (fs::is_regular_file(entry)) {
 				const auto file_name{ entry.path().stem().string() };
@@ -176,7 +177,8 @@ namespace callisto {
 							}
 							char input;
 							do {
-								spdlog::error("Failed to copy '{}' to '{}', try again? Y/N", source.string(), target.string());
+								spdlog::error(fmt::format(colors::build::EXCEPTION, 
+									"Failed to copy '{}' to '{}', try again? Y/N", source.string(), target.string()));
 								std::cin >> input;
 								std::cin.ignore((std::numeric_limits<std::streamsize>::max)());
 							} while (input != 'y' && input != 'Y' && input != 'n' && input != 'N');
@@ -191,7 +193,7 @@ namespace callisto {
 						fs::remove(source);
 					}
 					catch (const std::runtime_error&) {
-						spdlog::warn("Failed to remove temporary file '{}'", source.string());
+						spdlog::warn(fmt::format(colors::build::WARNING, "Failed to remove temporary file '{}'", source.string()));
 					}
 				}
 			}
@@ -199,7 +201,7 @@ namespace callisto {
 	}
 	
 	void Builder::init(const Configuration& config) {
-		spdlog::info("Initializing callisto directory");
+		spdlog::info(fmt::format(colors::build::MISC, "Initializing callisto directory\n"));
 		ensureCacheStructure(config);
 		generateCallistoAsmFile(config);
 		fs::create_directories(config.temporary_folder.getOrThrow());
@@ -208,7 +210,7 @@ namespace callisto {
 		tryConvenienceSetup(config);
 
 		if (config.levels.isSet() && fs::exists(config.levels.getOrThrow())) {
-			spdlog::info("Ensuring normalized level filenames");
+			spdlog::info(fmt::format(colors::build::MISC, "Ensuring normalized level filenames\n"));
 			Levels::normalizeMwls(config.levels.getOrThrow(), config.allow_user_input);
 		}
 	}
@@ -378,18 +380,17 @@ namespace callisto {
 
 	void Builder::checkCleanRom(const fs::path& clean_rom_path) {
 		if (!fs::exists(clean_rom_path)) {
-			throw InsertionException(fmt::format(
-				"No clean ROM found at '{}'", clean_rom_path.string()
-			));
+			throw InsertionException(fmt::format(colors::build::EXCEPTION, "No clean ROM found at '{}'", clean_rom_path.string()));
 		}
 
 		if (clean_rom_path.extension() != ".smc") {
-			spdlog::warn("Your clean ROM at '{}' does not have a .smc extension", clean_rom_path.string());
+			spdlog::warn(fmt::format(colors::build::WARNING, "Your clean ROM at '{}' does not have a .smc extension", clean_rom_path.string()));
 		}
 
 		const auto rom_size{ fs::file_size(clean_rom_path) };		
 		if (rom_size != CLEAN_ROM_SIZE && rom_size != CLEAN_ROM_SIZE + HEADER_SIZE) {
-			spdlog::warn("Your clean ROM at '{}' is not actually clean, as it has an incorrect size", clean_rom_path.string());
+			spdlog::warn(fmt::format(colors::build::WARNING, 
+				"Your clean ROM at '{}' is not actually clean, as it has an incorrect size", clean_rom_path.string()));
 			return;
 		}
 

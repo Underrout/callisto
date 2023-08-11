@@ -6,7 +6,7 @@ namespace callisto {
 			: LunarMagicExtractable(config, extracting_rom), map16_file_path(config.map16.getOrThrow()) {}
 
 		void BinaryMap16::extract() {
-			spdlog::info("Exporting Map16");
+			spdlog::info(fmt::format(colors::build::REMARK, "Exporting Map16"));
 			spdlog::debug(
 				"Exporting binary map16 file {} from ROM at {}",
 				map16_file_path.string(),
@@ -20,10 +20,11 @@ namespace callisto {
 			};
 
 			if (exit_code == 0) {
-				spdlog::info("Successfully exported Map16!");
+				spdlog::info(fmt::format(colors::build::PARTIAL_SUCCESS, "Successfully exported Map16!"));
 			}
 			else {
 				throw ExtractionException(fmt::format(
+					colors::build::EXCEPTION,
 					"Failed to export binary Map16 file {} from ROM {}",
 					map16_file_path.string(),
 					extracting_rom.string()

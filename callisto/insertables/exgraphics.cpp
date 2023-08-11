@@ -15,6 +15,7 @@ namespace callisto {
 
 		if (!fs::exists(project_exgraphics_folder_path)) {
 			throw ResourceNotFoundException(fmt::format(
+				colors::build::EXCEPTION,
 				"ExGraphics folder not found at {}",
 				project_exgraphics_folder_path.string()
 			));
@@ -35,7 +36,7 @@ namespace callisto {
 			throw InsertionException(fmt::format("No ExGraphics folder found at {}", project_exgraphics_folder_path.string()));
 		}
 
-		spdlog::info("Inserting ExGraphics");
+		spdlog::info(fmt::format(colors::build::REMARK, "Inserting ExGraphics"));
 		spdlog::debug(fmt::format(
 			"Inserting ExGraphics from folder {} into temporary ROM {}",
 			project_exgraphics_folder_path.string(),
@@ -47,6 +48,7 @@ namespace callisto {
 		}
 		catch (const std::exception& e) {
 			throw InsertionException(fmt::format(
+				colors::build::EXCEPTION,
 				"Failed to insert ExGraphics from folder {} into temporary ROM {} with following exception:\n\r{}",
 				project_exgraphics_folder_path.string(),
 				temporary_rom_path.string(),
@@ -54,7 +56,7 @@ namespace callisto {
 			));
 		}
 
-		spdlog::info("Successfully inserted ExGraphics!");
+		spdlog::info(fmt::format(colors::build::PARTIAL_SUCCESS, "Successfully inserted ExGraphics!"));
 		spdlog::debug(fmt::format(
 			"Successfully inserted ExGraphics from folder {} into temporary ROM {}",
 			project_exgraphics_folder_path.string(),

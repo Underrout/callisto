@@ -162,7 +162,7 @@ namespace callisto {
 		}
 
 		if (reloaded_at_least_one) {
-			spdlog::info("Successfully reloaded ROM in Lunar Magic for you ^0^");
+			spdlog::info(fmt::format(colors::build::REMARK, "Successfully reloaded ROM in Lunar Magic for you ^-^"));
 			return Result::SUCCESS;
 		}
 		else {
@@ -196,7 +196,9 @@ namespace callisto {
 
 		const auto lm_main_window{ GetParent(potential_lm_window_handle.value()) };
 
-		ShowWindow(lm_main_window, SW_RESTORE);
+		if (IsIconic(lm_main_window)) {
+			ShowWindow(lm_main_window, SW_RESTORE);
+		}
 		SetForegroundWindow(lm_main_window);
 
 		spdlog::debug("Successfully brought main Lunar Magic window to front!");

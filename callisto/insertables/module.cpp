@@ -19,6 +19,7 @@ namespace callisto {
 	{
 		if (!fs::exists(input_path)) {
 			throw ResourceNotFoundException(fmt::format(
+				colors::build::EXCEPTION,
 				"Module {} does not exist",
 				input_path.string()
 			));
@@ -26,8 +27,9 @@ namespace callisto {
 
 		if (!asar_init()) {
 			throw ToolNotFoundException(
+				fmt::format(colors::build::EXCEPTION,
 				"Asar library file not found, did you forget to copy it alongside callisto?"
-			);
+			));
 		}
 
 		for (const auto& output_path : output_paths) {
@@ -36,12 +38,12 @@ namespace callisto {
 
 		this->additional_include_paths.reserve(additional_include_paths.size());
 		std::transform(additional_include_paths.begin(), additional_include_paths.end(),
-			std::back_inserter(this->additional_include_paths),
-			[](const fs::path& path) {
-				char* copy{ new char[path.string().size()] };
-		std::strcpy(copy, path.string().c_str());
-		return copy;
-			});
+		std::back_inserter(this->additional_include_paths),
+		[](const fs::path& path) {
+			char* copy{ new char[path.string().size()] };
+			std::strcpy(copy, path.string().c_str());
+			return copy;
+		});
 	}
 
 	void Module::init() {
@@ -73,7 +75,7 @@ namespace callisto {
 		// delete potential previous dependency report
 		fs::remove(input_path.parent_path() / ".dependencies");
 
-		spdlog::info(fmt::format("Inserting module {}", project_relative_path.string()));
+		spdlog::info(fmt::format(colors::build::REMARK, "Inserting module {}", project_relative_path.string()));
 
 		memoryfile patch;
 		patch.path = "temp.asm";
@@ -126,8 +128,9 @@ namespace callisto {
 
 		if (!asar_init()) {
 			throw ToolNotFoundException(
+				fmt::format(colors::build::EXCEPTION,
 				"Asar library file not found, did you forget to copy it alongside callisto?"
-			);
+			));
 		}
 
 		asar_reset();
@@ -144,7 +147,7 @@ namespace callisto {
 			const auto warnings{ asar_getwarnings(&warning_count) };
 			bool missing_org_or_freespace{ false };
 			for (int i = 0; i != warning_count; ++i) {
-				spdlog::warn(warnings[i].fullerrdata);
+				spdlog::warn(fmt::format(colors::build::WARNING, warnings[i].fullerrdata));
 				if (warnings[i].errid == 1008) {
 					missing_org_or_freespace = true;
 				}
@@ -152,6 +155,7 @@ namespace callisto {
 
 			if (missing_org_or_freespace) {
 				throw InsertionException(fmt::format(
+					colors::build::EXCEPTION,
 					"Module {} is missing a freespace command",
 					project_relative_path.string()
 				));
@@ -164,7 +168,7 @@ namespace callisto {
 			std::ofstream out_rom{ temporary_rom_path, std::ios::out | std::ios::binary };
 			out_rom.write(rom_bytes.data(), rom_bytes.size());
 			out_rom.close();
-			spdlog::info(fmt::format("Successfully applied module {}!", project_relative_path.string()));
+			spdlog::info(fmt::format(colors::build::PARTIAL_SUCCESS, "Successfully applied module {}!", project_relative_path.string()));
 
 			emitOutputFiles();
 			emitPlainAddressFile();
@@ -185,6 +189,7 @@ namespace callisto {
 
 			fs::current_path(prev_folder);
 			throw InsertionException(fmt::format(
+				colors::build::EXCEPTION,
 				"Failed to apply module {} with the following error(s):\n\r{}",
 				project_relative_path.string(),
 				error_string.str()
@@ -219,6 +224,7 @@ namespace callisto {
 
 		if (label_number == 0) {
 			throw InsertionException(fmt::format(
+				colors::build::EXCEPTION,
 				"Module {} contains no labels, this will cause a freespace leak, please ensure your module contains at least one label",
 				module_name
 			));
@@ -227,6 +233,7 @@ namespace callisto {
 		if (input_path.extension() != ".asm") {
 			if (label_number > 1) {
 				throw InsertionException(fmt::format(
+					colors::build::EXCEPTION,
 					"Binary module {} unexpectedly contains more than one label",
 					module_name
 				));
@@ -330,6 +337,7 @@ namespace callisto {
 
 			if (!is_covered) {
 				throw InsertionException(fmt::format(
+					colors::build::EXCEPTION,
 					"Module {} contains at least one freespace block that does not contain any labels and thus cannot be cleaned up, "
 					"please ensure every freespace block in your module contains at least one label",
 					project_relative_path.string()
@@ -346,6 +354,7 @@ namespace callisto {
 
 			if (start < 0x80000) {
 				throw InsertionException(fmt::format(
+					colors::build::EXCEPTION,
 					"Module {} targets SNES address ${:06X} (unheadered), if this is not a mistake consider using a patch instead "
 					"as modules are not intended to modify original game code",
 					project_relative_path.string(), written_blocks[i].snesoffset
