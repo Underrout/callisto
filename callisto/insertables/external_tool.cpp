@@ -18,6 +18,7 @@ namespace callisto {
 
 		if (!fs::exists(tool_exe_path)) {
 			throw ToolNotFoundException(fmt::format(
+				colors::build::EXCEPTION,
 				"{} executable not found at {}",
 				tool_name,
 				tool_exe_path.string()
@@ -26,6 +27,7 @@ namespace callisto {
 
 		if (!fs::exists(working_directory)) {
 			throw NotFoundException(fmt::format(
+				colors::build::EXCEPTION,
 				"Working directory {} not found for {}",
 				working_directory.string(),
 				tool_name
@@ -34,6 +36,7 @@ namespace callisto {
 
 		if (!fs::exists(temporary_rom)) {
 			throw RomNotFoundException(fmt::format(
+				colors::build::EXCEPTION,
 				"Temporary ROM not found at {}",
 				temporary_rom.string()
 			));
@@ -42,11 +45,12 @@ namespace callisto {
 
 	std::unordered_set<ResourceDependency> ExternalTool::determineDependencies() {
 		if (!dependency_report_file_path.has_value()) {
-			throw DependencyException(fmt::format("No dependency report file specified for {}", tool_name));
+			throw DependencyException(fmt::format(colors::build::NOTIFICATION, "No dependency report file specified for {}", tool_name));
 		}
 
 		if (!fs::exists(dependency_report_file_path.value())) {
 			throw NoDependencyReportFound(fmt::format(
+				colors::build::NOTIFICATION,
 				"No dependency report file found at {}",
 				dependency_report_file_path.value().string()
 			));
@@ -73,7 +77,7 @@ namespace callisto {
 			fs::remove(dependency_report_file_path.value());
 		}
 
-		spdlog::info(fmt::format("Running {}", tool_name));
+		spdlog::info(fmt::format(colors::build::REMARK, "Running {}", tool_name));
 		spdlog::debug(fmt::format(
 			"Running {} using {} and options {}",
 			tool_name,
@@ -105,10 +109,11 @@ namespace callisto {
 		fs::current_path(prev_folder);
 
 		if (exit_code == 0) {
-			spdlog::info(fmt::format("Successfully ran {}!", tool_name));
+			spdlog::info(fmt::format(colors::build::PARTIAL_SUCCESS, "Successfully ran {}!", tool_name));
 		}
 		else {
 			throw InsertionException(fmt::format(
+				colors::build::EXCEPTION,
 				"Running {} failed",
 				tool_name
 			));

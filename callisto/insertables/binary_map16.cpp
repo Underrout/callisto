@@ -9,6 +9,7 @@ namespace callisto {
 
 		if (!fs::exists(map16_file_path)) {
 			throw ResourceNotFoundException(fmt::format(
+				colors::build::EXCEPTION,
 				"Binary Map16 file not found at {}",
 				map16_file_path.string()
 			));
@@ -22,7 +23,7 @@ namespace callisto {
 	}
 
 	void BinaryMap16::insert() {
-		spdlog::info("Inserting Map16");
+		spdlog::info(fmt::format(colors::build::REMARK, "Inserting Map16"));
 		spdlog::debug(fmt::format(
 			"Inserting binary map16 file at {} into temporary ROM at {}",
 			map16_file_path.string(),
@@ -36,10 +37,11 @@ namespace callisto {
 		};
 
 		if (exit_code == 0) {
-			spdlog::info("Successfully inserted Map16!");
+			spdlog::info(fmt::format(colors::build::PARTIAL_SUCCESS, "Successfully inserted Map16!"));
 		}
 		else {
 			throw InsertionException(fmt::format(
+				colors::build::EXCEPTION,
 				"Failed to insert binary Map16 file {} into temporary ROM {}",
 				map16_file_path.string(),
 				temporary_rom_path.string()

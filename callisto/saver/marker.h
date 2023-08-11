@@ -15,6 +15,8 @@
 #include "extractable_type.h"
 #include "../path_util.h"
 
+#include "../colors.h"
+
 using json = nlohmann::json;
 namespace fs = std::filesystem;
 

@@ -6,7 +6,7 @@ namespace callisto {
 			: LunarMagicExtractable(config, extracting_rom), config(config) {}
 
 		void ExGraphics::extract() {
-			spdlog::info("Exporting ExGraphics");
+			spdlog::info(fmt::format(colors::build::REMARK, "Exporting ExGraphics"));
 
 			const auto keep_symlink{ extracting_rom == config.output_rom.getOrThrow() };
 
@@ -15,6 +15,7 @@ namespace callisto {
 			}
 			catch (const std::exception& e) {
 				throw ExtractionException(fmt::format(
+					colors::build::EXCEPTION,
 					"Failed to export ExGraphics from ROM {} with exception:\n\r{}",
 					extracting_rom.string(),
 					e.what()

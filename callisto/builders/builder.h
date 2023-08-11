@@ -6,6 +6,8 @@
 
 #include "../configuration/configuration.h"
 
+#include "../colors.h"
+
 #include "../insertables/initial_patch.h"
 #include "../insertables/exgraphics.h"
 #include "../insertables/graphics.h"

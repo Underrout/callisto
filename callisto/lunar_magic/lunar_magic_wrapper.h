@@ -20,6 +20,8 @@ namespace fs = std::filesystem;
 
 #include "process_info.h"
 
+#include "../colors.h"
+
 namespace callisto {
 	class LunarMagicWrapper {
 	protected:
