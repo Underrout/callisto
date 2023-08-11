@@ -68,7 +68,7 @@ namespace callisto {
 		const auto patch_string{ getMarkerCheckPatch() };
 
 		if (!asar_init()) {
-			spdlog::warn("Failed to check ROM {} for marker string because asar not found", rom_path.string());
+			spdlog::warn(fmt::format(colors::build::WARNING, "Failed to check ROM {} for marker string because asar not found", rom_path.string()));
 		}
 
 		asar_reset();
@@ -130,7 +130,7 @@ namespace callisto {
 			}
 		}
 		else {
-			spdlog::warn("Failed to check ROM {} for marker string", rom_path.string());
+			spdlog::warn(fmt::format(colors::build::WARNING, "Failed to check ROM {} for marker string", rom_path.string()));
 			return {};
 		}
 	}
@@ -148,7 +148,7 @@ namespace callisto {
 		const auto patch_string{ getMarkerInsertionPatch(extractables, timestamp) };
 
 		if (!asar_init()) {
-			spdlog::warn("Failed to insert marker string into ROM {} because asar not found", rom_path.string());
+			spdlog::warn(fmt::format(colors::build::WARNING, "Failed to insert marker string into ROM {} because asar not found", rom_path.string()));
 		}
 
 		asar_reset();
@@ -194,7 +194,7 @@ namespace callisto {
 			out_rom.close();
 		}
 		else {
-			spdlog::warn("Failed to insert marker string into ROM {}", rom_path.string());
+			spdlog::warn(fmt::format(colors::build::WARNING, "Failed to insert marker string into ROM {}", rom_path.string()));
 		}
 	}
 

@@ -167,11 +167,24 @@ namespace callisto {
 	}
 
 	void GraphicsUtil::verifyFilename(const fs::path& file_path, bool exgfx) {
+		const std::string start{ exgfx ? "ExGFX" : "GFX" };
+
+		if (fs::is_directory(file_path)) {
+			throw VerificationException(fmt::format(
+				colors::build::EXCEPTION,
+				"Directory '{}' found inside {} directory, please remove the directory from your {} directory",
+				file_path.filename().string(), start, start
+			));
+		}
+
 		if (file_path.extension() != ".bin") {
-			return;
+			throw VerificationException(fmt::format(
+				colors::build::EXCEPTION,
+				"Non-bin file '{}' found inside {} directory, please remove the file from your {} directory",
+				file_path.filename().string(), start, start
+			));
 		}
 		
-		const std::string start{ exgfx ? "ExGFX" : "GFX" };
 		const auto filename{ file_path.stem().string() };
 
 		const VerificationException verification_exception{ fmt::format(

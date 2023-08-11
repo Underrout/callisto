@@ -14,7 +14,7 @@ namespace callisto {
 					fs::create_directories(levels_folder);
 				}
 				catch (const fs::filesystem_error&) {
-					throw ExtractionException(fmt::format("Failed to create levels directory {}", levels_folder.string()));
+					throw ExtractionException(fmt::format(colors::build::EXCEPTION, "Failed to create levels directory {}", levels_folder.string()));
 				}
 			}
 		}
@@ -106,7 +106,7 @@ namespace callisto {
 		}
 
 		void Levels::extract() {
-			spdlog::info("Exporting levels");
+			spdlog::info(fmt::format(colors::build::REMARK, "Exporting levels"));
 
 			fs::path temporary_levels_folder{ levels_folder.string() + "_temp" };
 			fs::remove_all(temporary_levels_folder);
@@ -146,6 +146,7 @@ namespace callisto {
 
 			if (std::all_of(exit_codes.begin(), exit_codes.end(), [](auto e) { return e == 0; })) {
 				spdlog::debug("Copying temporary folder {} to {}", temporary_levels_folder.string(), levels_folder.string());
+
 				fs::remove_all(levels_folder);
 				fs::copy(temporary_levels_folder, levels_folder);
 				fs::remove_all(temporary_levels_folder);

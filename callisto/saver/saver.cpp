@@ -175,10 +175,10 @@ namespace callisto {
 
 		if (!need_extraction.empty()) {
 			if (!force) {
-				spdlog::info("Some resources need to be exported, exporting them now");
+				spdlog::info(fmt::format(colors::build::NOTIFICATION, "Some resources need to be exported, exporting them now"));
 			}
 			else {
-				spdlog::info("Exporting all resources");
+				spdlog::info(fmt::format( colors::build::HEADER, "Exporting all resources"));
 			}
 			const auto export_start{ std::chrono::high_resolution_clock::now() };
 
@@ -188,13 +188,15 @@ namespace callisto {
 			const auto extractables{ getExtractables(config, need_extraction, rom_path) };
 
 			std::exception_ptr thread_exception{};
-			std::for_each(std::execution::par, extractables.begin(), extractables.end(), [&](auto&& extractable) { 
+			std::for_each(std::execution::par, extractables.begin(), extractables.end(), [&](auto&& extractable) {
+				spdlog::info("");
 				try {
-					extractable->extract(); 
+					extractable->extract();
 				}
 				catch (...) {
 					thread_exception = std::current_exception();
 				}
+				spdlog::info("");
 			});
 
 			if (thread_exception != nullptr) {
@@ -205,22 +207,22 @@ namespace callisto {
 				const auto potential_build_report{ PathUtil::getBuildReportPath(config.project_root.getOrThrow()) };
 
 				if (fs::exists(potential_build_report)) {
-					spdlog::info("Found a build report, updating it now");
+					spdlog::info(fmt::format(colors::build::MISC, "Found a build report, updating it now"));
 					try {
 						updateBuildReport(potential_build_report, need_extraction);
-						spdlog::info("Successfully updated build report!");
+						spdlog::info(fmt::format(colors::build::PARTIAL_SUCCESS, "Successfully updated build report!\n"));
 					}
 					catch (const std::exception& e) {
-						spdlog::warn("Failed to update build report with exception:\n{}", e.what());
+						spdlog::warn(fmt::format(colors::build::WARNING, "Failed to update build report with exception:\n\r{}", e.what()));
 					}
 				}
-				spdlog::info("Writing export marker to ROM");
+				spdlog::info(fmt::format(colors::build::MISC, "Writing export marker to ROM"));
 				try {
 					Saver::writeMarkerToRom(rom_path, config);
-					spdlog::info("Successfully wrote export marker to ROM!");
+					spdlog::info(fmt::format(colors::build::PARTIAL_SUCCESS, "Successfully wrote export marker to ROM!\n"));
 				}
 				catch (const std::exception& e) {
-					spdlog::warn("Failed to write export marker to ROM with exception:\n{}", e.what());
+					spdlog::warn(fmt::format(colors::build::WARNING, "Failed to write export marker to ROM with exception:\n\r{}", e.what()));
 				}
 			}
 
@@ -228,10 +230,11 @@ namespace callisto {
 
 			const auto export_end{ std::chrono::high_resolution_clock::now() };
 
-			spdlog::info("All resources exported successfully in {}!", TimeUtil::getDurationString(export_end - export_start));
+			spdlog::info(fmt::format(colors::build::SUCCESS, "All resources exported successfully in {}!",
+				TimeUtil::getDurationString(export_end - export_start)));
 		}
 		else {
-			spdlog::info("All resources already exported!");
+			spdlog::info(fmt::format(colors::build::NOTIFICATION, "All resources already up to date, nothing for me to export -.-"));
 		}
 	}
 }
