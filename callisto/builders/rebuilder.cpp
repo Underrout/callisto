@@ -6,7 +6,7 @@ namespace callisto {
 
 		spdlog::info(fmt::format(colors::build::HEADER, "Build started\n"));
 
-		spdlog::info(fmt::format(colors::build::MISC, "Checking clean ROM"));
+		spdlog::info(fmt::format(colors::build::MISC, "Checking clean ROM\n"));
 		checkCleanRom(config.clean_rom.getOrThrow());
 
 		init(config);
@@ -48,6 +48,7 @@ namespace callisto {
 		if (config.initial_patch.isSet()) {
 			InitialPatch initial_patch{ config };
 			const auto initial_patch_resource_dependencies{ initial_patch.insertWithDependencies() };
+			spdlog::info("");
 			const auto initial_patch_config_dependencies{ initial_patch.getConfigurationDependencies() };
 			dependencies.push_back({ Descriptor(Symbol::INITIAL_PATCH),
 				{ initial_patch_resource_dependencies, initial_patch_config_dependencies } });
@@ -455,6 +456,12 @@ namespace callisto {
 					config.output_rom.getOrThrow())).string(),
 				config.rom_size.getOrThrow()
 			) };
+			if (exit_code == 0) {
+				spdlog::info(fmt::format(colors::build::PARTIAL_SUCCESS, "Successfully expanded ROM!\n"));
+			}
+			else {
+				throw InsertionException(fmt::format(colors::build::EXCEPTION, "Failed to expand ROM to {}", config.rom_size.getOrThrow()));
+			}
 		}
 	}
 }
