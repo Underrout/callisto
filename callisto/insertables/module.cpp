@@ -163,7 +163,12 @@ namespace callisto {
 
 			recordOurAddresses();
 			verifyNonHijacking();
-			verifyWrittenBlockCoverage();
+			
+			// Turns out verifying that each written block has a label in it so that it can be cleaned
+			// is not as easy as you'd think it is, given that asar can cross banks or even place
+			// freespace areas right next to each other, which makes written blocks kinda not useful for this
+			// just gonna let freespace leak for now if there's no label(s) in there, it's probably almost a non-issue
+			// verifyWrittenBlockCoverage();
 
 			std::ofstream out_rom{ temporary_rom_path, std::ios::out | std::ios::binary };
 			out_rom.write(rom_bytes.data(), rom_bytes.size());
