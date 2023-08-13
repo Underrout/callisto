@@ -347,11 +347,22 @@ namespace callisto {
 			}
 
 			if (!is_covered) {
+				auto freespace_start{ freespace_area.front().start_snes + RATS_TAG_SIZE };
+				if ((freespace_start & 0xFFFF) < 0x8000) {
+					freespace_start += 0x8000;
+				}
+
+				const auto freespace_size{ std::accumulate(freespace_area.begin(), freespace_area.end(), 0, 
+					[](int val1, const WrittenBlock& val2) {
+					return val1 + val2.size;
+				}) - RATS_TAG_SIZE };
+
 				throw InsertionException(fmt::format(
 					colors::build::EXCEPTION,
-					"Module {} contains at least one freespace block that does not contain any labels and thus cannot be cleaned up, "
-					"please ensure every freespace block in your module contains at least one label",
-					project_relative_path.string()
+					"Module {} contains a freespace block of size 0x{:04X} starting at ${:06X} (unheadered), which does not "
+					"contain any labels, please ensure every freespace block in your modules contains at least one label so that they can be cleaned up by callisto",
+					project_relative_path.string(),
+					freespace_size, freespace_start
 				));
 			}
 		}
@@ -399,7 +410,9 @@ namespace callisto {
 		while (curr_block != written_blocks.end()) {
 			if (curr_freespace_size_left != 0 && curr_pc_offset != curr_block->start_pc) {
 				throw InsertionException(fmt::format(colors::build::EXCEPTION, 
-					"Invalid freespace continuation after bank cross"));
+					"Invalid freespace continuation at ${:06X} (unheadered), was expecting ${:06X} (unheadered), "
+					"still missing 0x{:04X} bytes for current freespace area", 
+					curr_block->start_snes, curr_snes_offset, curr_freespace_size_left));
 			}
 			else {
 				curr_pc_offset = curr_block->start_pc;
