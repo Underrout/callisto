@@ -18,7 +18,12 @@ set(CALLISTO_LINK_OPTIONS "")
 set(CALLISTO_COMPILE_OPTIONS "")
 set(CALLISTO_COMPILE_DEFINITIONS "")
 
-set(RC_CONTENTS "1 ICON \"callisto.ico\" 
+set(RC_CONTENTS "1 ICON \"icons\\callisto1.ico\" 
+2 ICON \"icons\\callisto2.ico\"
+3 ICON \"icons\\callisto3.ico\"
+4 ICON \"icons\\callisto4.ico\"
+5 ICON \"icons\\callisto5.ico\"
+6 ICON \"icons\\callisto6.ico\"
 1 VERSIONINFO 
       FILEVERSION     ${VERSION_MAJOR}, ${VERSION_MINOR}, ${VERSION_PATCH}, 0
       PRODUCTVERSION  ${VERSION_MAJOR}, ${VERSION_MINOR}, ${VERSION_PATCH}, 0
