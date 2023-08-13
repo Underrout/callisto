@@ -166,10 +166,6 @@ namespace callisto {
 			recordOurAddresses();
 			verifyNonHijacking();
 			
-			// Turns out verifying that each written block has a label in it so that it can be cleaned
-			// is not as easy as you'd think it is, given that asar can cross banks or even place
-			// freespace areas right next to each other, which makes written blocks kinda not useful for this
-			// just gonna let freespace leak for now if there's no label(s) in there, it's probably almost a non-issue
 			verifyWrittenBlockCoverage(rom_bytes);
 
 			std::ofstream out_rom{ temporary_rom_path, std::ios::out | std::ios::binary };
@@ -408,16 +404,8 @@ namespace callisto {
 		size_t curr_pc_offset{ 0 };
 		size_t curr_snes_offset{ 0 };
 		while (curr_block != written_blocks.end()) {
-			if (curr_freespace_size_left != 0 && curr_pc_offset != curr_block->start_pc) {
-				throw InsertionException(fmt::format(colors::build::EXCEPTION, 
-					"Invalid freespace continuation at ${:06X} (unheadered), was expecting ${:06X} (unheadered), "
-					"still missing 0x{:04X} bytes for current freespace area", 
-					curr_block->start_snes, curr_snes_offset, curr_freespace_size_left));
-			}
-			else {
-				curr_pc_offset = curr_block->start_pc;
-				curr_snes_offset = curr_block->start_snes;
-			}
+			curr_pc_offset = curr_block->start_pc;
+			curr_snes_offset = curr_block->start_snes;
 
 			auto size_left_in_curr_block{ curr_block->size };
 
@@ -439,16 +427,19 @@ namespace callisto {
 				size_left_in_curr_block -= served_by_block;
 				curr_pc_offset += served_by_block;
 				curr_snes_offset += served_by_block;
-
-				if (curr_freespace_size_left != 0) {
-					curr_snes_offset += 0x8000;
+			}
+			if (curr_freespace_size_left != 0) {
+				if ((curr_block->end_snes & 0xFFFF) != 0) {
+					// dropping "unused" freespace at end of a written block since
+					// asar apparently *will* reserve more space than it writes for
+					// some reason sometimes if, on the other hand, we just crossed 
+					// a bank border, we *do* need to keep track of the freespace 
+					// still, fun times
+					curr_freespace_size_left = 0;
 				}
 			}
-			++curr_block;
-		}
 
-		if (curr_freespace_size_left != 0) {
-			throw InsertionException(fmt::format(colors::build::EXCEPTION, "Not all freespace areas covered by RATS tags"));
+			++curr_block;
 		}
 
 		return freespace_areas;
