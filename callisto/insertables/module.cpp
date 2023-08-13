@@ -82,14 +82,16 @@ namespace callisto {
 		patch.buffer = patch_string.c_str();
 		patch.length = patch_string.size();
 
-		std::ifstream rom_file(temporary_rom_path, std::ios::in | std::ios::binary);
-		std::vector<char> rom_bytes((std::istreambuf_iterator<char>(rom_file)), (std::istreambuf_iterator<char>()));
+		const auto rom_size{ fs::file_size(temporary_rom_path) };
+		const auto header_size{ (int)rom_size & 0x7FFF };
+		int unheadered_rom_size{ (int)rom_size - header_size };
+
+		std::vector<char> rom_bytes(unheadered_rom_size);
+		std::vector<char> header(header_size);
+		std::ifstream rom_file(temporary_rom_path, std::ios::binary);
+		rom_file.read(reinterpret_cast<char*>(header.data()), header_size);
+		rom_file.read(reinterpret_cast<char*>(rom_bytes.data()), unheadered_rom_size);
 		rom_file.close();
-
-		int rom_size{ static_cast<int>(rom_bytes.size()) };
-		const auto header_size{ rom_size & 0x7FFF };
-
-		int unheadered_rom_size{ rom_size - header_size };
 
 		spdlog::debug(fmt::format(
 			"Applying module {} to temporary ROM {}:\n\r"
@@ -108,7 +110,7 @@ namespace callisto {
 		const patchparams params{
 			sizeof(struct patchparams),
 			"temp.asm",
-			rom_bytes.data() + header_size,
+			rom_bytes.data(),
 			MAX_ROM_SIZE,
 			&unheadered_rom_size,
 			reinterpret_cast<const char**>(additional_include_paths.data()),
@@ -168,10 +170,11 @@ namespace callisto {
 			// is not as easy as you'd think it is, given that asar can cross banks or even place
 			// freespace areas right next to each other, which makes written blocks kinda not useful for this
 			// just gonna let freespace leak for now if there's no label(s) in there, it's probably almost a non-issue
-			// verifyWrittenBlockCoverage();
+			verifyWrittenBlockCoverage(rom_bytes);
 
 			std::ofstream out_rom{ temporary_rom_path, std::ios::out | std::ios::binary };
-			out_rom.write(rom_bytes.data(), rom_bytes.size());
+			out_rom.write(header.data(), header_size);
+			out_rom.write(rom_bytes.data(), unheadered_rom_size);
 			out_rom.close();
 			spdlog::info(fmt::format(colors::build::PARTIAL_SUCCESS, "Successfully applied module {}!", project_relative_path.string()));
 
@@ -316,26 +319,29 @@ namespace callisto {
 		}
 	}
 
-	void Module::verifyWrittenBlockCoverage() const {
+	void Module::verifyWrittenBlockCoverage(const std::vector<char>& rom) const {
 		int label_count{};
 		const auto labels{ asar_getalllabels(&label_count) };
 
 		int block_count{};
 		const auto written_blocks{ asar_getwrittenblocks(&block_count) };
-		for (int i{ 0 }; i != block_count; ++i) {
-			const auto start{ written_blocks[i].snesoffset };
-
-			// this is probably imprecise and includes parts of the RATS tag, but who cares
-			const auto end{ start + written_blocks[i].numbytes };
-
+		const auto as_structs{ convertToWrittenBlockVector(written_blocks, block_count) };
+		const auto freespace_areas{ convertToFreespaceAreas(as_structs, rom) };
+		for (const auto& freespace_area : freespace_areas) {
 			bool is_covered{ false };
-			for (int j{ 0 }; j != label_count; ++j) {
-				// uggo but labels can have the bank byte be | $80 or not depending on how the user does things I think?
-				// not sure how this affects sa1 ROMs but I'm guessing it's a niche issue if anything (hopefully not wrong)
-				const auto location_low{ labels[j].location };
-				const auto location_high{ labels[j].location | 0x800000 };
-				if ((location_low >= start && location_low < end) || (location_high >= start && location_high < end)) {
-					is_covered = true;
+			for (const auto& written_block : freespace_area) {
+				for (int j{ 0 }; j != label_count; ++j) {
+					// uggo but labels can have the bank byte be | $80 or not depending on how the user does things I think?
+					// not sure how this affects sa1 ROMs but I'm guessing it's a niche issue if anything (hopefully not wrong)
+					const auto location_low{ labels[j].location };
+					const auto location_high{ labels[j].location | 0x800000 };
+					if ((location_low >= written_block.start_snes && location_low < written_block.end_snes) 
+						|| (location_high >= written_block.start_snes && location_high < written_block.end_snes)) {
+						is_covered = true;
+						break;
+					}
+				}
+				if (is_covered) {
 					break;
 				}
 			}
@@ -349,6 +355,90 @@ namespace callisto {
 				));
 			}
 		}
+	}
+
+	std::optional<uint16_t> Module::determineFreespaceBlockSize(size_t pc_address, const std::vector<char>& rom) {
+		char potential_tag[5];
+		strncpy(potential_tag, rom.data() + pc_address, 4);
+		potential_tag[4] = '\0';
+
+		if (std::string(potential_tag) != std::string(RATS_TAG_TEXT)) {
+			return {};
+		}
+
+		const auto potential_size{ (((unsigned char)rom[pc_address + 5]) << 8) | ((unsigned char)rom[pc_address + 4]) };
+		const auto potential_size_complement{ (((unsigned char)rom[pc_address + 7]) << 8) | ((unsigned char)rom[pc_address + 6]) };
+
+		if (potential_size + 1 != (potential_size_complement ^ 0xFFFF) + 1) {
+			return {};
+		}
+
+		return potential_size + 1;
+	}
+
+	std::vector<Module::WrittenBlock> Module::convertToWrittenBlockVector(const writtenblockdata* const written_blocks, int block_count) {
+		std::vector<WrittenBlock> written_block_vec{};
+		for (int i{ 0 }; i != block_count; ++i) {
+			const auto& written_block{ written_blocks[i] };
+			written_block_vec.push_back(WrittenBlock(written_block.pcoffset, written_block.snesoffset, written_block.numbytes));
+		}
+		std::sort(written_block_vec.begin(), written_block_vec.end(), [](const WrittenBlock& block1, const WrittenBlock& block2) {
+			// written blocks can't (shouldn't?) overlap, so this is probably fine
+			return block1.start_pc < block2.start_pc;
+		});
+		return written_block_vec;
+	}
+
+	std::vector<Module::FreespaceArea> Module::convertToFreespaceAreas(const std::vector<WrittenBlock>& written_blocks, const std::vector<char>& rom) {
+		std::vector<FreespaceArea> freespace_areas{};
+
+		auto curr_block{ written_blocks.begin() };
+		size_t curr_freespace_size_left{ 0 };
+		size_t curr_pc_offset{ 0 };
+		size_t curr_snes_offset{ 0 };
+		while (curr_block != written_blocks.end()) {
+			if (curr_freespace_size_left != 0 && curr_pc_offset != curr_block->start_pc) {
+				throw InsertionException(fmt::format(colors::build::EXCEPTION, 
+					"Invalid freespace continuation after bank cross"));
+			}
+			else {
+				curr_pc_offset = curr_block->start_pc;
+				curr_snes_offset = curr_block->start_snes;
+			}
+
+			auto size_left_in_curr_block{ curr_block->size };
+
+			while (size_left_in_curr_block != 0) {
+				if (curr_freespace_size_left == 0) {
+					freespace_areas.push_back(std::vector<WrittenBlock>());
+					const auto freespace_size{ determineFreespaceBlockSize(curr_pc_offset, rom) };
+					if (!freespace_size.has_value()) {
+						throw InsertionException(fmt::format(colors::build::EXCEPTION, "Freespace area at ${:06X} has invalid/no RATS tag", curr_pc_offset));
+					}
+					curr_freespace_size_left = freespace_size.value() + RATS_TAG_SIZE;
+				}
+
+				const auto served_by_block{ std::min(size_left_in_curr_block, curr_freespace_size_left) };
+
+				freespace_areas.back().emplace_back(curr_pc_offset, curr_snes_offset, served_by_block);
+
+				curr_freespace_size_left -= served_by_block;
+				size_left_in_curr_block -= served_by_block;
+				curr_pc_offset += served_by_block;
+				curr_snes_offset += served_by_block;
+
+				if (curr_freespace_size_left != 0) {
+					curr_snes_offset += 0x8000;
+				}
+			}
+			++curr_block;
+		}
+
+		if (curr_freespace_size_left != 0) {
+			throw InsertionException(fmt::format(colors::build::EXCEPTION, "Not all freespace areas covered by RATS tags"));
+		}
+
+		return freespace_areas;
 	}
 
 	void Module::verifyNonHijacking() const {
