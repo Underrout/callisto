@@ -373,7 +373,7 @@ namespace callisto {
 		trySetConfiguration();
 		
 		if (config == nullptr) {
-			showModal("Error", "Current configuration is not valid\nCannot package ROM");
+			showModal("Error", "Current configuration is not valid\nCannot package ROM\nUse 'Reload configuration' for a more detailed error message");
 			return;
 		}
 
@@ -451,7 +451,7 @@ namespace callisto {
 		trySetConfiguration();
 
 		if (config == nullptr) {
-			showModal("Error", "Current configuration is not valid\nCannot build ROM");
+			showModal("Error", "Current configuration is not valid\nCannot build ROM\nUse 'Reload configuration' for a more detailed error message");
 			return;
 		}
 
@@ -466,7 +466,7 @@ namespace callisto {
 		trySetConfiguration();
 
 		if (config == nullptr) {
-			showModal("Error", "Current configuration is not valid\nCannot quick build ROM");
+			showModal("Error", "Current configuration is not valid\nCannot quick build ROM\nUse 'Reload configuration' for a more detailed error message");
 			return;
 		}
 
@@ -491,7 +491,7 @@ namespace callisto {
 		trySetConfiguration();
 
 		if (config == nullptr) {
-			showModal("Error", "Current configuration is not valid\nCannot save ROM");
+			showModal("Error", "Current configuration is not valid\nCannot save ROM\nUse 'Reload configuration' for a more detailed error message");
 			return;
 		}
 
@@ -529,7 +529,7 @@ namespace callisto {
 		trySetConfiguration();
 		
 		if (config == nullptr) {
-			showModal("Error", "Current configuration is not valid\nCannot edit ROM");
+			showModal("Error", "Current configuration is not valid\nCannot edit ROM\nUse 'Reload configuration' for a more detailed error message");
 			return;
 		}
 
@@ -638,7 +638,8 @@ namespace callisto {
 
 	void TUI::emulatorButton(const std::string& emulator_to_launch) {
 		if (config == nullptr) {
-			showModal("Error", fmt::format("Current configuration is not valid\nCannot launch {}", emulator_to_launch));
+			showModal("Error", fmt::format("Current configuration is not valid\nCannot launch {}\n"
+				"Use 'Reload configuration' for a more detailed error message", emulator_to_launch));
 			return;
 		}
 
