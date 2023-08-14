@@ -65,7 +65,7 @@ namespace callisto {
 
 		if (toml_value.has_value()) {
 			checkNotSet(level, toml_value.value());
-			const auto as_int{ static_cast<std::int16_t>(toml::get<toml::integer>(toml_value.value())) };
+			const auto as_int{ static_cast<std::uint32_t>(toml::get<toml::integer>(toml_value.value())) };
 			spdlog::debug(fmt::format(
 				"Setting {} = {}",
 				name,

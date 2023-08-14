@@ -253,7 +253,7 @@ namespace callisto {
 		using ConfigVariable::ConfigVariable;
 	};
 
-	class IntegerConfigVariable : public ConfigVariable<toml::integer, std::int16_t> {
+	class IntegerConfigVariable : public ConfigVariable<toml::integer, std::uint32_t> {
 	public:
 		bool trySet(const toml::value& table, ConfigurationLevel level);
 

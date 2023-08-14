@@ -18,6 +18,8 @@
 #include "config_exception.h"
 #include "../path_util.h"
 #include "../descriptor.h"
+#include "color_configuration.h"
+#include "../colors.h"
 
 namespace fs = std::filesystem;
 
@@ -71,6 +73,7 @@ namespace callisto {
 		void verifyModuleExclusivity();
 		void verifyPatchUniqueness();
 		void finalizeBuildOrder();
+		void transferConfiguredColors();
 
 		bool trySet(StringConfigVariable& variable, const toml::value& table, 
 			ConfigurationLevel level, const std::map<std::string, std::string>& user_variable_map);
@@ -137,5 +140,7 @@ namespace callisto {
 		std::map<std::string, ToolConfiguration> generic_tool_configurations{};
 
 		std::map<std::string, EmulatorConfiguration> emulator_configurations{};
+
+		std::map<std::string, ColorConfiguration> color_configurations{};
 	};
 }

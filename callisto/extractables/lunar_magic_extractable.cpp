@@ -5,7 +5,7 @@ namespace callisto {
 		: lunar_magic_executable(config.lunar_magic_path.getOrThrow()), extracting_rom(extracting_rom){
 		if (!fs::exists(lunar_magic_executable)) {
 			throw ToolNotFoundException(fmt::format(
-				colors::build::EXCEPTION,
+				colors::EXCEPTION,
 				"Lunar Magic not found at {}",
 				lunar_magic_executable.string()
 			));
@@ -13,7 +13,7 @@ namespace callisto {
 
 		if (!fs::exists(extracting_rom)) {
 			throw ResourceNotFoundException(fmt::format(
-				colors::build::EXCEPTION,
+				colors::EXCEPTION,
 				"Extracting ROM not found at {}",
 				extracting_rom.string()
 			));

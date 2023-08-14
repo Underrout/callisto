@@ -6,7 +6,7 @@ namespace callisto {
 		lunar_magic_path(registerConfigurationDependency(config.lunar_magic_path, Policy::REINSERT).getOrThrow()) {
 		if (!fs::exists(lunar_magic_path)) {
 			throw ToolNotFoundException(fmt::format(
-				colors::build::EXCEPTION,
+				colors::EXCEPTION,
 				"Lunar Magic not found at {}",
 				lunar_magic_path.string()
 			));

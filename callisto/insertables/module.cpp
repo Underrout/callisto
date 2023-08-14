@@ -19,7 +19,7 @@ namespace callisto {
 	{
 		if (!fs::exists(input_path)) {
 			throw ResourceNotFoundException(fmt::format(
-				colors::build::EXCEPTION,
+				colors::EXCEPTION,
 				"Module {} does not exist",
 				input_path.string()
 			));
@@ -27,7 +27,7 @@ namespace callisto {
 
 		if (!asar_init()) {
 			throw ToolNotFoundException(
-				fmt::format(colors::build::EXCEPTION,
+				fmt::format(colors::EXCEPTION,
 				"Asar library file not found, did you forget to copy it alongside callisto?"
 			));
 		}
@@ -75,7 +75,7 @@ namespace callisto {
 		// delete potential previous dependency report
 		fs::remove(input_path.parent_path() / ".dependencies");
 
-		spdlog::info(fmt::format(colors::build::REMARK, "Inserting module {}", project_relative_path.string()));
+		spdlog::info(fmt::format(colors::RESOURCE, "Inserting module {}", project_relative_path.string()));
 
 		memoryfile patch;
 		patch.path = "temp.asm";
@@ -130,7 +130,7 @@ namespace callisto {
 
 		if (!asar_init()) {
 			throw ToolNotFoundException(
-				fmt::format(colors::build::EXCEPTION,
+				fmt::format(colors::EXCEPTION,
 				"Asar library file not found, did you forget to copy it alongside callisto?"
 			));
 		}
@@ -149,7 +149,7 @@ namespace callisto {
 			const auto warnings{ asar_getwarnings(&warning_count) };
 			bool missing_org_or_freespace{ false };
 			for (int i = 0; i != warning_count; ++i) {
-				spdlog::warn(fmt::format(colors::build::WARNING, warnings[i].fullerrdata));
+				spdlog::warn(fmt::format(colors::WARNING, warnings[i].fullerrdata));
 				if (warnings[i].errid == 1008) {
 					missing_org_or_freespace = true;
 				}
@@ -157,7 +157,7 @@ namespace callisto {
 
 			if (missing_org_or_freespace) {
 				throw InsertionException(fmt::format(
-					colors::build::EXCEPTION,
+					colors::EXCEPTION,
 					"Module {} is missing a freespace command",
 					project_relative_path.string()
 				));
@@ -172,7 +172,7 @@ namespace callisto {
 			out_rom.write(header.data(), header_size);
 			out_rom.write(rom_bytes.data(), unheadered_rom_size);
 			out_rom.close();
-			spdlog::info(fmt::format(colors::build::PARTIAL_SUCCESS, "Successfully applied module {}!", project_relative_path.string()));
+			spdlog::info(fmt::format(colors::PARTIAL_SUCCESS, "Successfully applied module {}!", project_relative_path.string()));
 
 			emitOutputFiles();
 			emitPlainAddressFile();
@@ -193,7 +193,7 @@ namespace callisto {
 
 			fs::current_path(prev_folder);
 			throw InsertionException(fmt::format(
-				colors::build::EXCEPTION,
+				colors::EXCEPTION,
 				"Failed to apply module {} with the following error(s):\n\r{}",
 				project_relative_path.string(),
 				error_string.str()
@@ -228,7 +228,7 @@ namespace callisto {
 
 		if (label_number == 0) {
 			throw InsertionException(fmt::format(
-				colors::build::EXCEPTION,
+				colors::EXCEPTION,
 				"Module {} contains no labels, this will cause a freespace leak, please ensure your module contains at least one label",
 				module_name
 			));
@@ -237,7 +237,7 @@ namespace callisto {
 		if (input_path.extension() != ".asm") {
 			if (label_number > 1) {
 				throw InsertionException(fmt::format(
-					colors::build::EXCEPTION,
+					colors::EXCEPTION,
 					"Binary module {} unexpectedly contains more than one label",
 					module_name
 				));
@@ -354,7 +354,7 @@ namespace callisto {
 				}) - RATS_TAG_SIZE };
 
 				throw InsertionException(fmt::format(
-					colors::build::EXCEPTION,
+					colors::EXCEPTION,
 					"Module {} contains a freespace block of size 0x{:04X} starting at ${:06X} (unheadered), which does not "
 					"contain any labels, please ensure every freespace block in your modules contains at least one label so that they can be cleaned up by callisto",
 					project_relative_path.string(),
@@ -414,7 +414,7 @@ namespace callisto {
 					freespace_areas.push_back(std::vector<WrittenBlock>());
 					const auto freespace_size{ determineFreespaceBlockSize(curr_pc_offset, rom) };
 					if (!freespace_size.has_value()) {
-						throw InsertionException(fmt::format(colors::build::EXCEPTION, "Freespace area at ${:06X} has invalid/no RATS tag", curr_pc_offset));
+						throw InsertionException(fmt::format(colors::EXCEPTION, "Freespace area at ${:06X} has invalid/no RATS tag", curr_pc_offset));
 					}
 					curr_freespace_size_left = freespace_size.value() + RATS_TAG_SIZE;
 				}
@@ -453,7 +453,7 @@ namespace callisto {
 
 			if (start < 0x80000) {
 				throw InsertionException(fmt::format(
-					colors::build::EXCEPTION,
+					colors::EXCEPTION,
 					"Module {} targets SNES address ${:06X} (unheadered), if this is not a mistake consider using a patch instead "
 					"as modules are not intended to modify original game code",
 					project_relative_path.string(), written_blocks[i].snesoffset

@@ -24,7 +24,7 @@ namespace callisto {
 		static std::unordered_set<ResourceDependency> extractDependenciesFromReport(const fs::path& dependency_report_file_path) {
 			if (!fs::exists(dependency_report_file_path)) {
 				throw NoDependencyReportFound(fmt::format(
-					colors::build::NOTIFICATION,
+					colors::NOTIFICATION,
 					"No dependency report found at {}",
 					dependency_report_file_path.string()
 				));

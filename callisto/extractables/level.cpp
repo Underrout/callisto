@@ -12,7 +12,7 @@ namespace callisto {
 				}
 				catch (const fs::filesystem_error& e) {
 					throw ExtractionException(fmt::format(
-						colors::build::EXCEPTION,
+						colors::EXCEPTION,
 						"Failed to create levels directory {} with exception:\n\r{}",
 						mwl_file.parent_path().string(),
 						e.what()
@@ -126,7 +126,7 @@ namespace callisto {
 		}
 
 		void Level::extract() {
-			spdlog::info(fmt::format(colors::build::REMARK, "Exporting level {} to file {}", level_number, mwl_file.string()));
+			spdlog::info(fmt::format(colors::RESOURCE, "Exporting level {} to file {}", level_number, mwl_file.string()));
 			spdlog::debug("Exporting level {} from ROM {} to file {}",
 				level_number, extracting_rom.string(), mwl_file.string());
 
@@ -137,11 +137,11 @@ namespace callisto {
 				if (strip_source_pointers) {
 					normalize(mwl_file);
 				}
-				spdlog::info(fmt::format(colors::build::PARTIAL_SUCCESS, "Successfully exported level {} to {}", level_number, mwl_file.string()));
+				spdlog::info(fmt::format(colors::PARTIAL_SUCCESS, "Successfully exported level {} to {}", level_number, mwl_file.string()));
 			}
 			else {
 				throw ExtractionException(fmt::format(
-					colors::build::EXCEPTION,
+					colors::EXCEPTION,
 					"Failed to export level {} from ROM {} to {}", level_number, extracting_rom.string(), mwl_file.string()
 				));
 			}

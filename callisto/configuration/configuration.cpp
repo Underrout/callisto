@@ -4,6 +4,10 @@ namespace callisto {
 	Configuration::Configuration(const ConfigFileMap& config_file_map, const VariableFileMap& variable_file_map, 
 		const fs::path& callisto_root_directory, bool allow_user_input) : allow_user_input(allow_user_input) {
 
+		for (const auto& config_color_str : colors::configurable_colors) {
+			color_configurations.emplace(config_color_str, ColorConfiguration(config_color_str));
+		}
+
 		const auto user_variables{ parseVariableFiles(variable_file_map) };
 		const auto config_files{ parseConfigFiles(config_file_map) };
 
@@ -83,7 +87,28 @@ namespace callisto {
 		}
 	}
 
+	void Configuration::transferConfiguredColors() {
+		for (const auto& [color_name, color_config] : color_configurations) {
+			auto& style{ colors::configurableColorStringToStyle(color_name) };
+			if (color_config.fg_color.isSet()) {
+				style = fmt::fg(fmt::color::black);
+				colors::addFgColor(style, color_config.fg_color.getOrThrow());
+			}
+			if (color_config.bg_color.isSet()) {
+				colors::addBgColor(style, color_config.bg_color.getOrThrow());
+			}
+			if (color_config.emphases.isSet()) {
+				for (const auto& emph : color_config.emphases.getOrThrow()) {
+					colors::addEmphasis(style, emph);
+				}
+			}
+		}
+	}
+
 	void Configuration::finalizeBuildOrder() {
+		colors::resetStyles();
+		transferConfiguredColors();
+		
 		verifyModuleExclusivity();
 		verifyPatchModuleExclusivity();
 		verifyPatchUniqueness();
@@ -481,6 +506,12 @@ namespace callisto {
 			tool.static_dependencies.trySet(config_file, level, tool.working_directory, user_variables);
 			tool.dependency_report_file.trySet(config_file, level, tool.working_directory, user_variables);
 			trySet(tool.pass_rom, config_file, level);
+		}
+
+		for (auto& [_, color_config] : color_configurations) {
+			color_config.fg_color.trySet(config_file, level);
+			color_config.bg_color.trySet(config_file, level);
+			color_config.emphases.trySet(config_file, level, user_variables);
 		}
 	}
 

@@ -162,7 +162,7 @@ namespace callisto {
 		}
 
 		if (reloaded_at_least_one) {
-			spdlog::info(fmt::format(colors::build::REMARK, "Successfully reloaded ROM in Lunar Magic for you ^-^"));
+			spdlog::info(fmt::format(colors::RESOURCE, "Successfully reloaded ROM in Lunar Magic for you (/o.o)-~*.^"));
 			return Result::SUCCESS;
 		}
 		else {

@@ -4,9 +4,11 @@ namespace callisto {
 	void Rebuilder::build(const Configuration& config) {
 		const auto build_start{ std::chrono::high_resolution_clock::now() };
 
-		spdlog::info(fmt::format(colors::build::HEADER, "Build started\n"));
+		spdlog::info(fmt::format(colors::ACTION_START, "Build started"));
+		spdlog::info("");
 
-		spdlog::info(fmt::format(colors::build::MISC, "Checking clean ROM\n"));
+		spdlog::info(fmt::format(colors::CALLISTO, "Checking clean ROM"));
+		spdlog::info("");
 		checkCleanRom(config.clean_rom.getOrThrow());
 
 		init(config);
@@ -93,7 +95,7 @@ namespace callisto {
 			const auto insertable{ pair.second };
 			const auto& descriptor{ pair.first };
 
-			spdlog::info(fmt::format(colors::build::MISC, "--- {} ---", descriptor.toString(config.project_root.getOrThrow())));
+			spdlog::info(fmt::format(colors::CALLISTO, "--- {} ---", descriptor.toString(config.project_root.getOrThrow())));
 
 			if (!failed_dependency_report.has_value()) {
 				std::unordered_set<ResourceDependency> resource_dependencies;
@@ -178,11 +180,11 @@ namespace callisto {
 				writeBuildReport(config.project_root.getOrThrow(), createBuildReport(config, insertion_report));
 			}
 			catch (const std::exception& e) {
-				spdlog::warn(fmt::format(colors::build::WARNING, "Failed to write build report with following exception:\n\r{}", e.what()));
+				spdlog::warn(fmt::format(colors::WARNING, "Failed to write build report with following exception:\n\r{}", e.what()));
 			}
 		}
 		else {
-			spdlog::info(fmt::format(colors::build::NOTIFICATION, "{}, Quickbuild not applicable, read the documentation "
+			spdlog::info(fmt::format(colors::NOTIFICATION, "{}, Quickbuild not applicable, read the documentation "
 					"on details for how to set up Quickbuild correctly", failed_dependency_report.value().what()));
 			removeBuildReport(config.project_root.getOrThrow());
 		}
@@ -206,13 +208,13 @@ namespace callisto {
 				std::rethrow_exception(conflict_thread_exception);
 			}
 			catch (const std::exception& e) {
-				spdlog::warn(fmt::format(colors::build::WARNING, "The following error occurred while attempting to report conflicts:\n\r{}", e.what()));
+				spdlog::warn(fmt::format(colors::WARNING, "The following error occurred while attempting to report conflicts:\n\r{}", e.what()));
 			}
 		}
 		
 		fs::remove_all(config.temporary_folder.getOrThrow());
 
-		spdlog::info(fmt::format(colors::build::SUCCESS, "Build finished successfully in {}!", 
+		spdlog::info(fmt::format(colors::SUCCESS, "Build finished successfully in {} \\(^.^)/", 
 			TimeUtil::getDurationString(build_end - build_start)));
 	}
 
@@ -260,7 +262,7 @@ namespace callisto {
 	void Rebuilder::reportConflicts(const WriteMap& write_map, const std::optional<fs::path>& log_file, 
 		Conflicts conflict_policy, std::exception_ptr conflict_exception) {
 		if (conflict_policy == Conflicts::NONE) {
-			spdlog::info(fmt::format(colors::build::NOTIFICATION, "Not set to detect conflicts"));
+			spdlog::info(fmt::format(colors::NOTIFICATION, "Not set to detect conflicts"));
 			return;
 		}
 
@@ -269,7 +271,7 @@ namespace callisto {
 				std::rethrow_exception(conflict_exception);
 			}
 			catch (const std::exception& e) {
-				spdlog::warn(fmt::format(colors::build::WARNING, "The following exception prevented conflict detection:\n\r{}", e.what()));
+				spdlog::warn(fmt::format(colors::WARNING, "The following exception prevented conflict detection:\n\r{}", e.what()));
 				return;
 			}
 		}
@@ -325,14 +327,14 @@ namespace callisto {
 		
 		if (log_to_file) {
 			if (conflicts == 0) {
-				spdlog::info(fmt::format(colors::build::PARTIAL_SUCCESS, "No conflicts logged to {}", log_file.value().string()));
+				spdlog::info(fmt::format(colors::PARTIAL_SUCCESS, "No conflicts logged to {}", log_file.value().string()));
 			}
 			else {
-				spdlog::warn(fmt::format(colors::build::WARNING, "{} conflict(s) logged to {}", conflicts, log_file.value().string()));
+				spdlog::warn(fmt::format(colors::WARNING, "{} conflict(s) logged to {}", conflicts, log_file.value().string()));
 			}
 		}
 		else if (conflicts == 0) {
-			spdlog::info(fmt::format(colors::build::PARTIAL_SUCCESS, "No conflicts found"));
+			spdlog::info(fmt::format(colors::PARTIAL_SUCCESS, "No conflicts found"));
 		}
 	}
 
@@ -448,7 +450,7 @@ namespace callisto {
 
 	void Rebuilder::expandRom(const Configuration& config) {
 		if (config.rom_size.isSet()) {
-			spdlog::info(fmt::format(colors::build::REMARK, "Expanding ROM to {}", config.rom_size.getOrThrow()));
+			spdlog::info(fmt::format(colors::RESOURCE, "Expanding ROM to {}", config.rom_size.getOrThrow()));
 			const auto exit_code{ bp::system(
 				config.lunar_magic_path.getOrThrow().string(),
 				"-ExpandROM",
@@ -457,10 +459,11 @@ namespace callisto {
 				config.rom_size.getOrThrow()
 			) };
 			if (exit_code == 0) {
-				spdlog::info(fmt::format(colors::build::PARTIAL_SUCCESS, "Successfully expanded ROM!\n"));
+				spdlog::info(fmt::format(colors::PARTIAL_SUCCESS, "Successfully expanded ROM!"));
+				spdlog::info("");
 			}
 			else {
-				throw InsertionException(fmt::format(colors::build::EXCEPTION, "Failed to expand ROM to {}", config.rom_size.getOrThrow()));
+				throw InsertionException(fmt::format(colors::EXCEPTION, "Failed to expand ROM to {}", config.rom_size.getOrThrow()));
 			}
 		}
 	}

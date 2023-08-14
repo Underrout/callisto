@@ -9,7 +9,7 @@ namespace callisto {
 	{
 		if (!fs::exists(flips_path)) {
 			throw ToolNotFoundException(fmt::format(
-				colors::build::EXCEPTION,
+				colors::EXCEPTION,
 				"FLIPS not found at {}",
 				flips_path.string()
 			));
@@ -17,7 +17,7 @@ namespace callisto {
 
 		if (!fs::exists(clean_rom_path)) {
 			throw NotFoundException(fmt::format(
-				colors::build::EXCEPTION,
+				colors::EXCEPTION,
 				"Clean ROM not found at {}",
 				clean_rom_path.string()
 			));
@@ -25,7 +25,7 @@ namespace callisto {
 
 		if (!fs::exists(initial_patch_path)) {
 			throw ResourceNotFoundException(fmt::format(
-				colors::build::EXCEPTION,
+				colors::EXCEPTION,
 				"Initial patch not found at {}",
 				initial_patch_path.string()
 			));
@@ -45,7 +45,7 @@ namespace callisto {
 	}
 
 	void InitialPatch::insert(const fs::path& target_rom) {
-		spdlog::info(fmt::format(colors::build::REMARK, "Applying initial patch {}", initial_patch_path.string()));
+		spdlog::info(fmt::format(colors::RESOURCE, "Applying initial patch {}", initial_patch_path.string()));
 
 		int exit_code{ bp::system(
 			flips_path.string(),
@@ -57,14 +57,14 @@ namespace callisto {
 
 		if (exit_code != 0) {
 			throw InsertionException(fmt::format(
-				colors::build::EXCEPTION,
+				colors::EXCEPTION,
 				"Failed to apply initial patch {} to ROM {}",
 				initial_patch_path.string(),
 				target_rom.string()
 			));
 		}
 		else {
-			spdlog::info(fmt::format(colors::build::PARTIAL_SUCCESS, "Successfully applied initial patch!"));
+			spdlog::info(fmt::format(colors::PARTIAL_SUCCESS, "Successfully applied initial patch!"));
 		}
 	}
 }

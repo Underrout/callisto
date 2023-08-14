@@ -9,7 +9,7 @@ namespace callisto {
 
 		if (!fs::exists(map16_folder_path)) {
 			throw ResourceNotFoundException(fmt::format(
-				colors::build::EXCEPTION,
+				colors::EXCEPTION,
 				"Map16 folder not found at {}",
 				map16_folder_path.string()
 			));
@@ -22,7 +22,7 @@ namespace callisto {
 
 	fs::path TextMap16::generateTemporaryMap16File() const
 	{
-		spdlog::info(fmt::format(colors::build::MISC, "Generating Map16 file from text files"));
+		spdlog::info(fmt::format(colors::CALLISTO, "Generating Map16 file from text files"));
 		spdlog::debug(fmt::format(
 			"Generating temporary map16 file from map16 folder {}",
 			map16_folder_path.string(),
@@ -37,7 +37,7 @@ namespace callisto {
 		}
 		catch (HumanMap16Exception& e) {
 			fs::current_path(current_path);
-			throw InsertionException(fmt::format(colors::build::EXCEPTION, "Failed to convert map16 folder to file with following exception:\n\r{}",
+			throw InsertionException(fmt::format(colors::EXCEPTION, "Failed to convert map16 folder to file with following exception:\n\r{}",
 				e.get_detailed_error_message()));
 		}
 
@@ -52,7 +52,7 @@ namespace callisto {
 		}
 		catch (const fs::filesystem_error&) {
 			spdlog::warn(fmt::format(
-				colors::build::WARNING,
+				colors::WARNING,
 				"WARNING: Failed to delete temporary Map16 file {}",
 				getTemporaryMap16FilePath().string()
 			));
@@ -69,7 +69,7 @@ namespace callisto {
 	}
 
 	void TextMap16::insert() {
-		spdlog::info(fmt::format(colors::build::REMARK, "Inserting Map16"));
+		spdlog::info(fmt::format(colors::RESOURCE, "Inserting Map16"));
 		spdlog::debug(fmt::format(
 			"Generating and inserting map16 into temporary ROM at {}",
 			map16_folder_path.string(),
@@ -87,11 +87,11 @@ namespace callisto {
 		deleteTemporaryMap16File();
 
 		if (exit_code == 0) {
-			spdlog::info(fmt::format(colors::build::PARTIAL_SUCCESS, "Successfully inserted Map16!"));
+			spdlog::info(fmt::format(colors::PARTIAL_SUCCESS, "Successfully inserted Map16!"));
 		}
 		else {
 			throw InsertionException(fmt::format(
-				colors::build::EXCEPTION,
+				colors::EXCEPTION,
 				"Failed to insert generated Map16 file {} into temporary ROM {}",
 				temp_map16.string(),
 				temporary_rom_path.string()

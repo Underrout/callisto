@@ -65,7 +65,7 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(asar)
 set_target_properties(asar PROPERTIES CXX_STANDARD 14)
 
-set(CALLISTO_SOURCE_FILES "")
+set(CALLISTO_SOURCE_FILES "" "configuration/color_configuration.h")
 
 list(APPEND CALLISTO_SOURCE_FILES
 "callisto.rc" "callisto.cpp" "callisto.h" "insertable.h" "cli/cli_handler.h" "cli/cli_handler.cpp"
@@ -99,7 +99,7 @@ if (MSVC)
     "junction/libntfslinks/source/CharUtils.cpp")
 endif()
 
-add_executable (callisto ${CALLISTO_SOURCE_FILES} "recent_projects/recent_projects_manager.h" "cli/cli_handler.h" "prompt_util.h"  "configuration/module_configuration.h" "lunar_magic/process_info.h" "lunar_magic/process_info.cpp")
+add_executable (callisto ${CALLISTO_SOURCE_FILES} "recent_projects/recent_projects_manager.h" "cli/cli_handler.h" "prompt_util.h"  "configuration/module_configuration.h" "lunar_magic/process_info.h" "lunar_magic/process_info.cpp" "colors.cpp")
 target_link_options(callisto PRIVATE ${CALLISTO_LINK_OPTIONS})
 target_compile_options(callisto PRIVATE ${CALLISTO_COMPILE_OPTIONS})
 target_compile_definitions(callisto PRIVATE ${CALLISTO_COMPILE_DEFINITIONS})
@@ -239,6 +239,11 @@ add_custom_command(TARGET callisto POST_BUILD
 add_custom_command(TARGET callisto POST_BUILD 
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
     "${CMAKE_CURRENT_SOURCE_DIR}/modules.toml" $<TARGET_FILE_DIR:callisto>
+)
+
+add_custom_command(TARGET callisto POST_BUILD 
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+    "${CMAKE_CURRENT_SOURCE_DIR}/colors.toml" $<TARGET_FILE_DIR:callisto>
 )
 
 add_custom_command(TARGET callisto POST_BUILD 

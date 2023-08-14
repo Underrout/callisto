@@ -5,7 +5,7 @@ namespace callisto {
 		const auto build_report_path{ PathUtil::getBuildReportPath(project_root) };
 		if (!fs::exists(build_report_path)) {
 			throw MustRebuildException(fmt::format(
-				colors::build::EXCEPTION,
+				colors::EXCEPTION,
 				"No build report found at {}, must rebuild",
 				build_report_path.string()
 			));
@@ -19,38 +19,45 @@ namespace callisto {
 	QuickBuilder::Result QuickBuilder::build(const Configuration& config) {
 		const auto build_start{ std::chrono::high_resolution_clock::now() };
 
-		spdlog::info(fmt::format(colors::build::HEADER, "Quick Build started\n"));
+		spdlog::info(fmt::format(colors::ACTION_START, "Quick Build started"));
+		spdlog::info("");
 
 		init(config);
 
-		spdlog::info(fmt::format(colors::build::MISC, "Checking whether ROM from previous build exists"));
+		spdlog::info(fmt::format(colors::CALLISTO, "Checking whether ROM from previous build exists"));
 		if (!fs::exists(config.output_rom.getOrThrow())) {
-			throw MustRebuildException(fmt::format(colors::build::NOTIFICATION, "No ROM found at {}, must rebuild", config.output_rom.getOrThrow().string()));
+			throw MustRebuildException(fmt::format(colors::NOTIFICATION, "No ROM found at {}, must rebuild", config.output_rom.getOrThrow().string()));
 		}
-		spdlog::info(fmt::format(colors::build::PARTIAL_SUCCESS, "ROM from previous build found at '{}'\n", config.output_rom.getOrThrow().string()));
+		spdlog::info(fmt::format(colors::PARTIAL_SUCCESS, "ROM from previous build found at '{}'", config.output_rom.getOrThrow().string()));
+		spdlog::info("");
 
-		spdlog::info(fmt::format(colors::build::MISC, "Checking whether configured ROM size has changed"));
+		spdlog::info(fmt::format(colors::CALLISTO, "Checking whether configured ROM size has changed"));
 		checkRebuildRomSize(config);
-		spdlog::info(fmt::format(colors::build::PARTIAL_SUCCESS, "Configured ROM size has not changed\n"));
+		spdlog::info(fmt::format(colors::PARTIAL_SUCCESS, "Configured ROM size has not changed"));
+		spdlog::info("");
 
-		spdlog::info(fmt::format(colors::build::MISC, "Checking whether build report format has changed"));
+		spdlog::info(fmt::format(colors::CALLISTO, "Checking whether build report format has changed"));
 		checkBuildReportFormat();
-		spdlog::info(fmt::format(colors::build::PARTIAL_SUCCESS, "Build report format has not changed\n"));
+		spdlog::info(fmt::format(colors::PARTIAL_SUCCESS, "Build report format has not changed"));
+		spdlog::info("");
 
-		spdlog::info(fmt::format(colors::build::MISC, "Checking whether build order has changed"));
+		spdlog::info(fmt::format(colors::CALLISTO, "Checking whether build order has changed"));
 		checkBuildOrderChange(config);
-		spdlog::info(fmt::format(colors::build::PARTIAL_SUCCESS, "Build order has not changed\n"));
+		spdlog::info(fmt::format(colors::PARTIAL_SUCCESS, "Build order has not changed"));
+		spdlog::info("");
 
 		if (config.levels.isSet()) {
-			spdlog::info(fmt::format(colors::build::MISC, "Checking whether level files have been removed since last build"));
+			spdlog::info(fmt::format(colors::CALLISTO, "Checking whether level files have been removed since last build"));
 			checkProblematicLevelChanges(config.levels.getOrThrow(), report["inserted_levels"]);
-			spdlog::info(fmt::format(colors::build::PARTIAL_SUCCESS, "No level files have been removed\n"));
+			spdlog::info(fmt::format(colors::PARTIAL_SUCCESS, "No level files have been removed"));
+			spdlog::info("");
 		}
 
 		auto& json_dependencies{ report["dependencies"] };
-		spdlog::info(fmt::format(colors::build::MISC, "Checking whether any configuration changes require a rebuild"));
+		spdlog::info(fmt::format(colors::CALLISTO, "Checking whether any configuration changes require a rebuild"));
 		checkRebuildConfigDependencies(json_dependencies, config);
-		spdlog::info(fmt::format(colors::build::PARTIAL_SUCCESS, "No configuration changes require a rebuild\n"));
+		spdlog::info(fmt::format(colors::PARTIAL_SUCCESS, "No configuration changes require a rebuild"));
+		spdlog::info("");
 
 		const auto temporary_rom_path{ PathUtil::getTemporaryRomPath(
 			config.temporary_folder.getOrThrow(), config.output_rom.getOrThrow()
@@ -62,7 +69,7 @@ namespace callisto {
 		for (auto& entry : json_dependencies) {
 			checkRebuildResourceDependencies(json_dependencies, config.project_root.getOrThrow(), i++);
 			const auto descriptor{ Descriptor(entry["descriptor"]) };
-			spdlog::info(fmt::format(colors::build::MISC, "--- {} ---", descriptor.toString(config.project_root.getOrThrow())));
+			spdlog::info(fmt::format(colors::CALLISTO, "--- {} ---", descriptor.toString(config.project_root.getOrThrow())));
 
 			const auto descriptor_string{ descriptor.toString(config.project_root.getOrThrow()) };
 			const auto config_result{ 
@@ -70,7 +77,7 @@ namespace callisto {
 			bool must_reinsert{ false };
 			if (config_result.has_value()) {
 				spdlog::info(fmt::format(
-					colors::build::NOTIFICATION,
+					colors::NOTIFICATION,
 					"{} must be reinserted due to change in configuration variable {}",
 					descriptor_string,
 					config_result.value().config_keys
@@ -84,7 +91,7 @@ namespace callisto {
 
 				if (resource_result.has_value()) {
 					spdlog::info(fmt::format(
-						colors::build::NOTIFICATION,
+						colors::NOTIFICATION,
 						"{} must be reinserted due to change in resource '{}'",
 						descriptor_string,
 						(fs::relative(resource_result.value().dependent_path, config.project_root.getOrThrow())).string()
@@ -144,7 +151,7 @@ namespace callisto {
 
 					if (hijacksGoneBad(old_hijacks, new_hijacks)) {
 						throw MustRebuildException(fmt::format(
-							colors::build::NOTIFICATION,
+							colors::NOTIFICATION,
 							"Hijacks of patch {} have changed, must rebuild", patch->project_relative_path.string()));
 					}
 					else {
@@ -161,7 +168,8 @@ namespace callisto {
 					copyOldModuleOutput(old_outputs, config.project_root.getOrThrow());
 				}
 
-				spdlog::info(fmt::format(colors::build::PARTIAL_SUCCESS, "{} already up to date\n", descriptor.toString(config.project_root.getOrThrow())));
+				spdlog::info(fmt::format(colors::PARTIAL_SUCCESS, "{} already up to date", descriptor.toString(config.project_root.getOrThrow())));
+				spdlog::info("");
 			}
 		}
 
@@ -170,7 +178,7 @@ namespace callisto {
 				writeBuildReport(config.project_root.getOrThrow(), createBuildReport(config, report["dependencies"]));
 			}
 			else {
-				spdlog::warn(fmt::format(colors::build::WARNING, "{}, Quickbuild not applicable, read the documentation "
+				spdlog::warn(fmt::format(colors::WARNING, "{}, Quickbuild not applicable, read the documentation "
 					"on details for how to set up Quickbuild correctly", failed_dependency_report.value().what()));
 				removeBuildReport(config.project_root.getOrThrow());
 			}
@@ -186,39 +194,39 @@ namespace callisto {
 
 			const auto build_end{ std::chrono::high_resolution_clock::now() };
 
-			spdlog::info(fmt::format(colors::build::SUCCESS, 
-				"Quickbuild finished successfully in {}!", TimeUtil::getDurationString(build_end - build_start)));
+			spdlog::info(fmt::format(colors::SUCCESS, 
+				"Quickbuild finished successfully in {} \\(^.^)/", TimeUtil::getDurationString(build_end - build_start)));
 			return Result::SUCCESS;
 		}
 		else {
-			spdlog::info(fmt::format(colors::build::NOTIFICATION, "Everything already up to date, no work for me to do -.-"));
+			spdlog::info(fmt::format(colors::NOTIFICATION, "Everything already up to date, no work for me to do (-.-)"));
 			return Result::NO_WORK;
 		}
 	}
 
 	void QuickBuilder::checkBuildReportFormat() const {
 		if (report["file_format_version"] != BUILD_REPORT_VERSION) {
-			throw MustRebuildException(fmt::format(colors::build::NOTIFICATION, "Build report format has changed, must rebuild"));
+			throw MustRebuildException(fmt::format(colors::NOTIFICATION, "Build report format has changed, must rebuild"));
 		}
 	}
 
 	void QuickBuilder::checkBuildOrderChange(const Configuration& config) const {
 		if (config.build_order.size() != report["build_order"].size()) {
-			throw MustRebuildException(fmt::format(colors::build::NOTIFICATION, "Build order has changed, must rebuild"));
+			throw MustRebuildException(fmt::format(colors::NOTIFICATION, "Build order has changed, must rebuild"));
 		}
 		
 		size_t i{ 0 };
 		for (const auto& new_descriptor : config.build_order) {
 			const auto old_descriptor{ Descriptor(report["build_order"].at(i++)) };
 			if (old_descriptor != new_descriptor) {
-				throw MustRebuildException(fmt::format(colors::build::NOTIFICATION, "Build order has changed, must rebuild"));
+				throw MustRebuildException(fmt::format(colors::NOTIFICATION, "Build order has changed, must rebuild"));
 			}
 		}
 	}
 
 	void QuickBuilder::checkRebuildRomSize(const Configuration& config) const {
 		if ((report["rom_size"] == nullptr && config.rom_size.isSet()) || report["rom_size"] != config.rom_size.getOrThrow()) {
-			throw MustRebuildException(fmt::format(colors::build::NOTIFICATION, "{} has changed, must rebuild", config.rom_size.name));
+			throw MustRebuildException(fmt::format(colors::NOTIFICATION, "{} has changed, must rebuild", config.rom_size.name));
 		}
 	}
 
@@ -227,7 +235,7 @@ namespace callisto {
 		
 		if (!fs::exists(levels_path)) {
 			throw InsertionException(fmt::format(
-				colors::build::EXCEPTION,
+				colors::EXCEPTION,
 				"Configured levels folder at '{}' does not exist, but levels were previously inserted into this ROM, "
 				"aborting build for safety, if you wish to no longer insert levels, unset the 'levels' path in your configuration",
 				levels_path.string()
@@ -241,7 +249,7 @@ namespace callisto {
 				}
 				catch (const std::exception& e) {
 					throw InsertionException(fmt::format(
-						colors::build::EXCEPTION,
+						colors::EXCEPTION,
 						"Failed to determine source level number of level file '{}' with exception:\n\r{}",
 						entry.path().string(), e.what()
 					));
@@ -257,7 +265,7 @@ namespace callisto {
 
 		if (old_missing_from_new != 0) {
 			throw MustRebuildException(fmt::format(
-				colors::build::NOTIFICATION,
+				colors::NOTIFICATION,
 				"{} old level file{} {} been removed, must rebuild",
 				old_missing_from_new, old_missing_from_new > 1 ? "s" : "", old_missing_from_new > 1 ? "have" : "has"
 			));
@@ -275,7 +283,7 @@ namespace callisto {
 
 					if (previous_value != new_value) {
 						throw MustRebuildException(fmt::format(
-							colors::build::NOTIFICATION,
+							colors::NOTIFICATION,
 							"Value of {} has changed, must rebuild",
 							config_dependency.config_keys
 						));
@@ -298,7 +306,7 @@ namespace callisto {
 						std::nullopt };
 					if (new_timestamp != resource_dependency.last_write_time) {
 						throw MustRebuildException(fmt::format(
-							colors::build::NOTIFICATION,
+							colors::NOTIFICATION,
 							"Dependency '{}' of '{}' has changed, must rebuild",
 							resource_dependency.dependent_path.string(),
 							Descriptor((*entry)["descriptor"]).toString(project_root)
@@ -350,7 +358,7 @@ namespace callisto {
 
 		if (!fs::exists(cleanup_file)) {
 			throw MustRebuildException(fmt::format(
-				colors::build::NOTIFICATION,
+				colors::NOTIFICATION,
 				"Cannot clean module {} as its cleanup file is missing, must rebuild",
 				module_source_path.string()
 			));
@@ -399,7 +407,7 @@ namespace callisto {
 
 		if (!asar_init()) {
 			throw ToolNotFoundException(fmt::format(
-				colors::build::EXCEPTION,
+				colors::EXCEPTION,
 				"Asar library file not found, did you forget to copy it alongside callisto?"
 			));
 		}
@@ -417,7 +425,7 @@ namespace callisto {
 		}
 		else {
 			throw MustRebuildException(fmt::format(
-				colors::build::NOTIFICATION,
+				colors::NOTIFICATION,
 				"Failed to clean module {}, must rebuild",
 				module_source_path.string()
 			));
@@ -431,7 +439,7 @@ namespace callisto {
 
 			if (!fs::exists(source)) {
 				throw MustRebuildException(fmt::format(
-					colors::build::NOTIFICATION,
+					colors::NOTIFICATION,
 					"Previously created module output {} is missing, must rebuild",
 					source.string()
 				));
