@@ -5,8 +5,11 @@
 #include <filesystem>
 #include <fstream>
 #include <utility>
+#include <unordered_set>
+#include <thread>
 
 #include <boost/process.hpp>
+#include <boost/process/windows.hpp>
 
 #include <spdlog/spdlog.h>
 #include <fmt/format.h>
@@ -25,6 +28,11 @@ namespace fs = std::filesystem;
 #include <malloc.h>
 #include <memory.h>
 #include <tchar.h>
+
+class EloperException : public std::runtime_error {
+public:
+	using std::runtime_error::runtime_error;
+};
 
 constexpr auto CALLISTO_MAGIC_MARKER{ "; Callisto generated call below, if you can see this, you should remove it!" };
 
@@ -46,6 +54,12 @@ bp::pid_t getLunarMagicPid(HWND message_window_handle);
 
 void handleNewRom(HWND message_window_hwnd);
 void handleSave();
+
+std::unordered_set<std::string> getProfileNames(const fs::path& callisto_path);
+std::optional<std::string> getLastConfigName(const fs::path& callisto_directory);
+std::optional<std::string> determineSaveProfile(const fs::path& callisto_path);
+
+void checkForCallisto(const fs::path& callisto_path);
 
 std::pair<HWND, uint16_t> extractHandleAndVerificationCode(const std::string& lm_string);
 

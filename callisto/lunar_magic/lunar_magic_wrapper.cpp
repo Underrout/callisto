@@ -30,7 +30,8 @@ namespace callisto {
 
 	void LunarMagicWrapper::appendInjectionStringToUsertoolbar(const std::string& shared_memory_name, const fs::path& callisto_path, const fs::path& usertoolbar_path){
 		const auto injection_string{ fmt::format(
-			LM_USERBAR_TEXT, CALLISTO_MAGIC_MARKER, (callisto_path.parent_path() / ELOPER_NAME).string(), usertoolbar_path.string())};
+			LM_USERBAR_TEXT, CALLISTO_MAGIC_MARKER, (callisto_path.parent_path() / ELOPER_NAME).string(), 
+			usertoolbar_path.string(), callisto_path.string())};
 
 		spdlog::debug("Adding injection string to Lunar Magic's usertoolbar.txt at {}:\n\r{}", usertoolbar_path.string(), injection_string);
 

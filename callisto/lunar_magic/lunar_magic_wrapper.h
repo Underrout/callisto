@@ -35,7 +35,7 @@ namespace callisto {
 		static constexpr auto LM_USERBAR_TEXT{
 			"{}\n"
 			"***START***\n"
-			"\"{}\" \"%9\" \"%1\" \"{}\"\n"
+			"\"{}\" \"%9\" \"%1\" \"{}\" \"{}\"\n"
 			"LM_DEFAULT\n"
 			"LM_NO_BUTTON,LM_AUTORUN_ON_NEW_ROM,LM_NOTIFY_ON_NEW_ROM,"
 			"LM_NOTIFY_ON_SAVE_LEVEL,LM_NOTIFY_ON_SAVE_MAP16,LM_NOTIFY_ON_SAVE_OV"

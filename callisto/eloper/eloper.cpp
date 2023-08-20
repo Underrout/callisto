@@ -7,8 +7,10 @@ WCHAR szTitle[MAX_LOADSTRING] = L"eloper";
 WCHAR szWindowClass[MAX_LOADSTRING] = L"eloper";
 
 bp::child lunar_magic_process;
+bp::child callisto_save_process;
 callisto::ProcessInfo process_info;
 HWND message_only_window;
+fs::path callisto_path;
 
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPWSTR lpCmdLine, _In_ int nCmdShow) {
 	UNREFERENCED_PARAMETER(hPrevInstance);
@@ -36,6 +38,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 		++argc;
 	}
 
+	callisto_path = argv[4];
 	const auto& usertoolbar_path{ argv[3] };
 	restoreUsertoolbar(usertoolbar_path);
 
@@ -54,10 +57,11 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 
 	MSG msg;
 
-	// Main message loop:
-	while (GetMessage(&msg, nullptr, 0, 0)) {
-		TranslateMessage(&msg);
-		DispatchMessage(&msg);
+	while (!lunar_magic_process.wait_for(std::chrono::milliseconds(100))) {
+		while (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE)) {
+			TranslateMessage(&msg);
+			DispatchMessage(&msg);
+		}
 	}
 
 	return (int)msg.wParam;
@@ -112,6 +116,7 @@ LRESULT CALLBACK wndProc(HWND hwnd, UINT umsg, WPARAM wparam, LPARAM lparam) {
 				return FALSE;
 			}
 
+			std::jthread thr;
 			switch (static_cast<LunarMagicNotificationType>(notification_type)) {
 			case LunarMagicNotificationType::NEW_ROM:
 				handleNewRom((HWND)wparam);
@@ -135,6 +140,27 @@ LRESULT CALLBACK wndProc(HWND hwnd, UINT umsg, WPARAM wparam, LPARAM lparam) {
 }
 
 
+std::unordered_set<std::string> getProfileNames(const fs::path& callisto_path) {
+	if (fs::exists(callisto_path)) {
+		bp::ipstream ip;
+		bp::child profiles_process(callisto_path.string(), "--profiles", bp::std_out > ip, bp::windows::create_no_window);
+
+		std::unordered_set<std::string> profile_names{};
+		std::string line;
+		while (std::getline(ip, line)) {
+			profile_names.insert(line.substr(line.size() - 1));  // drop newline from end of line
+		}
+
+		profiles_process.wait();
+
+		return profile_names;
+	}
+	else {
+		throw EloperException(fmt::format("Callisto not found at path '{}', cannot get profile names", callisto_path.string()));
+	}
+}
+
+
 std::pair<HWND, uint16_t> extractHandleAndVerificationCode(const std::string& lm_string) {
 	const auto colon{ lm_string.find(':') };
 
@@ -145,6 +171,20 @@ std::pair<HWND, uint16_t> extractHandleAndVerificationCode(const std::string& lm
 	const auto verification_code{ static_cast<uint16_t>(std::stoi(verification_part, nullptr, 16)) };
 
 	return { hwnd, verification_code };
+}
+
+std::optional<std::string> getLastConfigName(const fs::path& callisto_directory) {
+	const auto path{ callisto_directory / ".cache" / "last_profile.txt" };
+	if (fs::exists(path)) {
+		std::ifstream last_profile_file{ path };
+		std::string name;
+		std::getline(last_profile_file, name);
+		last_profile_file.close();
+		return name;
+	}
+	else {
+		return {};
+	}
 }
 
 bp::pid_t getLunarMagicPid(HWND message_window_handle) {
@@ -159,9 +199,102 @@ void handleNewRom(HWND message_window_hwnd) {
 	process_info.setCurrentLunarMagicRomPath(rom_path);
 }
 
+std::optional<std::string> determineSaveProfile(const fs::path& callisto_path) {
+	const auto profile_names{ getProfileNames(callisto_path) };
+	if (profile_names.empty()) {
+		return {};
+	}
+	else {
+		return *profile_names.begin();
+	}
+
+	/* 
+	* TODO the commented out portion here almost handles different profile 
+	* names and such, but honestly if your profile influences how saving works, 
+	* you're probably doing something really weird, so I'm not going to handle
+	* this for now and just return the first profile if there are any and nullopt otherwise
+	
+	const auto last_used{ getLastConfigName(callisto_path.parent_path()) };
+	const auto profile_names{ getProfileNames(callisto_path) };
+
+	if (!last_used.has_value()) {
+		if (profile_names.empty()) {
+			return {};
+		}
+		else if (profile_names.size() == 1) {
+			return *profile_names.begin();
+		}
+		else {
+			// TODO prompt user for which profile to use
+		}
+	}
+	else {
+		const auto& last_used_name{ last_used.value() };
+		if (profile_names.contains(last_used_name)) {
+			return last_used_name;
+		}
+		else if (profile_names.empty()) {
+			return {};
+		}
+		else {
+			// TODO handle profile name no longer being in list, probably prompt user for which profile to use as well
+		}
+	}
+	*/
+}
+
 void handleSave() {
-	// TODO make callisto export in separate process here, maybe make it interruptable too
-	// so that we can terminate it early if the user saves something again
+	try {
+		checkForCallisto(callisto_path);
+	}
+	catch (const EloperException&) {
+		const auto message{ fmt::format("Callisto executable not found at '{}', cannot automatically export resources!", callisto_path.string()) };
+		MessageBox(NULL, message.data(), "Callisto not found", MB_OK | MB_ICONWARNING);
+		return;
+	}
+
+	const auto profile{ determineSaveProfile(callisto_path) };
+
+	if (callisto_save_process.running()) {
+		callisto_save_process.wait();  // idk if any of this is necessary, but I guess I'll do it for safety? who knows
+	}
+
+	bp::ipstream output;
+
+	if (profile.has_value()) {
+		callisto_save_process = bp::child(callisto_path.string(), "save", "--profile", profile.value(), bp::std_out > output, bp::windows::create_no_window);
+	}
+	else {
+		callisto_save_process = bp::child(callisto_path.string(), "save", bp::std_out > output, bp::windows::create_no_window);
+	}
+
+	callisto_save_process.wait();
+
+	const auto& exit_code{ callisto_save_process.exit_code() };
+
+	if (exit_code != 0) {
+		const fs::path error_log_path{ callisto_path.parent_path() / "failed_save.txt" };
+		std::ofstream error_log{ error_log_path };
+		std::string line;
+		while (std::getline(output, line)) {
+			error_log << line;
+		}
+		error_log.close();
+
+		const auto message{ fmt::format(
+			"Automatic save of resources using callisto failed, "
+			"please refer to error log at '{}'",
+			error_log_path.string()
+		) };
+
+		MessageBox(NULL, message.data(), "Callisto save failed", MB_OK | MB_ICONWARNING);
+	}
+}
+
+void checkForCallisto(const fs::path& callisto_path) {
+	if (!fs::exists(callisto_path)) {
+		throw EloperException(fmt::format("Callisto not found at advertised path '{}'", callisto_path.string()));
+	}
 }
 
 void restoreUsertoolbar(const fs::path& usertoolbar_path) {

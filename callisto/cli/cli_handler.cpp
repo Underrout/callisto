@@ -132,7 +132,7 @@ namespace callisto {
 		});
 
 		profiles_sub->callback([&] {
-			fmt::print("{}\n", fmt::join(config_manager.getProfileNames(), ","));
+			fmt::print("{}", fmt::join(config_manager.getProfileNames(), "\n"));
 			exit(0);
 		});
 
