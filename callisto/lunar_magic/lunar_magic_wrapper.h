@@ -18,7 +18,7 @@
 namespace bp = boost::process;
 namespace fs = std::filesystem;
 
-#include "process_info.h"
+#include "../process_info.h"
 
 #include "../colors.h"
 
@@ -28,15 +28,19 @@ namespace callisto {
 		static constexpr auto LM_MESSAGE_ID{ 0xBECB };
 		static constexpr auto LM_REQUEST_TYPE{ 2 };
 		static constexpr auto LM_USERTOOLBAR_FILE{ "usertoolbar.txt" };
+		static constexpr auto ELOPER_NAME{ "eloper.exe" };
 
 		static constexpr auto CALLISTO_MAGIC_MARKER{ "; Callisto generated call below, if you can see this, you should remove it!" };
 
 		static constexpr auto LM_USERBAR_TEXT{
 			"{}\n"
 			"***START***\n"
-			"\"{}\" \"magic\" \"%9\" \"%1\" \"{}\" \"{}\"\n"
+			"\"{}\" \"%9\" \"%1\" \"{}\"\n"
 			"LM_DEFAULT\n"
-			"LM_NO_BUTTON,LM_AUTORUN_ON_NEW_ROM,LM_NO_CONSOLE_WINDOW\n"
+			"LM_NO_BUTTON,LM_AUTORUN_ON_NEW_ROM,LM_NOTIFY_ON_NEW_ROM,"
+			"LM_NOTIFY_ON_SAVE_LEVEL,LM_NOTIFY_ON_SAVE_MAP16,LM_NOTIFY_ON_SAVE_OV"
+			",LM_NO_CONSOLE_WINDOW"
+			"\n"
 			"***END***\n"
 		};
 
@@ -47,12 +51,8 @@ namespace callisto {
 		static fs::path getUsertoolbarPath(const fs::path& lunar_magic_path);
 		static bp::child launchLunarMagic(const fs::path& lunar_magic_path, const fs::path& rom_to_open);
 		void launchInjectedLunarMagic(const fs::path& callisto_path, const fs::path& lunar_magic_path, const fs::path& rom_to_open);
-#ifdef _WIN32
-		static std::pair<HWND, uint16_t> extractHandleAndVerificationCode(const std::string& lm_string);
-#endif
 
 		void appendInjectionStringToUsertoolbar(const std::string& shared_memory_name, const fs::path& callisto_path, const fs::path& usertoolbar_path);
-		static void restoreUsertoolbar(const fs::path& usertoolbar_path);
 
 		void cleanClosedInstances();
 
@@ -70,8 +70,5 @@ namespace callisto {
 
 		Result reloadRom(const fs::path& rom_to_reload);
 		void bringToFrontOrOpen(const fs::path& callisto_path, const fs::path& lunar_magic_path, const fs::path& rom_to_open);
-
-		static void communicate(const fs::path& current_rom, 
-			const std::string& lm_verification_string, const std::string& shared_memory_name, const fs::path& usertoolbar_path);
 	};
 }

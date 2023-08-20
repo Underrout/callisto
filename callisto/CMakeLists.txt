@@ -99,7 +99,7 @@ if (MSVC)
     "junction/libntfslinks/source/CharUtils.cpp")
 endif()
 
-add_executable (callisto ${CALLISTO_SOURCE_FILES} "recent_projects/recent_projects_manager.h" "cli/cli_handler.h" "prompt_util.h"  "configuration/module_configuration.h" "lunar_magic/process_info.h" "lunar_magic/process_info.cpp" "colors.cpp")
+add_executable (callisto ${CALLISTO_SOURCE_FILES} "recent_projects/recent_projects_manager.h" "cli/cli_handler.h" "prompt_util.h"  "configuration/module_configuration.h" "process_info.h" "process_info.cpp" "colors.cpp")
 target_link_options(callisto PRIVATE ${CALLISTO_LINK_OPTIONS})
 target_compile_options(callisto PRIVATE ${CALLISTO_COMPILE_OPTIONS})
 target_compile_definitions(callisto PRIVATE ${CALLISTO_COMPILE_DEFINITIONS})
@@ -200,6 +200,15 @@ target_link_libraries(callisto
   PRIVATE ftxui::dom
   PRIVATE ftxui::component
 )
+
+if (MSVC)
+    add_executable(eloper WIN32 "eloper/eloper.h" "eloper/eloper.cpp" "process_info.h" "process_info.cpp")
+
+    target_link_libraries(eloper PRIVATE fmt::fmt)
+    target_link_libraries(eloper PUBLIC spdlog::spdlog)
+    target_link_libraries(eloper PRIVATE Boost::system Boost::filesystem Boost::thread Boost::program_options)
+    target_include_directories(eloper PUBLIC ${CMAKE_SOURCE_DIR})
+endif()
 
 add_custom_command(TARGET callisto POST_BUILD 
     COMMAND ${CMAKE_COMMAND} -E copy_if_different

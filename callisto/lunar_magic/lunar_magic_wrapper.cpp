@@ -1,20 +1,6 @@
 #include "lunar_magic_wrapper.h"
 
 namespace callisto {
-#ifdef _WIN32
-	std::pair<HWND, uint16_t> LunarMagicWrapper::extractHandleAndVerificationCode(const std::string& lm_string) {
-		const auto colon{ lm_string.find(':') };
-
-		const auto hwnd_part{ lm_string.substr(0, colon) };
-		const auto hwnd{ reinterpret_cast<HWND>(std::stoi(hwnd_part, nullptr, 16)) };
-
-		const auto verification_part{ lm_string.substr(colon + 1) };
-		const auto verification_code{ static_cast<uint16_t>(std::stoi(verification_part, nullptr, 16))};
-
-		return { hwnd, verification_code };
-	}
-#endif
-
 	fs::path LunarMagicWrapper::getUsertoolbarPath(const fs::path& lunar_magic_path) {
 		return lunar_magic_path.parent_path() / LM_USERTOOLBAR_FILE;
 	}
@@ -37,12 +23,14 @@ namespace callisto {
 
 		auto lunar_magic{ launchLunarMagic(lunar_magic_path, rom_to_open) };
 
+		process_info.setPid(lunar_magic.id());
+
 		lunar_magic_processes.emplace_back(std::move(lunar_magic), std::move(process_info));
 	}
 
 	void LunarMagicWrapper::appendInjectionStringToUsertoolbar(const std::string& shared_memory_name, const fs::path& callisto_path, const fs::path& usertoolbar_path){
 		const auto injection_string{ fmt::format(
-			LM_USERBAR_TEXT, CALLISTO_MAGIC_MARKER, callisto_path.string(), shared_memory_name, usertoolbar_path.string()) };
+			LM_USERBAR_TEXT, CALLISTO_MAGIC_MARKER, (callisto_path.parent_path() / ELOPER_NAME).string(), usertoolbar_path.string())};
 
 		spdlog::debug("Adding injection string to Lunar Magic's usertoolbar.txt at {}:\n\r{}", usertoolbar_path.string(), injection_string);
 
@@ -52,42 +40,6 @@ namespace callisto {
 			stream << '\n';
 		}
 		stream << injection_string;
-	}
-
-	void LunarMagicWrapper::restoreUsertoolbar(const fs::path& usertoolbar_path) {
-		spdlog::debug("Attempting to clean usertoolbar.txt at {}", usertoolbar_path.string());
-		std::ostringstream out{};
-		std::ifstream usertoolbar_file{ usertoolbar_path };
-		std::string line;
-		bool first{ true };
-		while (std::getline(usertoolbar_file, line)) {
-			if (line == CALLISTO_MAGIC_MARKER) {
-				spdlog::debug("Magic marker line found");
-				break;
-			}
-
-			if (first) {
-				first = false;
-			}
-			else {
-				out << std::endl;
-			}
-
-			out << line;
-		}
-		usertoolbar_file.close();
-
-		std::string out_string{ out.str() };
-
-		if (out_string.empty()) {
-			spdlog::debug("Cleaned usertoolbar file would be empty, deleting it instead");
-			fs::remove(usertoolbar_path);
-		}
-		else {
-			spdlog::debug("Writing back user's previous usertoolbar file");
-			std::ofstream outfile{ usertoolbar_path };
-			outfile << out_string;
-		}
 	}
 
 	void LunarMagicWrapper::cleanClosedInstances() {
@@ -212,51 +164,5 @@ namespace callisto {
 			spdlog::info("Bringing Lunar Magic window to top is only supported on Windows, please manually locate your Lunar Magic window!");
 		}
 #endif
-	}
-
-	void LunarMagicWrapper::communicate(const fs::path& current_rom, 
-		const std::string& lm_verification_string, const std::string& shared_memory_name, const fs::path& usertoolbar_path) {
-		// this will throw if the shared memory does not exist, which I think is fine cause this is meant to be called by the Lunar Magic side
-
-		spdlog::debug("Attempting to communicate Lunar Magic information back to main callisto instance through {}", shared_memory_name);
-		auto shared_memory_object{ bi::shared_memory_object(
-			bi::open_only,
-			shared_memory_name.data(),
-			bi::read_write
-		) };
-
-		bi::mapped_region mapped_region{ shared_memory_object, bi::read_write };
-
-		void* addr{ mapped_region.get_address() };
-		auto shared_memory{ static_cast<ProcessInfo::SharedMemory*>(addr) };
-
-		spdlog::debug("Successfully set up writeable shared memory");
-
-		const auto [handle, verification] = extractHandleAndVerificationCode(lm_verification_string);
-
-		spdlog::debug(
-			"Attempting to communicate Lunar Magic information:\n\r"
-			"Verification code: {:X}\n\r"
-			"LM Message window: {:X}\n\r"
-			"Current ROM: {}",
-			verification,
-			(uint32_t)handle,
-			current_rom.string()
-		);
-
-		bi::scoped_lock<bi::interprocess_mutex>(shared_memory->mutex);
-
-		shared_memory->set = true;
-		std::strcpy(shared_memory->current_rom, current_rom.string().data());
-		shared_memory->verification_code = verification;
-		shared_memory->hwnd = (uint32_t)handle;
-
-		if (shared_memory->usertoolbar_needs_cleaning) {
-			spdlog::debug("Cleaning usertoolbar.txt");
-			restoreUsertoolbar(usertoolbar_path);
-			shared_memory->usertoolbar_needs_cleaning = false;
-		}
-
-		spdlog::debug("Successfully communicated with main callisto instance, exiting now!");
 	}
 }
