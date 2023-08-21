@@ -5,31 +5,47 @@ namespace callisto {
 		return fmt::format(SHARED_MEMORY_NAME, lunar_magic_pid);
 	}
 
-	void ProcessInfo::setUpSharedMemory() {
-		shared_memory_object = bi::shared_memory_object(
-			bi::open_or_create,
-			shared_memory_name.data(),
-			bi::read_write
-		);
+	void ProcessInfo::setUpSharedMemory(bool open_only) {
+		if (open_only) {
+			shared_memory_object = bi::shared_memory_object(
+				bi::open_only,
+				shared_memory_name.data(),
+				bi::read_write
+			);
+		}
+		else {
+			shared_memory_object = bi::shared_memory_object(
+				bi::open_or_create,
+				shared_memory_name.data(),
+				bi::read_write
+			);
+		}
 
-		shared_memory_object.truncate(sizeof(SharedMemory));
+		if (!open_only) {
+			shared_memory_object.truncate(sizeof(SharedMemory));
+		}
 
 		mapped_region = bi::mapped_region(shared_memory_object, bi::read_write);
 
 		void* addr = mapped_region.get_address();
 
-		shared_memory = new (addr) SharedMemory;
+		if (!open_only) {
+			shared_memory = new (addr) SharedMemory;
+		}
+		else {
+			shared_memory = static_cast<SharedMemory*>(addr);
+		}
 	}
 
 	ProcessInfo::ProcessInfo() {};
 
-	void ProcessInfo::setPid(const bp::pid_t lunar_magic_pid) {
+	void ProcessInfo::setPid(const bp::pid_t lunar_magic_pid, bool open_only) {
 		shared_memory_name = determineSharedMemoryName(lunar_magic_pid);
-		setUpSharedMemory();
+		setUpSharedMemory(open_only);
 	}
 
-	ProcessInfo::ProcessInfo(const bp::pid_t lunar_magic_pid) : shared_memory_name(determineSharedMemoryName(lunar_magic_pid)) {
-		setUpSharedMemory();
+	ProcessInfo::ProcessInfo(const bp::pid_t lunar_magic_pid, bool open_only) : shared_memory_name(determineSharedMemoryName(lunar_magic_pid)) {
+		setUpSharedMemory(open_only);
 	}
 
 	ProcessInfo::ProcessInfo(ProcessInfo&& other) noexcept {
@@ -136,6 +152,23 @@ namespace callisto {
 
 	const std::string& ProcessInfo::getSharedMemoryName() const {
 		return shared_memory_name;
+	}
+
+	bool ProcessInfo::sharedMemoryExistsFor(bp::pid_t pid) {
+		try {
+			bi::shared_memory_object shared(
+				bi::open_only,
+				determineSharedMemoryName(pid).data(),
+				bi::read_only
+			);
+		}
+		catch (const std::exception&) {
+			// supposedly creating a shared memory object with open_only that doesn't exist will throw an 
+			// exception, hoping that's true and also that this will not throw exceptions in other 
+			// circumstances...
+			return false;
+		}
+		return true;
 	}
 
 	ProcessInfo::~ProcessInfo() {

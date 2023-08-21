@@ -46,7 +46,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 	const auto [hwnd, verification_code] = extractHandleAndVerificationCode(lm_verification_string);
 	const auto pid{ getLunarMagicPid(hwnd) };
 	lunar_magic_process = bp::child(pid);
-	process_info = callisto::ProcessInfo(lunar_magic_process.id());
+	process_info = callisto::ProcessInfo(lunar_magic_process.id(), true);
 
 	process_info.setLunarMagicMessageWindowHandle(hwnd);
 	process_info.setLunarMagicVerificationCode(verification_code);

@@ -48,14 +48,14 @@ namespace callisto {
 		static constexpr auto SHARED_MEMORY_NAME{ "callisto_discourse_{}" };
 
 		static std::string determineSharedMemoryName(const bp::pid_t lunar_magic_pid);
-		void setUpSharedMemory();
+		void setUpSharedMemory(bool open_only);
 
 	public:
 		ProcessInfo();
-		ProcessInfo(const bp::pid_t lunar_magic_pid);
+		ProcessInfo(const bp::pid_t lunar_magic_pid, bool open_only = false);
 		ProcessInfo(ProcessInfo&& other) noexcept;
 
-		void setPid(const bp::pid_t lunar_magic_pid);
+		void setPid(const bp::pid_t lunar_magic_pid, bool open_only = false);
 
 		ProcessInfo& operator=(ProcessInfo&& other) noexcept;
 
@@ -70,13 +70,15 @@ namespace callisto {
 		void setCurrentLunarMagicRomPath(const fs::path& rom_path);
 
 		std::optional<bp::pid_t> getSaveProcessPid();
-		void setSaveProcessPid(bp::pid_t);
+		void setSaveProcessPid(bp::pid_t pid);
 		void unsetSaveProcessPid();
 
 		fs::path getProjectRomPath();
 		void setProjectRomPath(const fs::path& rom_path);
 
 		const std::string& getSharedMemoryName() const;
+
+		static bool sharedMemoryExistsFor(bp::pid_t pid);
 
 		~ProcessInfo();
 	};

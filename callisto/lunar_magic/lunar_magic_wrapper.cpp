@@ -1,6 +1,33 @@
 #include "lunar_magic_wrapper.h"
 
 namespace callisto {
+	void LunarMagicWrapper::attemptReattach(const fs::path& lunar_magic_path) {
+		PROCESSENTRY32 entry;
+		entry.dwSize = sizeof(PROCESSENTRY32);
+
+		HANDLE snapshot{ CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0) };
+
+		if (Process32First(snapshot, &entry) == TRUE) {
+			while (Process32Next(snapshot, &entry) == TRUE) {
+				HANDLE module_snapshot{ CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, entry.th32ProcessID) };
+
+				MODULEENTRY32 module_entry;
+				module_entry.dwSize = sizeof(MODULEENTRY32);
+				if (Module32First(module_snapshot, &module_entry)) {
+					if (stricmp(module_entry.szExePath, lunar_magic_path.string().data()) == 0) {
+						if (ProcessInfo::sharedMemoryExistsFor(entry.th32ProcessID)) {
+							lunar_magic_processes.emplace_back(bp::child(entry.th32ProcessID), ProcessInfo(entry.th32ProcessID, true));
+						}
+					}
+				}
+
+				CloseHandle(module_snapshot);
+			}
+		}
+
+		CloseHandle(snapshot);
+	}
+	
 	fs::path LunarMagicWrapper::getUsertoolbarPath(const fs::path& lunar_magic_path) {
 		return lunar_magic_path.parent_path() / LM_USERTOOLBAR_FILE;
 	}

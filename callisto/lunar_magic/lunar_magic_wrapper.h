@@ -10,6 +10,7 @@
 
 #ifdef _WIN32
 #include <Windows.h>
+#include <tlhelp32.h>
 #endif
 
 #include <spdlog/spdlog.h>
@@ -48,6 +49,7 @@ namespace callisto {
 
 		LunarMagicProcessVector lunar_magic_processes{};
 
+
 		static fs::path getUsertoolbarPath(const fs::path& lunar_magic_path);
 		static bp::child launchLunarMagic(const fs::path& lunar_magic_path, const fs::path& rom_to_open);
 		void launchInjectedLunarMagic(const fs::path& callisto_path, const fs::path& lunar_magic_path, const fs::path& rom_to_open);
@@ -72,6 +74,8 @@ namespace callisto {
 		void bringToFrontOrOpen(const fs::path& callisto_path, const fs::path& lunar_magic_path, const fs::path& rom_to_open);
 
 		void setNewProjectRom(const fs::path& project_rom_path);
+
+		void attemptReattach(const fs::path& lunar_magic_path);
 
 		std::optional<bp::pid_t> pendingEloperSave();
 	};
