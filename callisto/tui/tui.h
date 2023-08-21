@@ -119,6 +119,7 @@ namespace callisto {
 		void emulatorButton(const std::string& emulator_name);
 		void editButton();
 
+		void saveInProgressSafeguard(std::function<void()> func);
 		void markerSafeguard(const std::string& title, std::function<void()> func);
 
 		Component wrapMenuInEventCatcher(Component full_menu);

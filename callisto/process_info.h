@@ -17,6 +17,9 @@ namespace bp = boost::process;
 #include <boost/interprocess/shared_memory_object.hpp>
 #include <boost/interprocess/mapped_region.hpp>
 
+#include <boost/process.hpp>
+
+namespace bp = boost::process;
 namespace bi = boost::interprocess;
 
 #include <spdlog/spdlog.h>
@@ -26,13 +29,15 @@ namespace callisto {
 	class ProcessInfo {
 	public:
 		struct SharedMemory {
-			SharedMemory() : hwnd_set(false), verification_code_set(false), current_rom_set(false) {}
+			SharedMemory() : hwnd_set(false), verification_code_set(false), current_rom_set(false), save_process_pid_set(false) {}
 
 			bi::interprocess_mutex mutex;
-			bool hwnd_set, verification_code_set, current_rom_set;
+			bool hwnd_set, verification_code_set, current_rom_set, save_process_pid_set;
+			bp::pid_t save_process_pid;
 			uint32_t hwnd;
 			uint16_t verification_code;
 			char current_rom[MAX_PATH];
+			char project_rom[MAX_PATH];
 		};
 	protected:
 		std::string shared_memory_name;
@@ -63,6 +68,13 @@ namespace callisto {
 
 		std::optional<fs::path> getCurrentLunarMagicRomPath();
 		void setCurrentLunarMagicRomPath(const fs::path& rom_path);
+
+		std::optional<bp::pid_t> getSaveProcessPid();
+		void setSaveProcessPid(bp::pid_t);
+		void unsetSaveProcessPid();
+
+		fs::path getProjectRomPath();
+		void setProjectRomPath(const fs::path& rom_path);
 
 		const std::string& getSharedMemoryName() const;
 

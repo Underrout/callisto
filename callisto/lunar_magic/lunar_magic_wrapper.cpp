@@ -74,6 +74,22 @@ namespace callisto {
 		launchInjectedLunarMagic(callisto_path, lunar_magic_path, rom_to_open);
 	}
 
+	void LunarMagicWrapper::setNewProjectRom(const fs::path& project_rom_path) {
+		for (auto& [_, proc_info] : lunar_magic_processes) {
+			proc_info.setProjectRomPath(project_rom_path);
+		}
+	}
+
+	std::optional<bp::pid_t> LunarMagicWrapper::pendingEloperSave() {
+		for (auto& [_, proc_info] : lunar_magic_processes) {
+			const auto potential_pid{ proc_info.getSaveProcessPid() };
+			if (potential_pid.has_value()) {
+				return potential_pid.value();
+			}
+		}
+		return {};
+	}
+
 	LunarMagicWrapper::Result LunarMagicWrapper::reloadRom(const fs::path& rom_to_reload) {
 		spdlog::debug("Attempting to reload ROM {}", rom_to_reload.string());
 

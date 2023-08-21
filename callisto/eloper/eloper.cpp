@@ -7,7 +7,6 @@ WCHAR szTitle[MAX_LOADSTRING] = L"eloper";
 WCHAR szWindowClass[MAX_LOADSTRING] = L"eloper";
 
 bp::child lunar_magic_process;
-bp::child callisto_save_process;
 callisto::ProcessInfo process_info;
 HWND message_only_window;
 fs::path callisto_path;
@@ -54,6 +53,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 
 	const auto& current_rom{ argv[2] };
 	process_info.setCurrentLunarMagicRomPath(current_rom);
+	process_info.setProjectRomPath(current_rom);
 
 	MSG msg;
 
@@ -244,6 +244,11 @@ std::optional<std::string> determineSaveProfile(const fs::path& callisto_path) {
 }
 
 void handleSave() {
+	if (process_info.getCurrentLunarMagicRomPath().value() != process_info.getProjectRomPath()) {
+		// save of non-project ROM, skip
+		return;
+	}
+
 	try {
 		checkForCallisto(callisto_path);
 	}
@@ -255,22 +260,35 @@ void handleSave() {
 
 	const auto profile{ determineSaveProfile(callisto_path) };
 
-	if (callisto_save_process.running()) {
-		callisto_save_process.wait();  // idk if any of this is necessary, but I guess I'll do it for safety? who knows
+	const auto callisto_save_process_pid{ process_info.getSaveProcessPid() };
+
+	if (callisto_save_process_pid.has_value()) {
+		bp::child other_process{ callisto_save_process_pid.value() };
+		other_process.terminate();  // idk if any of this is necessary, but I guess I'll do it for safety? who knows
 	}
 
 	bp::ipstream output;
 
+	bp::child new_save_process;
 	if (profile.has_value()) {
-		callisto_save_process = bp::child(callisto_path.string(), "save", "--profile", profile.value(), bp::std_out > output, bp::windows::create_no_window);
+		new_save_process = bp::child(callisto_path.string(), "save", "--profile", profile.value(), bp::std_out > output, bp::windows::create_no_window);
 	}
 	else {
-		callisto_save_process = bp::child(callisto_path.string(), "save", bp::std_out > output, bp::windows::create_no_window);
+		new_save_process = bp::child(callisto_path.string(), "save", bp::std_out > output, bp::windows::create_no_window);
 	}
 
-	callisto_save_process.wait();
+	process_info.setSaveProcessPid(new_save_process.id());
 
-	const auto& exit_code{ callisto_save_process.exit_code() };
+	new_save_process.wait();
+
+	process_info.unsetSaveProcessPid();
+
+	const auto& exit_code{ new_save_process.exit_code() };
+
+	if (exit_code == 1) {
+		// terminate called on our process, ignore it
+		return;
+	}
 
 	if (exit_code != 0) {
 		const fs::path error_log_path{ callisto_path.parent_path() / "failed_save.txt" };

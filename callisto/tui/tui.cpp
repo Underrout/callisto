@@ -196,6 +196,37 @@ namespace callisto {
 		}
 		previously_selected_profile_menu_entry = selected_profile_menu_entry;
 	}
+	
+	void TUI::saveInProgressSafeguard(std::function<void()> func) {
+		const auto potential_save_process{ lunar_magic_wrapper.pendingEloperSave() };
+		if (potential_save_process.has_value()) {
+			showChoiceModal(
+				"Prompt",
+				"WARNING: An automated resource export from Lunar Magic is ongoing,\n"
+				"it is recommended that you wait for this export to complete. Alternatively,\n"
+				"if the issue persists, aborting the save process and continuing anyway is\n"
+				"possible.\n\n"
+				"Press 'Yes' to return to main menu and wait, press 'No' to abort the\nexport and continue anyway (not recommended).",
+				[=] {
+
+				},
+				[=] {
+					try {
+						bp::child save_process{ potential_save_process.value() };
+						save_process.terminate();  // who knows if this actually works
+					}
+					catch (const std::exception&) {
+						// passing, presumably the save process has terminated in the meantime
+					}
+
+					func();
+				}
+			);
+		}
+		else {
+			func();
+		}
+	}
 
 	void TUI::markerSafeguard(const std::string& title, std::function<void()> func) {
 		if (config != nullptr && config->output_rom.isSet() && fs::exists(config->output_rom.getOrThrow())) {
@@ -282,6 +313,8 @@ namespace callisto {
 		try {
 			auto new_config{ config_manager.getConfiguration(profile_name) };
 			config = new_config;
+
+			lunar_magic_wrapper.setNewProjectRom(config->output_rom.getOrThrow());
 		}
 		catch (const std::exception&) {
 			config = nullptr;
@@ -455,11 +488,15 @@ namespace callisto {
 			return;
 		}
 
-		markerSafeguard("Rebuild", [=] { 
-			Rebuilder rebuilder{}; 
-			rebuilder.build(*config);
-			lunar_magic_wrapper.reloadRom(config->output_rom.getOrThrow());
-		});
+		saveInProgressSafeguard(
+			[=] {
+				markerSafeguard("Rebuild", [=] {
+					Rebuilder rebuilder{};
+					rebuilder.build(*config);
+					lunar_magic_wrapper.reloadRom(config->output_rom.getOrThrow());
+				});
+			}
+		);
 	}
 
 	void TUI::quickbuildButton() {
@@ -470,21 +507,26 @@ namespace callisto {
 			return;
 		}
 
-		markerSafeguard("Quickbuild", [=] {
-			try {
-				QuickBuilder quick_builder{ config->project_root.getOrThrow() };
-				const auto result{ quick_builder.build(*config) };
-				if (result == QuickBuilder::Result::SUCCESS) {
-					lunar_magic_wrapper.reloadRom(config->output_rom.getOrThrow());
-				}
+		saveInProgressSafeguard(
+			[=] {
+				markerSafeguard("Quickbuild", [=] {
+					try {
+						QuickBuilder quick_builder{ config->project_root.getOrThrow() };
+						const auto result{ quick_builder.build(*config) };
+						if (result == QuickBuilder::Result::SUCCESS) {
+							lunar_magic_wrapper.reloadRom(config->output_rom.getOrThrow());
+						}
+					}
+					catch (const MustRebuildException& e) {
+						spdlog::info("Quickbuild cannot continue due to the following reason, rebuilding ROM:\n\r{}", e.what());
+						Rebuilder rebuilder{};
+						rebuilder.build(*config);
+						lunar_magic_wrapper.reloadRom(config->output_rom.getOrThrow());
+					}
+				});
 			}
-			catch (const MustRebuildException& e) {
-				spdlog::info("Quickbuild cannot continue due to the following reason, rebuilding ROM:\n\r{}", e.what());
-				Rebuilder rebuilder{};
-				rebuilder.build(*config);
-				lunar_magic_wrapper.reloadRom(config->output_rom.getOrThrow());
-			}
-		});
+		);
+
 	}
 
 	void TUI::saveButton() {
@@ -522,7 +564,11 @@ namespace callisto {
 			return;
 		}
 
-		runWithLogging("ROM Save", [=] { Saver::exportResources(config->output_rom.getOrThrow(), *config, true); });
+		saveInProgressSafeguard(
+			[=] {
+				runWithLogging("ROM Save", [=] { Saver::exportResources(config->output_rom.getOrThrow(), *config, true); });
+			}
+		);
 	}
 
 	void TUI::editButton() {
