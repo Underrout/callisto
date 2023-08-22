@@ -173,6 +173,12 @@ namespace callisto {
 		modal_text = new_text;
 	}
 
+	Component TUI::getSaveSpinnerComponent() {
+		return Maybe(Renderer([&] {
+			return window(text(""), hbox({ spinner(2, shift / 2), text(" Save in progress...") | color(Color::Cyan) }));
+		}), &save_in_progress);
+	}
+
 	void TUI::determineInitialProfile() {
 		const auto last_config_name{ getLastConfigName(callisto_directory) };
 		bool used_cached{ false };
@@ -289,7 +295,7 @@ namespace callisto {
 		setProfileMenu();
 
 		Component full_menu{ Container::Vertical({ Container::Horizontal({
-			main_menu | size(WIDTH, GREATER_THAN, 40),
+			Container::Vertical({ main_menu, getSaveSpinnerComponent()}) | size(WIDTH, GREATER_THAN, 40),
 			Container::Vertical({
 				profile_menu, emulator_menu
 			}),
@@ -301,7 +307,31 @@ namespace callisto {
 		full_menu |= Modal(getModal(), &show_modal);
 		full_menu |= Modal(getChoiceModal(), &show_choice_modal);
 
+		std::atomic<bool> continue_refresh{ true };
+		std::jthread refresh_ui_thread{ [&] {
+			while (continue_refresh) {
+				using namespace std::chrono_literals;
+				std::this_thread::sleep_for(0.05s);
+				screen.Post([&] { shift++; });
+				screen.Post(Event::Custom);
+			}
+		} };
+
+		std::jthread save_in_progress_monitor{ [&] {
+			while (continue_refresh) {
+				if (lunar_magic_wrapper.pendingEloperSave().has_value()) {
+					save_in_progress = true;
+				}
+				else {
+					save_in_progress = false;
+				}
+				using namespace std::chrono_literals;
+				std::this_thread::sleep_for(0.05s);
+			}
+		} };
+
 		screen.Loop(full_menu);
+		continue_refresh = false;
 	}
 
 	void TUI::setConfiguration(const std::optional<std::string>& profile_name, const fs::path& callisto_directory) {
