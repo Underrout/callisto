@@ -73,6 +73,19 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 		}
 	}
 
+	// Construct below serves purely to account for saving stuff on Lunar Magic exit
+	// Pretty hacky, but does seem to work
+	if (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE)) {
+		TranslateMessage(&msg);
+		DispatchMessage(&msg);
+	}
+
+	std::this_thread::sleep_for(std::chrono::seconds(10));
+
+	while (process_info.getSaveProcessPid().has_value()) {
+		std::this_thread::sleep_for(std::chrono::seconds(1));
+	}
+
 	return (int)msg.wParam;
 }
 
