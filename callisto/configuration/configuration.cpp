@@ -401,6 +401,9 @@ namespace callisto {
 		const std::map<std::string, std::string>& user_variables) {
 		for (const auto& config_file : config_files) {
 			fillOneConfigurationFile(config_file, level, user_variables);
+		}
+
+		for (const auto& config_file : config_files) {
 			discoverBuildOrder(config_file, level, user_variables);
 		}
 	}
