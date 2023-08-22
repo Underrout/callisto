@@ -77,6 +77,6 @@ namespace callisto {
 
 		void attemptReattach(const fs::path& lunar_magic_path);
 
-		std::optional<bp::pid_t> pendingEloperSave();
+		std::optional<bp::group::native_handle_t> pendingEloperSave();
 	};
 }

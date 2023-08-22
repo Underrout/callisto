@@ -12,6 +12,7 @@
 #include <boost/process/windows.hpp>
 
 #include <spdlog/spdlog.h>
+#include "spdlog/sinks/basic_file_sink.h"
 #include <fmt/format.h>
 
 namespace bp = boost::process;

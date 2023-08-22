@@ -11,8 +11,17 @@ callisto::ProcessInfo process_info;
 HWND message_only_window;
 fs::path callisto_path;
 
+std::atomic<bool> cancel{ false };
+std::mutex m;
+
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPWSTR lpCmdLine, _In_ int nCmdShow) {
 	UNREFERENCED_PARAMETER(hPrevInstance);
+
+	/*
+	auto file_logger = spdlog::basic_logger_mt("file_logger", "log.txt");
+	spdlog::set_default_logger(file_logger);
+	spdlog::flush_on(spdlog::level::info);
+	*/
 
 	registerClass(hInstance);
 
@@ -116,6 +125,7 @@ LRESULT CALLBACK wndProc(HWND hwnd, UINT umsg, WPARAM wparam, LPARAM lparam) {
 				return FALSE;
 			}
 
+			std::thread thr;
 			switch (static_cast<LunarMagicNotificationType>(notification_type)) {
 			case LunarMagicNotificationType::NEW_ROM:
 				handleNewRom((HWND)wparam);
@@ -126,7 +136,8 @@ LRESULT CALLBACK wndProc(HWND hwnd, UINT umsg, WPARAM wparam, LPARAM lparam) {
 			case LunarMagicNotificationType::SAVE_MAP16:
 				[[fallthrough]];
 			case LunarMagicNotificationType::SAVE_OW:
-				handleSave();
+				thr = std::thread([&] { handleSave(); });
+				thr.detach();
 				break;
 
 			default:
@@ -242,6 +253,8 @@ std::optional<std::string> determineSaveProfile(const fs::path& callisto_path) {
 }
 
 void handleSave() {
+	const auto id{ std::hash<std::thread::id>{}(std::this_thread::get_id()) };
+
 	if (process_info.getCurrentLunarMagicRomPath().value() != process_info.getProjectRomPath()) {
 		// save of non-project ROM, skip
 		return;
@@ -260,35 +273,68 @@ void handleSave() {
 
 	const auto callisto_save_process_pid{ process_info.getSaveProcessPid() };
 
+	spdlog::info("Thread {}: Checking for pending save", id);
 	if (callisto_save_process_pid.has_value()) {
-		bp::child other_process{ callisto_save_process_pid.value() };
-		other_process.terminate();  // idk if any of this is necessary, but I guess I'll do it for safety? who knows
+		cancel = true;
+		spdlog::info("Thread {}: Sending cancel", id, callisto_save_process_pid.value());
 	}
+
+	std::scoped_lock lock(m);
 
 	bp::ipstream output;
 
+	bp::group g;
 	bp::child new_save_process;
 	if (profile.has_value()) {
-		new_save_process = bp::child(callisto_path.string(), "save", "--profile", profile.value(), bp::std_out > output, bp::windows::create_no_window);
+		new_save_process = bp::child(callisto_path.string(), "save", "--profile", profile.value(), bp::std_out > output, bp::windows::create_no_window, g);
 	}
 	else {
-		new_save_process = bp::child(callisto_path.string(), "save", bp::std_out > output, bp::windows::create_no_window);
+		new_save_process = bp::child(callisto_path.string(), "save", bp::std_out > output, bp::windows::create_no_window, g);
 	}
 
-	process_info.setSaveProcessPid(new_save_process.id());
+	spdlog::info("Thread {}: Started new save process {:X}", id, new_save_process.id());
+	process_info.setSaveProcessPid(g.native_handle());
 
-	new_save_process.wait();
+	spdlog::info("Thread {}: Waiting for save process {:X} to exit", id, new_save_process.id());
+	bool received_cancel{ false };
+	while (new_save_process.running()) {
+		if (received_cancel) {
+			spdlog::info("Thread {}: But it's still running...", id);
+			continue;
+		}
 
+		if (cancel) {
+			spdlog::info("Thread {}: Received cancel, terminating save process {:X} and returning", id, new_save_process.id());
+			g.terminate();
+			cancel = false;
+			received_cancel = true;
+		}
+		else {
+			spdlog::info("Thread {}: Not cancelled", id);
+		}
+		std::this_thread::sleep_for(std::chrono::milliseconds(100));
+	}
+
+	if (received_cancel) {
+		process_info.unsetSaveProcessPid();
+		return;
+	}
+
+	g.wait();
+	spdlog::info("Thread {}: Finished waiting for save process {:X}", id, new_save_process.id());
 	process_info.unsetSaveProcessPid();
 
 	const auto& exit_code{ new_save_process.exit_code() };
 
+	spdlog::info("Thread {}: Exit code = {}", id, exit_code);
 	if (exit_code == 1) {
+		spdlog::info("Thread {}: Got terminated", id);
 		// terminate called on our process, ignore it
 		return;
 	}
 
 	if (exit_code != 0) {
+		spdlog::info("Thread {}: Save failed", id);
 		const fs::path error_log_path{ callisto_path.parent_path() / "failed_save.txt" };
 		std::ofstream error_log{ error_log_path };
 		std::string line;
@@ -304,6 +350,9 @@ void handleSave() {
 		) };
 
 		MessageBox(NULL, message.data(), "Callisto save failed", MB_OK | MB_ICONWARNING);
+	}
+	else {
+		spdlog::info("Thread {}: Save succeeded", id);
 	}
 }
 

@@ -119,13 +119,13 @@ namespace callisto {
 		shared_memory->current_rom_set = true;
 	}
 
-	std::optional<bp::pid_t> ProcessInfo::getSaveProcessPid() {
+	std::optional<bp::group::native_handle_t> ProcessInfo::getSaveProcessPid() {
 		bi::scoped_lock<bi::interprocess_mutex>(shared_memory->mutex);
 
 		return shared_memory->save_process_pid_set ? std::make_optional(shared_memory->save_process_pid) : std::nullopt;
 	}
 
-	void ProcessInfo::setSaveProcessPid(bp::pid_t pid) {
+	void ProcessInfo::setSaveProcessPid(bp::group::native_handle_t pid) {
 		bi::scoped_lock<bi::interprocess_mutex>(shared_memory->mutex);
 
 		shared_memory->save_process_pid_set = true;

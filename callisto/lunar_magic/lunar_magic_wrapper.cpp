@@ -107,7 +107,7 @@ namespace callisto {
 		}
 	}
 
-	std::optional<bp::pid_t> LunarMagicWrapper::pendingEloperSave() {
+	std::optional<bp::group::native_handle_t> LunarMagicWrapper::pendingEloperSave() {
 		for (auto& [_, proc_info] : lunar_magic_processes) {
 			const auto potential_pid{ proc_info.getSaveProcessPid() };
 			if (potential_pid.has_value()) {

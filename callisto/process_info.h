@@ -33,7 +33,7 @@ namespace callisto {
 
 			bi::interprocess_mutex mutex;
 			bool hwnd_set, verification_code_set, current_rom_set, save_process_pid_set;
-			bp::pid_t save_process_pid;
+			bp::group::native_handle_t save_process_pid;
 			uint32_t hwnd;
 			uint16_t verification_code;
 			char current_rom[MAX_PATH];
@@ -69,8 +69,8 @@ namespace callisto {
 		std::optional<fs::path> getCurrentLunarMagicRomPath();
 		void setCurrentLunarMagicRomPath(const fs::path& rom_path);
 
-		std::optional<bp::pid_t> getSaveProcessPid();
-		void setSaveProcessPid(bp::pid_t pid);
+		std::optional<bp::group::native_handle_t> getSaveProcessPid();
+		void setSaveProcessPid(bp::group::native_handle_t pid);
 		void unsetSaveProcessPid();
 
 		fs::path getProjectRomPath();

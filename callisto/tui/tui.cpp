@@ -204,30 +204,10 @@ namespace callisto {
 	}
 	
 	void TUI::saveInProgressSafeguard(std::function<void()> func) {
-		const auto potential_save_process{ lunar_magic_wrapper.pendingEloperSave() };
+		auto potential_save_process{ lunar_magic_wrapper.pendingEloperSave() };
 		if (potential_save_process.has_value()) {
-			showChoiceModal(
-				"Prompt",
-				"WARNING: An automated resource export from Lunar Magic is ongoing,\n"
-				"it is recommended that you wait for this export to complete. Alternatively,\n"
-				"if the issue persists, aborting the save process and continuing anyway is\n"
-				"possible.\n\n"
-				"Press 'Yes' to return to main menu and wait, press 'No' to abort the\nexport and continue anyway (not recommended).",
-				[=] {
-
-				},
-				[=] {
-					try {
-						bp::child save_process{ potential_save_process.value() };
-						save_process.terminate();  // who knows if this actually works
-					}
-					catch (const std::exception&) {
-						// passing, presumably the save process has terminated in the meantime
-					}
-
-					func();
-				}
-			);
+			showModal("Save in progress", "An automated export of resources from Lunar Magic is currently\n"
+				"in progress. Please wait for the save to finish and try again.");
 		}
 		else {
 			func();
