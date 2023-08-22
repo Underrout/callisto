@@ -116,7 +116,6 @@ LRESULT CALLBACK wndProc(HWND hwnd, UINT umsg, WPARAM wparam, LPARAM lparam) {
 				return FALSE;
 			}
 
-			std::jthread thr;
 			switch (static_cast<LunarMagicNotificationType>(notification_type)) {
 			case LunarMagicNotificationType::NEW_ROM:
 				handleNewRom((HWND)wparam);
@@ -159,7 +158,6 @@ std::unordered_set<std::string> getProfileNames(const fs::path& callisto_path) {
 		throw EloperException(fmt::format("Callisto not found at path '{}', cannot get profile names", callisto_path.string()));
 	}
 }
-
 
 std::pair<HWND, uint16_t> extractHandleAndVerificationCode(const std::string& lm_string) {
 	const auto colon{ lm_string.find(':') };
