@@ -132,7 +132,7 @@ namespace callisto {
 		});
 
 		profiles_sub->callback([&] {
-			fmt::print("{}\n", fmt::join(config_manager.getProfileNames(), ","));
+			fmt::print("{}", fmt::join(config_manager.getProfileNames(), "\n"));
 			exit(0);
 		});
 
@@ -141,7 +141,7 @@ namespace callisto {
 		}
 		catch (const std::exception &e) {
 			spdlog::error(e.what());
-			exit(1);
+			exit(2);
 		}
 
 		exit(0);
