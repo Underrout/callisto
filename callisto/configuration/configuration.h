@@ -20,6 +20,7 @@
 #include "../descriptor.h"
 #include "color_configuration.h"
 #include "../colors.h"
+#include "../globals.h"
 
 namespace fs = std::filesystem;
 
@@ -93,7 +94,7 @@ namespace callisto {
 			const std::map<std::string, std::string>& previous_user_variables = {});
 
 		Configuration(const ConfigFileMap& config_file_map, const VariableFileMap& variable_file_map,
-			const fs::path& callisto_root_directory, bool allow_user_input = true);
+			const fs::path& callisto_root_directory);
 
 		ConfigValueType getByKey(const std::string& key) const;
 

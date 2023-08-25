@@ -2,7 +2,7 @@
 
 namespace callisto {
 	Configuration::Configuration(const ConfigFileMap& config_file_map, const VariableFileMap& variable_file_map, 
-		const fs::path& callisto_root_directory, bool allow_user_input) : allow_user_input(allow_user_input) {
+		const fs::path& callisto_root_directory) : allow_user_input(globals::ALLOW_USER_INPUT) {
 
 		for (const auto& config_color_str : colors::configurable_colors) {
 			color_configurations.emplace(config_color_str, ColorConfiguration(config_color_str));

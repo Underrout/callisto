@@ -305,7 +305,8 @@ void handleSave() {
 		new_save_process = bp::child(
 			callisto_path.string(), "save", 
 			"--profile", profile.value(), 
-			"--max-thread-count", thread_count, 
+			"--max-threads", thread_count, 
+			"--allow-user-input", "false",
 			bp::std_out > output, bp::windows::create_no_window, g
 		);
 	}
@@ -313,7 +314,8 @@ void handleSave() {
 		new_save_process = bp::child(
 			callisto_path.string(), 
 			"save", 
-			"--max-thread-count", thread_count,
+			"--max-threads", thread_count,
+			"--allow-user-input", "false",
 			bp::std_out > output, bp::windows::create_no_window, g
 		);
 	}

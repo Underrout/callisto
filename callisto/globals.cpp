@@ -7,6 +7,8 @@ namespace callisto {
 			? 1
 			: std::jthread::hardware_concurrency() - 1;
 
+		bool ALLOW_USER_INPUT = true;
+
 		void setMaxThreadCount(size_t proposed_thread_count) {
 			MAX_THREAD_COUNT = proposed_thread_count > std::jthread::hardware_concurrency()
 				? std::jthread::hardware_concurrency()
