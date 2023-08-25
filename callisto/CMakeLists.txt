@@ -242,45 +242,10 @@ add_custom_command(TARGET callisto POST_BUILD
     $<TARGET_FILE:asar> $<TARGET_FILE_DIR:callisto>
 )
 
-add_custom_command(TARGET callisto POST_BUILD 
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different
-    "${CMAKE_CURRENT_SOURCE_DIR}/build_order.toml" $<TARGET_FILE_DIR:callisto>
+add_custom_target(toml_config
+    COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_LIST_DIR}/toml_config ${CMAKE_CURRENT_BINARY_DIR}/config
 )
-
-add_custom_command(TARGET callisto POST_BUILD 
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different
-    "${CMAKE_CURRENT_SOURCE_DIR}/patches.toml" $<TARGET_FILE_DIR:callisto>
-)
-
-add_custom_command(TARGET callisto POST_BUILD 
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different
-    "${CMAKE_CURRENT_SOURCE_DIR}/project.toml" $<TARGET_FILE_DIR:callisto>
-)
-
-add_custom_command(TARGET callisto POST_BUILD 
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different
-    "${CMAKE_CURRENT_SOURCE_DIR}/resources.toml" $<TARGET_FILE_DIR:callisto>
-)
-
-add_custom_command(TARGET callisto POST_BUILD 
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different
-    "${CMAKE_CURRENT_SOURCE_DIR}/tools.toml" $<TARGET_FILE_DIR:callisto>
-)
-
-add_custom_command(TARGET callisto POST_BUILD 
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different
-    "${CMAKE_CURRENT_SOURCE_DIR}/variables.toml" $<TARGET_FILE_DIR:callisto>
-)
-
-add_custom_command(TARGET callisto POST_BUILD 
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different
-    "${CMAKE_CURRENT_SOURCE_DIR}/modules.toml" $<TARGET_FILE_DIR:callisto>
-)
-
-add_custom_command(TARGET callisto POST_BUILD 
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different
-    "${CMAKE_CURRENT_SOURCE_DIR}/colors.toml" $<TARGET_FILE_DIR:callisto>
-)
+add_dependencies(callisto toml_config)
 
 add_custom_command(TARGET callisto POST_BUILD 
     COMMAND ${CMAKE_COMMAND} -E copy_if_different

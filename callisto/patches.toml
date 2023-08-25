@@ -1,5 +1,0 @@
-[resources]
-patches = [
-	# "patches/some_patch.asm",
-	# "patches/etc.asm"
-]

@@ -1,0 +1,10 @@
+# This config file contains the list of patches 
+# to be applied by callisto during the build
+
+# Add as many as you like!
+
+[resources]
+patches = [
+	# "patches/some_patch.asm",
+	# "patches/etc.asm"
+]

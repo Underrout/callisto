@@ -1,3 +1,9 @@
+# This config file contains the paths to various 
+# resources which are exported and inserted by 
+# callisto
+
+# You can change these as you please!
+
 [resources]
 initial_patch = "resources/initial_patch.bps"
 levels = "resources/levels"
@@ -8,5 +14,7 @@ titlescreen = "resources/titlescreen.bps"
 credits = "resources/credits.bps"
 global_exanimation = "resources/global_exanimation.bps"
 
+# If you want to keep your (Ex)GFX next to your ROM like 
+# usual, you can just comment out these two lines
 graphics = "resources/graphics"
 ex_graphics = "resources/exgraphics"
