@@ -99,7 +99,7 @@ if (MSVC)
     "junction/libntfslinks/source/CharUtils.cpp")
 endif()
 
-add_executable (callisto ${CALLISTO_SOURCE_FILES} "recent_projects/recent_projects_manager.h" "cli/cli_handler.h" "prompt_util.h"  "configuration/module_configuration.h" "process_info.h" "process_info.cpp" "colors.cpp")
+add_executable (callisto ${CALLISTO_SOURCE_FILES} "recent_projects/recent_projects_manager.h" "cli/cli_handler.h" "prompt_util.h"  "configuration/module_configuration.h" "process_info.h" "process_info.cpp" "colors.cpp" "globals.h" "globals.cpp")
 target_link_options(callisto PRIVATE ${CALLISTO_LINK_OPTIONS})
 target_compile_options(callisto PRIVATE ${CALLISTO_COMPILE_OPTIONS})
 target_compile_definitions(callisto PRIVATE ${CALLISTO_COMPILE_DEFINITIONS})

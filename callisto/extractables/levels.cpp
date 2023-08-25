@@ -2,9 +2,9 @@
 
 namespace callisto {
 	namespace extractables {
-		Levels::Levels(const Configuration& config, const fs::path& extracting_rom)
+		Levels::Levels(const Configuration& config, const fs::path& extracting_rom, size_t max_thread_count)
 			: LunarMagicExtractable(config, extracting_rom), levels_folder(config.levels.getOrThrow()), 
-			temp_folder(config.temporary_folder.getOrThrow() / "chunked_roms") {
+			temp_folder(config.temporary_folder.getOrThrow() / "chunked_roms"), max_thread_count(max_thread_count) {
 
 			fs::create_directories(temp_folder);
 
@@ -115,16 +115,15 @@ namespace callisto {
 			spdlog::debug("Exporting levels to temporary folder {} from ROM {}", levels_folder.string(), extracting_rom.string());
 
 			const auto modified_offsets{ determineModifiedOffsets(extracting_rom) };
-			const auto thread_count{ std::jthread::hardware_concurrency() };
 			std::exception_ptr thread_exception{};
 			std::vector<std::jthread> export_threads{};
-			std::vector<int> exit_codes(thread_count, 0);
+			std::vector<int> exit_codes(max_thread_count, 0);
 
-			for (size_t i{ 0 }; i != thread_count; ++i) {
+			for (size_t i{ 0 }; i != max_thread_count; ++i) {
 				export_threads.emplace_back([=, &exit_codes, &modified_offsets, &thread_exception] {
 					try {
 						const auto temp_rom{ createChunkedRom(temp_folder, i,
-				thread_count, extracting_rom, modified_offsets) };
+							max_thread_count, extracting_rom, modified_offsets) };
 						const auto exit_code{ callLunarMagic("-ExportMultLevels",
 						temp_rom.string(), (temporary_levels_folder / "level").string()) };
 						exit_codes[i] = exit_code;

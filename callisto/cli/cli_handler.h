@@ -12,6 +12,8 @@
 #include "../saver/saver.h"
 #include "../saver/marker.h"
 
+#include "../globals.h"
+
 namespace fs = std::filesystem;
 
 namespace callisto {

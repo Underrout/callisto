@@ -34,6 +34,7 @@
 #include "../path_util.h"
 #include "../time_util.h"
 #include "../colors.h"
+#include "../globals.h"
 
 namespace fs = std::filesystem;
 using json = nlohmann::json;

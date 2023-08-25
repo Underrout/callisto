@@ -88,7 +88,7 @@ namespace callisto {
 		case ExtractableType::TITLE_SCREEN:
 			return std::make_shared<TitleScreen>(config, extracting_rom);
 		case ExtractableType::LEVELS:
-			return std::make_shared<Levels>(config, extracting_rom);
+			return std::make_shared<Levels>(config, extracting_rom, globals::MAX_THREAD_COUNT);
 		case ExtractableType::SHARED_PALETTES:
 			return std::make_shared<SharedPalettes>(config, extracting_rom);
 		case ExtractableType::GRAPHICS:

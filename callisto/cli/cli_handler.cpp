@@ -17,6 +17,9 @@ namespace callisto {
 		auto package_sub{ app.add_subcommand("package", "Packages project ROM into a BPS patch")};
 		auto profiles_sub{ app.add_subcommand("profiles", "Lists available configuration profiles")};
 
+		std::optional<size_t> max_thread_count;
+		save_sub->add_option("--max-thread-count", max_thread_count, "Maximum number of threads to use");
+
 		bool quick_build{ false };
 		build_sub->add_flag(
 			"-q,--quick", 
@@ -82,6 +85,10 @@ namespace callisto {
 		);
 
 		save_sub->callback([&] {
+			if (max_thread_count.has_value()) {
+				globals::setMaxThreadCount(max_thread_count.value());
+			}
+
 			const auto config{ config_manager.getConfiguration(profile_name, true) };
 
 			Saver::exportResources(config->output_rom.getOrThrow(), *config, true);

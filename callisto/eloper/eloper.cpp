@@ -298,11 +298,24 @@ void handleSave() {
 
 	bp::group g;
 	bp::child new_save_process;
+	
+	// just going with a single thread, speed probably doesn't matter much on automated saves, I'd guess
+	const auto thread_count{ "1" };
 	if (profile.has_value()) {
-		new_save_process = bp::child(callisto_path.string(), "save", "--profile", profile.value(), bp::std_out > output, bp::windows::create_no_window, g);
+		new_save_process = bp::child(
+			callisto_path.string(), "save", 
+			"--profile", profile.value(), 
+			"--max-thread-count", thread_count, 
+			bp::std_out > output, bp::windows::create_no_window, g
+		);
 	}
 	else {
-		new_save_process = bp::child(callisto_path.string(), "save", bp::std_out > output, bp::windows::create_no_window, g);
+		new_save_process = bp::child(
+			callisto_path.string(), 
+			"save", 
+			"--max-thread-count", thread_count,
+			bp::std_out > output, bp::windows::create_no_window, g
+		);
 	}
 
 	spdlog::info("Thread {}: Started new save process {:X}", id, new_save_process.id());

@@ -25,6 +25,7 @@ namespace callisto {
 			const fs::path levels_folder;
 			const bool strip_source_pointers{ true };  // TODO potentially make this configurable?
 			const fs::path temp_folder;
+			const size_t max_thread_count;
 
 			void normalize() const;
 			
@@ -35,7 +36,7 @@ namespace callisto {
 		public:
 			void extract() override;
 
-			Levels(const Configuration& config, const fs::path& extracting_rom);
+			Levels(const Configuration& config, const fs::path& extracting_rom, size_t max_thread_count);
 		};
 	}
 }
