@@ -33,7 +33,7 @@ namespace callisto {
 
 	private:
 		static constexpr std::array VALID_STATIC_BUILD_ORDER_SYMBOLS{
-			"Modules", "Graphics", "ExGraphics", "Map16", "TitleScreenMovement", "SharedPalettes",
+			"InitialPatch", "Modules", "Graphics", "ExGraphics", "Map16", "TitleScreenMovement", "SharedPalettes",
 			"Overworld", "TitleScreen", "Credits", "GlobalExAnimation", 
 			"Patches", "Levels"
 		};
@@ -99,6 +99,8 @@ namespace callisto {
 
 		const bool allow_user_input;
 
+		std::unordered_set<Descriptor> ignored_conflict_symbols{};
+
 		StringConfigVariable config_name{ {"settings", "config_name"} };
 		PathConfigVariable project_root{ {"settings", "project_root"} };
 		StringConfigVariable level_import_flag{ {"settings", "level_import_flag"} };
@@ -108,6 +110,7 @@ namespace callisto {
 		PathConfigVariable clean_rom{ {"settings", "clean_rom"} };
 		StringConfigVariable check_conflicts{ {"settings", "check_conflicts"} };
 		PathConfigVariable conflict_log_file { {"settings", "conflict_log_file"} };
+		StringVectorConfigVariable ignored_conflict_symbol_strings{ {"settings", "ignored_conflict_symbols"} };
 
 		PathConfigVariable output_rom{ {"output", "output_rom"} };
 		PathConfigVariable temporary_folder{ {"output", "temporary_folder"} };

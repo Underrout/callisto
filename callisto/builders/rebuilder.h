@@ -26,10 +26,11 @@ namespace callisto {
 
 		static json getJsonDependencies(const DependencyVector& dependencies, const PatchHijacksVector& hijacks);
 		static void reportConflicts(const WriteMap& write_map, const std::optional<fs::path>& log_file, 
-			Conflicts conflict_policy, std::exception_ptr conflict_exception);
+			Conflicts conflict_policy, std::exception_ptr conflict_exception, const std::unordered_set<Descriptor>& ignored_descriptors,
+			const fs::path& project_root);
 		static std::string getConflictString(const ConflictVector& conflict_vector, 
 			int pc_start_offset, int conflict_size, bool for_console = true);
-		static bool writesAreIdentical(const Writes& writes);
+		static bool writesAreIdentical(const Writes& writes, const std::unordered_set<std::string>& ignored_names);
 		static int pcToSnes(int address);
 		static std::vector<std::string> getWriters(const Writes& writes);
 		static std::vector<char> getRom(const fs::path& rom_path);

@@ -19,6 +19,24 @@ check_conflicts = "hijacks"
 # file instead of the console after rebuilds
 conflict_log_file = "conflicts.txt"
 
+ignored_conflict_symbols = [
+	"InitialPatch",
+
+    "Overworld",
+    "TitleScreen",
+    "Credits",
+    "GlobalExAnimation",
+
+    "SharedPalettes",
+
+    "ExGraphics",
+    "Graphics",
+
+    "Levels",
+
+    "Map16"
+]
+
 # Uncomment to use integrated text map16 format
 # instead of binary format
 use_text_map16_format = true

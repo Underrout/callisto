@@ -117,6 +117,11 @@ namespace callisto {
 			const auto descriptors{ symbolToDescriptor(symbol) };
 			build_order.insert(build_order.end(), descriptors.begin(), descriptors.end());
 		}
+
+		for (const auto& ignored_string : ignored_conflict_symbol_strings.getOrDefault({})) {
+			const auto descriptors{ symbolToDescriptor(ignored_string) };
+			ignored_conflict_symbols.insert(descriptors.begin(), descriptors.end());
+		}
 	}
 
 	bool Configuration::trySet(StringConfigVariable& variable, const toml::value& table, 
@@ -429,6 +434,7 @@ namespace callisto {
 
 		trySet(check_conflicts, config_file, level, user_variables);
 		trySet(conflict_log_file, config_file, level, root, user_variables);
+		ignored_conflict_symbol_strings.trySet(config_file, level, user_variables);
 
 		trySet(flips_path, config_file, level, root, user_variables);
 
@@ -604,7 +610,10 @@ namespace callisto {
 	}
 
 	std::vector<Descriptor> Configuration::symbolToDescriptor(const std::string& symbol) const {
-		if (symbol == "Graphics") {
+		if (symbol == "InitialPatch") {
+			return { Descriptor(Symbol::INITIAL_PATCH) };
+		}
+		else if (symbol == "Graphics") {
 			return { Descriptor(Symbol::GRAPHICS) };
 		}
 		else if (symbol == "ExGraphics") {

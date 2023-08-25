@@ -47,31 +47,6 @@ namespace callisto {
 			old_rom = getRom(temp_rom_path);
 		}
 
-		if (config.initial_patch.isSet()) {
-			InitialPatch initial_patch{ config };
-			const auto initial_patch_resource_dependencies{ initial_patch.insertWithDependencies() };
-			spdlog::info("");
-			const auto initial_patch_config_dependencies{ initial_patch.getConfigurationDependencies() };
-			dependencies.push_back({ Descriptor(Symbol::INITIAL_PATCH),
-				{ initial_patch_resource_dependencies, initial_patch_config_dependencies } });
-			patch_hijacks.push_back({});
-
-			if (check_conflicts_policy != Conflicts::NONE) {
-				conflict_thread_created = true;
-				conflict_thread = std::jthread([&] {
-					try {
-						auto new_rom{ getRom(temp_rom_path) };
-						updateWrites(old_rom, new_rom, check_conflicts_policy, write_map,
-							Descriptor(Symbol::INITIAL_PATCH).toString(config.project_root.getOrThrow()));
-						old_rom.swap(new_rom);
-					}
-					catch (...) {
-						conflict_thread_exception = std::current_exception();
-					}
-				});
-			}
-		}
-
 		expandRom(config);
 
 		size_t i{ 0 };
@@ -165,7 +140,8 @@ namespace callisto {
 				try {
 					reportConflicts(write_map, config.conflict_log_file.isSet() ?
 						std::make_optional(config.conflict_log_file.getOrThrow()) :
-						std::nullopt, check_conflicts_policy, conflict_thread_exception);
+						std::nullopt, check_conflicts_policy, conflict_thread_exception, 
+						config.ignored_conflict_symbols, config.project_root.getOrThrow());
 				}
 				catch (...) {
 					conflict_thread_exception = std::current_exception();
@@ -260,7 +236,8 @@ namespace callisto {
 	}
 
 	void Rebuilder::reportConflicts(const WriteMap& write_map, const std::optional<fs::path>& log_file, 
-		Conflicts conflict_policy, std::exception_ptr conflict_exception) {
+		Conflicts conflict_policy, std::exception_ptr conflict_exception, const std::unordered_set<Descriptor>& ignored_descriptors, 
+		const fs::path& project_root) {
 		if (conflict_policy == Conflicts::NONE) {
 			spdlog::info(fmt::format(colors::NOTIFICATION, "Not set to detect conflicts"));
 			return;
@@ -276,6 +253,11 @@ namespace callisto {
 			}
 		}
 
+		std::unordered_set<std::string> ignored_names{};
+		for (const auto& descriptor : ignored_descriptors) {
+			ignored_names.insert(descriptor.toString(project_root));
+		}
+
 		std::ofstream log;
 		int conflicts{ 0 };
 		const auto log_to_file{ log_file.has_value() };
@@ -289,7 +271,7 @@ namespace callisto {
 			auto& pc_offset{ current->first };
 			auto writes{ current->second };
 
-			if (!writesAreIdentical(writes)) {
+			if (!writesAreIdentical(writes, ignored_names)) {
 				auto writers{ getWriters(writes) };
 				ConflictVector written_bytes{};
 				for (const auto& writer : writers) {
@@ -303,7 +285,7 @@ namespace callisto {
 					}
 					++conflict_size;
 					++current;
-				} while (current != write_map.end() && writers == getWriters(current->second) && !writesAreIdentical(current->second));
+				} while (current != write_map.end() && writers == getWriters(current->second) && !writesAreIdentical(current->second, ignored_names));
 				const auto conflict_string{ getConflictString(
 					written_bytes, pc_offset, conflict_size, !log_to_file) };
 				++conflicts;
@@ -368,11 +350,25 @@ namespace callisto {
 		return output.str();
 	}
 
-	bool Rebuilder::writesAreIdentical(const Writes& writes) {
-		auto first{ writes.at(1).second };
-		return std::all_of(writes.begin() + 1, writes.end(), [&](const auto& entry) {
-			return entry.second == first;
-		});
+	bool Rebuilder::writesAreIdentical(const Writes& writes, const std::unordered_set<std::string>& ignored_names) {
+		if (writes.size() == 1) {
+			return true;
+		}
+		std::optional<unsigned char> byte_to_match{};
+		for (auto it{ writes.begin() + 1 }; it != writes.end(); ++it) {
+			if (ignored_names.contains(it->first)) {
+				continue;
+			}
+
+			if (!byte_to_match.has_value()) {
+				byte_to_match = it->second;
+			}
+			else if (byte_to_match.value() != it->second) {
+				return false;
+			}
+		}
+
+		return true;
 	}
 
 	// just assuming lorom here, hope nobody gets mad (read: someone will be mad, but it's ok because I saw it coming)

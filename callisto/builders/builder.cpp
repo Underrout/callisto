@@ -15,7 +15,10 @@ namespace callisto {
 		const auto symbol{ descriptor.symbol };
 		const auto name{ descriptor.name };
 
-		if (symbol == Symbol::GRAPHICS) {
+		if (symbol == Symbol::INITIAL_PATCH) {
+			return std::make_shared<InitialPatch>(config);
+		}
+		else if (symbol == Symbol::GRAPHICS) {
 			return std::make_shared<Graphics>(config);
 		}
 		else if (symbol == Symbol::EX_GRAPHICS) {
