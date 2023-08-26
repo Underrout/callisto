@@ -8,7 +8,7 @@ namespace callisto {
 
 		if (!fs::exists(flips_executable)) {
 			throw ToolNotFoundException(fmt::format(
-				colors::build::EXCEPTION,
+				colors::EXCEPTION,
 				"FLIPS not found at {}",
 				flips_executable.string()
 			));
@@ -16,7 +16,7 @@ namespace callisto {
 
 		if (!fs::exists(clean_rom_path)) {
 			throw NotFoundException(fmt::format(
-				colors::build::EXCEPTION,
+				colors::EXCEPTION,
 				"Clean ROM not found at {}",
 				clean_rom_path.string()
 			));
@@ -25,7 +25,7 @@ namespace callisto {
 
 	void FlipsExtractable::extract() {
 		const auto temp_rom{ getTemporaryResourceRomPath() };
-		spdlog::info(fmt::format(colors::build::REMARK, "Exporting {}", getResourceName()));
+		spdlog::info(fmt::format(colors::RESOURCE, "Exporting {}", getResourceName()));
 		createTemporaryResourceRom(temp_rom);
 		invokeLunarMagic(temp_rom);
 		createOutputPatch(temp_rom);
@@ -45,7 +45,7 @@ namespace callisto {
 		}
 		catch (const fs::filesystem_error& e) {
 			throw ExtractionException(fmt::format(
-				colors::build::EXCEPTION,
+				colors::EXCEPTION,
 				"Failed to copy clean ROM from {} to {}",
 				clean_rom_path.string(), temporary_resource_rom.string()
 			));
@@ -63,7 +63,7 @@ namespace callisto {
 			spdlog::debug("Successfully expanded ROM");
 		}
 		else {
-			spdlog::warn(fmt::format(colors::build::WARNING, "Failed to expand temporary resource ROM at {} using Lunar Magic at {}, "
+			spdlog::warn(fmt::format(colors::WARNING, "Failed to expand temporary resource ROM at {} using Lunar Magic at {}, "
 				"if your {} data is large, you may get a Lunar Magic popup at some point",
 				temporary_resource_rom.string(), lunar_magic_executable.string(), getResourceName()));
 		}
@@ -80,7 +80,7 @@ namespace callisto {
 		}
 		else {
 			throw ExtractionException(fmt::format(
-				colors::build::EXCEPTION,
+				colors::EXCEPTION,
 				"Failed to transfer {} from {} to {}",
 				getResourceName(), extracting_rom.string(), temporary_resource_rom.string()
 			));
@@ -99,11 +99,11 @@ namespace callisto {
 		if (exit_code == 0) {
 			spdlog::debug("Successfully created patch {} from temporary ROM {}",
 				output_patch_path.string(),  temporary_resource_rom.string());
-			spdlog::info(fmt::format(colors::build::PARTIAL_SUCCESS, "Successfully exported {}!", getResourceName()));
+			spdlog::info(fmt::format(colors::PARTIAL_SUCCESS, "Successfully exported {}!", getResourceName()));
 		}
 		else {
 			throw ExtractionException(fmt::format(
-				colors::build::EXCEPTION,
+				colors::EXCEPTION,
 				"Failed to create BPS patch {} from temporary ROM {}",
 				output_patch_path.string(), temporary_resource_rom.string()
 			));
@@ -115,7 +115,7 @@ namespace callisto {
 			fs::remove(temporary_resource_rom);
 		}
 		catch (const fs::filesystem_error& e) {
-			spdlog::warn(fmt::format(colors::build::WARNING, "Failed to remove temporary ROM {}", temporary_resource_rom.string()));
+			spdlog::warn(fmt::format(colors::WARNING, "Failed to remove temporary ROM {}", temporary_resource_rom.string()));
 		}
 	}
 }

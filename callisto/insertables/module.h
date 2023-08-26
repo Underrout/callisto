@@ -27,6 +27,21 @@ namespace callisto {
 	protected:
 		static constexpr auto PLACEHOLDER_LABEL{ "PLACEHOLDER " };
 		static constexpr auto MAX_ROM_SIZE{ 16 * 1024 * 1024 };
+		static constexpr auto RATS_TAG_TEXT{ "STAR" };
+		static constexpr auto RATS_TAG_SIZE{ 8 };
+
+		struct WrittenBlock {
+			WrittenBlock(size_t start_pc, size_t start_snes, size_t size)
+				: start_pc(start_pc), end_pc(start_pc + size), size(size), start_snes(start_snes), end_snes(start_snes + size) {};
+			
+			// this shit sucks, fuck the pc vs. snes shit
+			size_t start_snes;
+			size_t end_snes;
+			size_t start_pc;
+			size_t end_pc;
+			size_t size;
+		};
+		using FreespaceArea = std::vector<WrittenBlock>;
 
 		std::string patch_string{};
 
@@ -55,8 +70,12 @@ namespace callisto {
 		void fixAsarMemoryLeak() const;
 
 		void recordOurAddresses();
-		void verifyWrittenBlockCoverage() const;
+		void verifyWrittenBlockCoverage(const std::vector<char>& rom) const;
 		void verifyNonHijacking() const;
+
+		static std::optional<uint16_t> determineFreespaceBlockSize(size_t pc_address, const std::vector<char>& rom);
+		static std::vector<WrittenBlock> convertToWrittenBlockVector(const writtenblockdata* const written_blocks, int block_count);
+		static std::vector<FreespaceArea> convertToFreespaceAreas(const std::vector<WrittenBlock>& written_blocks, const std::vector<char>& rom);
 
 	public:
 		static std::string modulePathToName(const fs::path& path);

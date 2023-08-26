@@ -7,7 +7,7 @@ namespace callisto {
 			shared_palettes_path(config.shared_palettes.getOrThrow()) {}
 
 		void SharedPalettes::extract() {
-			spdlog::info(fmt::format(colors::build::REMARK, "Exporting Shared Palettes"));
+			spdlog::info(fmt::format(colors::RESOURCE, "Exporting Shared Palettes"));
 			spdlog::debug(fmt::format(
 				"Exporting Shared Palette file {} from ROM {}",
 				shared_palettes_path.string(),
@@ -18,7 +18,7 @@ namespace callisto {
 				extracting_rom.string(), shared_palettes_path.string()) };
 
 			if (exit_code == 0) {
-				spdlog::info(fmt::format(colors::build::PARTIAL_SUCCESS, "Successfully exported Shared Palettes!"));
+				spdlog::info(fmt::format(colors::PARTIAL_SUCCESS, "Successfully exported Shared Palettes!"));
 				spdlog::debug(fmt::format(
 					"Successfully exported Shared Palette file {} from ROM {}",
 					shared_palettes_path.string(),
@@ -27,7 +27,7 @@ namespace callisto {
 			}
 			else {
 				throw ExtractionException(fmt::format(
-					colors::build::EXCEPTION,
+					colors::EXCEPTION,
 					"Failed to export Shared Palette file {} from ROM {}",
 					shared_palettes_path.string(),
 					extracting_rom.string()

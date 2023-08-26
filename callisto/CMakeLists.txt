@@ -18,7 +18,12 @@ set(CALLISTO_LINK_OPTIONS "")
 set(CALLISTO_COMPILE_OPTIONS "")
 set(CALLISTO_COMPILE_DEFINITIONS "")
 
-set(RC_CONTENTS "1 ICON \"callisto.ico\" 
+set(RC_CONTENTS "1 ICON \"icons\\callisto1.ico\" 
+2 ICON \"icons\\callisto2.ico\"
+3 ICON \"icons\\callisto3.ico\"
+4 ICON \"icons\\callisto4.ico\"
+5 ICON \"icons\\callisto5.ico\"
+6 ICON \"icons\\callisto6.ico\"
 1 VERSIONINFO 
       FILEVERSION     ${VERSION_MAJOR}, ${VERSION_MINOR}, ${VERSION_PATCH}, 0
       PRODUCTVERSION  ${VERSION_MAJOR}, ${VERSION_MINOR}, ${VERSION_PATCH}, 0
@@ -53,14 +58,14 @@ set(ASAR_GEN_EXE_TEST OFF)
 set(ASAR_GEN_DLL_TEST OFF)
 FetchContent_Declare(
 	asar
-	GIT_REPOSITORY https://github.com/RPGHacker/asar
+	GIT_REPOSITORY https://github.com/Underrout/asar
 	GIT_TAG v1.81
 	SOURCE_SUBDIR src
 )
 FetchContent_MakeAvailable(asar)
 set_target_properties(asar PROPERTIES CXX_STANDARD 14)
 
-set(CALLISTO_SOURCE_FILES "")
+set(CALLISTO_SOURCE_FILES "" "configuration/color_configuration.h")
 
 list(APPEND CALLISTO_SOURCE_FILES
 "callisto.rc" "callisto.cpp" "callisto.h" "insertable.h" "cli/cli_handler.h" "cli/cli_handler.cpp"
@@ -94,7 +99,7 @@ if (MSVC)
     "junction/libntfslinks/source/CharUtils.cpp")
 endif()
 
-add_executable (callisto ${CALLISTO_SOURCE_FILES} "recent_projects/recent_projects_manager.h" "cli/cli_handler.h" "prompt_util.h"  "configuration/module_configuration.h" "lunar_magic/process_info.h" "lunar_magic/process_info.cpp")
+add_executable (callisto ${CALLISTO_SOURCE_FILES} "recent_projects/recent_projects_manager.h" "cli/cli_handler.h" "prompt_util.h"  "configuration/module_configuration.h" "process_info.h" "process_info.cpp" "colors.cpp" "globals.h" "globals.cpp")
 target_link_options(callisto PRIVATE ${CALLISTO_LINK_OPTIONS})
 target_compile_options(callisto PRIVATE ${CALLISTO_COMPILE_OPTIONS})
 target_compile_definitions(callisto PRIVATE ${CALLISTO_COMPILE_DEFINITIONS})
@@ -196,45 +201,68 @@ target_link_libraries(callisto
   PRIVATE ftxui::component
 )
 
+if (MSVC)
+    set(RC_CONTENTS_ELOPER "1 ICON \"icons\\eloper.ico\" 
+    1 VERSIONINFO 
+          FILEVERSION     ${VERSION_MAJOR}, ${VERSION_MINOR}, ${VERSION_PATCH}, 0
+          PRODUCTVERSION  ${VERSION_MAJOR}, ${VERSION_MINOR}, ${VERSION_PATCH}, 0
+    {
+        BLOCK \"StringFileInfo\" 
+        {
+            BLOCK \"040904b0\" // en-US with UTF-8
+            {
+                VALUE \"CompanyName\", \"callisto developers\\0\" 
+                VALUE \"FileDescription\", \"eloper - callisto subsystem\\0\"
+                VALUE \"FileVersion\", \"v${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH}\\0\"
+                VALUE \"InternalName\", \"eloper\\0\" 
+                VALUE \"OriginalFilename\", \"eloper.exe\\0\" 
+                VALUE \"ProductName\", \"eloper\\0\" 
+                VALUE \"ProductVersion\", \"v${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH}\\0\"
+            }
+        }
+        BLOCK \"VarFileInfo\" 
+        {
+            VALUE \"Translation\", 0x409, 1200 // en-US with UTF-8
+        }
+    }"
+    )
+
+    file(WRITE "${CMAKE_CURRENT_SOURCE_DIR}/eloper.rc" "${RC_CONTENTS_ELOPER}")
+
+    add_executable(eloper WIN32 "eloper/eloper.h" "eloper/eloper.cpp" "process_info.h" "process_info.cpp" "eloper.rc" 
+    "configuration/config_exception.h" "configuration/config_variable.cpp" "configuration/config_variable.h" "configuration/configuration.h"
+    "configuration/configuration_level.h" "configuration/configuration.cpp" "configuration/tool_configuration.h" "configuration/emulator_configuration.h"
+    "configuration/configuration_manager.h" "configuration/configuration_manager.cpp"
+    "path_util.h"
+    "descriptor.h"
+    "configuration/color_configuration.h"
+    "colors.h" "colors.cpp"
+    "globals.h" "globals.cpp")
+
+    target_link_libraries(eloper PRIVATE nlohmann_json::nlohmann_json)
+    target_link_libraries(eloper PUBLIC ordered_map)
+    target_link_libraries(eloper PUBLIC platform_folders)
+    target_link_libraries(eloper PUBLIC toml11::toml11)
+    target_link_libraries(eloper PRIVATE fmt::fmt)
+    target_link_libraries(eloper PUBLIC spdlog::spdlog)
+    target_link_libraries(eloper PRIVATE Boost::system Boost::filesystem Boost::thread Boost::program_options)
+    target_include_directories(eloper PUBLIC ${CMAKE_SOURCE_DIR})
+endif()
+
 add_custom_command(TARGET callisto POST_BUILD 
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
     $<TARGET_FILE:asar> $<TARGET_FILE_DIR:callisto>
 )
 
-add_custom_command(TARGET callisto POST_BUILD 
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different
-    "${CMAKE_CURRENT_SOURCE_DIR}/build_order.toml" $<TARGET_FILE_DIR:callisto>
+add_custom_target(toml_config
+    COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_LIST_DIR}/toml_config ${CMAKE_CURRENT_BINARY_DIR}/config
 )
+add_dependencies(callisto toml_config)
 
-add_custom_command(TARGET callisto POST_BUILD 
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different
-    "${CMAKE_CURRENT_SOURCE_DIR}/patches.toml" $<TARGET_FILE_DIR:callisto>
+add_custom_target(initial_patches
+    COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_LIST_DIR}/initial_patches ${CMAKE_CURRENT_BINARY_DIR}/initial_patches
 )
-
-add_custom_command(TARGET callisto POST_BUILD 
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different
-    "${CMAKE_CURRENT_SOURCE_DIR}/project.toml" $<TARGET_FILE_DIR:callisto>
-)
-
-add_custom_command(TARGET callisto POST_BUILD 
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different
-    "${CMAKE_CURRENT_SOURCE_DIR}/resources.toml" $<TARGET_FILE_DIR:callisto>
-)
-
-add_custom_command(TARGET callisto POST_BUILD 
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different
-    "${CMAKE_CURRENT_SOURCE_DIR}/tools.toml" $<TARGET_FILE_DIR:callisto>
-)
-
-add_custom_command(TARGET callisto POST_BUILD 
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different
-    "${CMAKE_CURRENT_SOURCE_DIR}/variables.toml" $<TARGET_FILE_DIR:callisto>
-)
-
-add_custom_command(TARGET callisto POST_BUILD 
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different
-    "${CMAKE_CURRENT_SOURCE_DIR}/modules.toml" $<TARGET_FILE_DIR:callisto>
-)
+add_dependencies(callisto initial_patches)
 
 add_custom_command(TARGET callisto POST_BUILD 
     COMMAND ${CMAKE_COMMAND} -E copy_if_different

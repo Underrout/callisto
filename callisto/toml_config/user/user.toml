@@ -1,0 +1,16 @@
+# This config file contains some user-specific settings
+# that apply across projects
+
+# Set this path so that it points to a copy of a clean Super Mario World ROM
+# You can use the same ROM for all your projects, no need to make a copy for 
+# each one!
+[settings]
+clean_rom = "path/to/my/clean/rom.smc"
+
+# You can specify your emulators like this, you can have as many as you want
+# [emulators.Mesen2]
+# executable = "path/to/my/emulators/Mesen.exe"
+# options = "--fullscreen"
+
+# [emulators.snes9x]
+# executable = "path/to/my/emulators/snes9x.exe"

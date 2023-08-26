@@ -4,9 +4,11 @@ namespace callisto {
 	void Rebuilder::build(const Configuration& config) {
 		const auto build_start{ std::chrono::high_resolution_clock::now() };
 
-		spdlog::info(fmt::format(colors::build::HEADER, "Build started\n"));
+		spdlog::info(fmt::format(colors::ACTION_START, "Build started"));
+		spdlog::info("");
 
-		spdlog::info(fmt::format(colors::build::MISC, "Checking clean ROM"));
+		spdlog::info(fmt::format(colors::CALLISTO, "Checking clean ROM"));
+		spdlog::info("");
 		checkCleanRom(config.clean_rom.getOrThrow());
 
 		init(config);
@@ -45,30 +47,6 @@ namespace callisto {
 			old_rom = getRom(temp_rom_path);
 		}
 
-		if (config.initial_patch.isSet()) {
-			InitialPatch initial_patch{ config };
-			const auto initial_patch_resource_dependencies{ initial_patch.insertWithDependencies() };
-			const auto initial_patch_config_dependencies{ initial_patch.getConfigurationDependencies() };
-			dependencies.push_back({ Descriptor(Symbol::INITIAL_PATCH),
-				{ initial_patch_resource_dependencies, initial_patch_config_dependencies } });
-			patch_hijacks.push_back({});
-
-			if (check_conflicts_policy != Conflicts::NONE) {
-				conflict_thread_created = true;
-				conflict_thread = std::jthread([&] {
-					try {
-						auto new_rom{ getRom(temp_rom_path) };
-						updateWrites(old_rom, new_rom, check_conflicts_policy, write_map,
-							Descriptor(Symbol::INITIAL_PATCH).toString(config.project_root.getOrThrow()));
-						old_rom.swap(new_rom);
-					}
-					catch (...) {
-						conflict_thread_exception = std::current_exception();
-					}
-				});
-			}
-		}
-
 		expandRom(config);
 
 		size_t i{ 0 };
@@ -92,7 +70,7 @@ namespace callisto {
 			const auto insertable{ pair.second };
 			const auto& descriptor{ pair.first };
 
-			spdlog::info(fmt::format(colors::build::MISC, "--- {} ---", descriptor.toString(config.project_root.getOrThrow())));
+			spdlog::info(fmt::format(colors::CALLISTO, "--- {} ---", descriptor.toString(config.project_root.getOrThrow())));
 
 			if (!failed_dependency_report.has_value()) {
 				std::unordered_set<ResourceDependency> resource_dependencies;
@@ -162,7 +140,8 @@ namespace callisto {
 				try {
 					reportConflicts(write_map, config.conflict_log_file.isSet() ?
 						std::make_optional(config.conflict_log_file.getOrThrow()) :
-						std::nullopt, check_conflicts_policy, conflict_thread_exception);
+						std::nullopt, check_conflicts_policy, conflict_thread_exception, 
+						config.ignored_conflict_symbols, config.project_root.getOrThrow());
 				}
 				catch (...) {
 					conflict_thread_exception = std::current_exception();
@@ -177,11 +156,11 @@ namespace callisto {
 				writeBuildReport(config.project_root.getOrThrow(), createBuildReport(config, insertion_report));
 			}
 			catch (const std::exception& e) {
-				spdlog::warn(fmt::format(colors::build::WARNING, "Failed to write build report with following exception:\n\r{}", e.what()));
+				spdlog::warn(fmt::format(colors::WARNING, "Failed to write build report with following exception:\n\r{}", e.what()));
 			}
 		}
 		else {
-			spdlog::info(fmt::format(colors::build::NOTIFICATION, "{}, Quickbuild not applicable, read the documentation "
+			spdlog::info(fmt::format(colors::NOTIFICATION, "{}, Quickbuild not applicable, read the documentation "
 					"on details for how to set up Quickbuild correctly", failed_dependency_report.value().what()));
 			removeBuildReport(config.project_root.getOrThrow());
 		}
@@ -205,13 +184,13 @@ namespace callisto {
 				std::rethrow_exception(conflict_thread_exception);
 			}
 			catch (const std::exception& e) {
-				spdlog::warn(fmt::format(colors::build::WARNING, "The following error occurred while attempting to report conflicts:\n\r{}", e.what()));
+				spdlog::warn(fmt::format(colors::WARNING, "The following error occurred while attempting to report conflicts:\n\r{}", e.what()));
 			}
 		}
 		
 		fs::remove_all(config.temporary_folder.getOrThrow());
 
-		spdlog::info(fmt::format(colors::build::SUCCESS, "Build finished successfully in {}!", 
+		spdlog::info(fmt::format(colors::SUCCESS, "Build finished successfully in {} \\(^.^)/", 
 			TimeUtil::getDurationString(build_end - build_start)));
 	}
 
@@ -257,9 +236,10 @@ namespace callisto {
 	}
 
 	void Rebuilder::reportConflicts(const WriteMap& write_map, const std::optional<fs::path>& log_file, 
-		Conflicts conflict_policy, std::exception_ptr conflict_exception) {
+		Conflicts conflict_policy, std::exception_ptr conflict_exception, const std::unordered_set<Descriptor>& ignored_descriptors, 
+		const fs::path& project_root) {
 		if (conflict_policy == Conflicts::NONE) {
-			spdlog::info(fmt::format(colors::build::NOTIFICATION, "Not set to detect conflicts"));
+			spdlog::info(fmt::format(colors::NOTIFICATION, "Not set to detect conflicts"));
 			return;
 		}
 
@@ -268,9 +248,14 @@ namespace callisto {
 				std::rethrow_exception(conflict_exception);
 			}
 			catch (const std::exception& e) {
-				spdlog::warn(fmt::format(colors::build::WARNING, "The following exception prevented conflict detection:\n\r{}", e.what()));
+				spdlog::warn(fmt::format(colors::WARNING, "The following exception prevented conflict detection:\n\r{}", e.what()));
 				return;
 			}
+		}
+
+		std::unordered_set<std::string> ignored_names{};
+		for (const auto& descriptor : ignored_descriptors) {
+			ignored_names.insert(descriptor.toString(project_root));
 		}
 
 		std::ofstream log;
@@ -286,7 +271,7 @@ namespace callisto {
 			auto& pc_offset{ current->first };
 			auto writes{ current->second };
 
-			if (!writesAreIdentical(writes)) {
+			if (!writesAreIdentical(writes, ignored_names)) {
 				auto writers{ getWriters(writes) };
 				ConflictVector written_bytes{};
 				for (const auto& writer : writers) {
@@ -300,7 +285,7 @@ namespace callisto {
 					}
 					++conflict_size;
 					++current;
-				} while (current != write_map.end() && writers == getWriters(current->second) && !writesAreIdentical(current->second));
+				} while (current != write_map.end() && writers == getWriters(current->second) && !writesAreIdentical(current->second, ignored_names));
 				const auto conflict_string{ getConflictString(
 					written_bytes, pc_offset, conflict_size, !log_to_file) };
 				++conflicts;
@@ -324,14 +309,14 @@ namespace callisto {
 		
 		if (log_to_file) {
 			if (conflicts == 0) {
-				spdlog::info(fmt::format(colors::build::PARTIAL_SUCCESS, "No conflicts logged to {}", log_file.value().string()));
+				spdlog::info(fmt::format(colors::PARTIAL_SUCCESS, "No conflicts logged to {}", log_file.value().string()));
 			}
 			else {
-				spdlog::warn(fmt::format(colors::build::WARNING, "{} conflict(s) logged to {}", conflicts, log_file.value().string()));
+				spdlog::warn(fmt::format(colors::WARNING, "{} conflict(s) logged to {}", conflicts, log_file.value().string()));
 			}
 		}
 		else if (conflicts == 0) {
-			spdlog::info(fmt::format(colors::build::PARTIAL_SUCCESS, "No conflicts found"));
+			spdlog::info(fmt::format(colors::PARTIAL_SUCCESS, "No conflicts found"));
 		}
 	}
 
@@ -365,11 +350,25 @@ namespace callisto {
 		return output.str();
 	}
 
-	bool Rebuilder::writesAreIdentical(const Writes& writes) {
-		auto first{ writes.at(1).second };
-		return std::all_of(writes.begin() + 1, writes.end(), [&](const auto& entry) {
-			return entry.second == first;
-		});
+	bool Rebuilder::writesAreIdentical(const Writes& writes, const std::unordered_set<std::string>& ignored_names) {
+		if (writes.size() == 1) {
+			return true;
+		}
+		std::optional<unsigned char> byte_to_match{};
+		for (auto it{ writes.begin() + 1 }; it != writes.end(); ++it) {
+			if (ignored_names.contains(it->first)) {
+				continue;
+			}
+
+			if (!byte_to_match.has_value()) {
+				byte_to_match = it->second;
+			}
+			else if (byte_to_match.value() != it->second) {
+				return false;
+			}
+		}
+
+		return true;
 	}
 
 	// just assuming lorom here, hope nobody gets mad (read: someone will be mad, but it's ok because I saw it coming)
@@ -447,7 +446,7 @@ namespace callisto {
 
 	void Rebuilder::expandRom(const Configuration& config) {
 		if (config.rom_size.isSet()) {
-			spdlog::info(fmt::format(colors::build::REMARK, "Expanding ROM to {}", config.rom_size.getOrThrow()));
+			spdlog::info(fmt::format(colors::RESOURCE, "Expanding ROM to {}", config.rom_size.getOrThrow()));
 			const auto exit_code{ bp::system(
 				config.lunar_magic_path.getOrThrow().string(),
 				"-ExpandROM",
@@ -455,6 +454,13 @@ namespace callisto {
 					config.output_rom.getOrThrow())).string(),
 				config.rom_size.getOrThrow()
 			) };
+			if (exit_code == 0) {
+				spdlog::info(fmt::format(colors::PARTIAL_SUCCESS, "Successfully expanded ROM!"));
+				spdlog::info("");
+			}
+			else {
+				throw InsertionException(fmt::format(colors::EXCEPTION, "Failed to expand ROM to {}", config.rom_size.getOrThrow()));
+			}
 		}
 	}
 }

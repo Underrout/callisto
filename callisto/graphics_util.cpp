@@ -13,7 +13,7 @@ namespace callisto {
 
 		if (exit_code != 0) {
 			throw ExtractionException(fmt::format(
-				colors::build::EXCEPTION,
+				colors::EXCEPTION,
 				"Failed to export {} from temporary ROM {}",
 				exgfx_or_gfx,
 				temporary_export_rom.string()
@@ -55,7 +55,7 @@ namespace callisto {
 
 		if (exit_code != 0) {
 			throw InsertionException(fmt::format(
-				colors::build::EXCEPTION,
+				colors::EXCEPTION,
 				"Failed to import {} from {} into ROM {}",
 				exgfx ? "ExGraphics" : "Graphics",
 				source_path.string(),
@@ -70,23 +70,23 @@ namespace callisto {
 			const auto exgfx_or_gfx{ exgfx ? "ExGFX" : "GFX" };
 			if (allow_user_input) {
 				PromptUtil::yesNoPrompt(fmt::format(
-					colors::build::WARNING,
+					colors::WARNING,
 					"{} stored at '{}' differ from {} stored in ROM, export {} from the ROM anyway?"
 					"\n\rWARNING: This will overwrite the files in your {} folder, discarding any "
 					"unimported changes made there, only do this if you're sure!!",
 					exgfx_or_gfx, old_folder.string(), exgfx_or_gfx, exgfx_or_gfx, exgfx_or_gfx
 				), [&] {
-					spdlog::info(fmt::format(colors::build::NOTIFICATION, "Overwriting {} at '{}' with {} from ROM",
+					spdlog::info(fmt::format(colors::NOTIFICATION, "Overwriting {} at '{}' with {} from ROM",
 					exgfx_or_gfx, old_folder.string(), exgfx_or_gfx));
 					fs::remove_all(old_folder);
 					fs::rename(new_folder, old_folder);
-					spdlog::info(fmt::format(colors::build::PARTIAL_SUCCESS, 
+					spdlog::info(fmt::format(colors::PARTIAL_SUCCESS, 
 						"Successfully overwrote {} at '{}' with {} from ROM", exgfx_or_gfx, old_folder.string(), exgfx_or_gfx));
 				});
 			}
 			else {
 				throw ExtractionException(fmt::format(
-					colors::build::EXCEPTION,
+					colors::EXCEPTION,
 					"{} stored at '{}' differ from {} stored in ROM, refusing to export",
 					exgfx_or_gfx, old_folder.string(), exgfx_or_gfx
 				));
@@ -138,7 +138,7 @@ namespace callisto {
 			}
 			catch (const std::exception& e) {
 				throw CallistoException(fmt::format(
-					colors::build::EXCEPTION,
+					colors::EXCEPTION,
 					"Failed to compare graphics exported from ROM with project graphics stored in '{}' with exception:\n\r{}", 
 					old_folder.string(), e.what()
 				));
@@ -171,7 +171,7 @@ namespace callisto {
 
 		if (fs::is_directory(file_path)) {
 			throw VerificationException(fmt::format(
-				colors::build::EXCEPTION,
+				colors::EXCEPTION,
 				"Directory '{}' found inside {} directory, please remove the directory from your {} directory",
 				file_path.filename().string(), start, start
 			));
@@ -179,7 +179,7 @@ namespace callisto {
 
 		if (file_path.extension() != ".bin") {
 			throw VerificationException(fmt::format(
-				colors::build::EXCEPTION,
+				colors::EXCEPTION,
 				"Non-bin file '{}' found inside {} directory, please remove the file from your {} directory",
 				file_path.filename().string(), start, start
 			));
@@ -188,7 +188,7 @@ namespace callisto {
 		const auto filename{ file_path.stem().string() };
 
 		const VerificationException verification_exception{ fmt::format(
-			colors::build::EXCEPTION,
+			colors::EXCEPTION,
 			"{} file '{}' does not match standard {} filename format",
 			start, file_path.string(), start
 		) };

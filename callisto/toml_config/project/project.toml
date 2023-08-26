@@ -1,0 +1,85 @@
+# This config file contains general information about 
+# your project, such as its name, the root folder, 
+# the output ROM path, etc.
+
+# All config files use the TOML (https://toml.io/en/) format!
+
+[settings]
+
+# Name of this configuration,
+# can be anything you like really
+config_name = "main"
+
+# Root directory of the project, this can 
+# be a relative or absolute path, but relative 
+# paths are generally nicer since they will stay 
+# valid even if you move your project folder
+project_root = "../.."
+
+# Where callisto should check for conflicts 
+# between tools/resources during rebuilds, 
+# can be set to "none" to disable it, "hijacks" 
+# to only check for conflicts in the vanilla 
+# ROM area or "all" to check anywhere in the ROM
+check_conflicts = "hijacks"
+
+# Optional log file for conflicts, if 
+# set, callisto will log conflicts to this 
+# file instead of the console after rebuilds
+conflict_log_file = "conflicts.txt"
+
+# Any symbols from the build order (see build_order.toml)
+# listed here will not be considered when 
+# reporting conflicts, this lets you configure the verbosity 
+# of callisto's conflict reporting to your liking
+ignored_conflict_symbols = [
+	"InitialPatch",
+
+    "Overworld",
+    "TitleScreen",
+    "Credits",
+    "GlobalExAnimation",
+
+    "SharedPalettes",
+
+    "ExGraphics",
+    "Graphics",
+
+    "Levels",
+
+    "Map16"
+]
+
+# Set to true to use integrated text-based map16 format 
+# instead of Lunar Magic's binary .map16 format
+# (git handles the text-based one much better)
+use_text_map16_format = true
+
+# Set to true to automatically call callisto's "Save" 
+# function in the background whenever you save a level, 
+# map16 or the overworld in Lunar Magic
+#
+# Note that this only works when you launch Lunar Magic
+# through callisto's "Edit" function
+enable_automatic_exports = false
+
+# Set to true to make callisto automatically reload your 
+# output ROM in Lunar Magic whenever a build succeeds
+#
+# Note that this only works when you launch Lunar Magic
+# through callisto's "Edit" function
+enable_automatic_reloads = true
+
+# ROM size to expand to after applying initial patch
+rom_size = "4MB"
+
+[output]
+
+# Path for the output ROM
+output_rom = "build/my_hack.smc"
+
+# Path to temporary folder used during builds
+temporary_folder = "build/temp"
+
+# Path for BPS package output by the Package function
+bps_package = "build/package/my_hack.bps"

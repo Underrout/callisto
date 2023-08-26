@@ -9,7 +9,7 @@ namespace callisto {
 	{
 		if (!fs::exists(patch_path)) {
 			throw ResourceNotFoundException(fmt::format(
-				colors::build::EXCEPTION,
+				colors::EXCEPTION,
 				"Patch {} does not exist",
 				patch_path.string()
 			));
@@ -17,7 +17,7 @@ namespace callisto {
 
 		if (!asar_init()) {
 			throw ToolNotFoundException(
-				fmt::format(colors::build::EXCEPTION,
+				fmt::format(colors::EXCEPTION,
 				"Asar library file not found, did you forget to copy it alongside callisto?"
 			));
 		}
@@ -36,7 +36,7 @@ namespace callisto {
 		const auto prev_folder{ fs::current_path() };
 		fs::current_path(patch_path.parent_path());
 
-		spdlog::info(fmt::format(colors::build::REMARK, "Applying patch {}", project_relative_path.string()));
+		spdlog::info(fmt::format(colors::RESOURCE, "Applying patch {}", project_relative_path.string()));
 
 		// delete potential previous dependency report
 		fs::remove(patch_path.parent_path() / ".dependencies");
@@ -84,7 +84,7 @@ namespace callisto {
 
 		if (!asar_init()) {
 			throw ToolNotFoundException(
-				fmt::format(colors::build::EXCEPTION,
+				fmt::format(colors::EXCEPTION,
 				"Asar library file not found, did you forget to copy it alongside callisto?"
 			));
 		}
@@ -119,7 +119,7 @@ namespace callisto {
 				}
 			}
 
-			spdlog::info(fmt::format(colors::build::PARTIAL_SUCCESS, "Successfully applied patch {}!", project_relative_path.string()));
+			spdlog::info(fmt::format(colors::PARTIAL_SUCCESS, "Successfully applied patch {}!", project_relative_path.string()));
 		}
 		else {
 			int error_count;
@@ -134,7 +134,7 @@ namespace callisto {
 			}
 
 			throw InsertionException(fmt::format(
-				colors::build::EXCEPTION,
+				colors::EXCEPTION,
 				"Failed to apply patch {} with the following error(s):\n\r{}",
 				project_relative_path.string(),
 				error_string.str()

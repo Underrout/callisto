@@ -18,6 +18,9 @@
 #include "config_exception.h"
 #include "../path_util.h"
 #include "../descriptor.h"
+#include "color_configuration.h"
+#include "../colors.h"
+#include "../globals.h"
 
 namespace fs = std::filesystem;
 
@@ -31,7 +34,7 @@ namespace callisto {
 
 	private:
 		static constexpr std::array VALID_STATIC_BUILD_ORDER_SYMBOLS{
-			"Modules", "Graphics", "ExGraphics", "Map16", "TitleScreenMovement", "SharedPalettes",
+			"InitialPatch", "Modules", "Graphics", "ExGraphics", "Map16", "TitleScreenMovement", "SharedPalettes",
 			"Overworld", "TitleScreen", "Credits", "GlobalExAnimation", 
 			"Patches", "Levels"
 		};
@@ -71,6 +74,7 @@ namespace callisto {
 		void verifyModuleExclusivity();
 		void verifyPatchUniqueness();
 		void finalizeBuildOrder();
+		void transferConfiguredColors();
 
 		bool trySet(StringConfigVariable& variable, const toml::value& table, 
 			ConfigurationLevel level, const std::map<std::string, std::string>& user_variable_map);
@@ -90,11 +94,13 @@ namespace callisto {
 			const std::map<std::string, std::string>& previous_user_variables = {});
 
 		Configuration(const ConfigFileMap& config_file_map, const VariableFileMap& variable_file_map,
-			const fs::path& callisto_root_directory, bool allow_user_input = true);
+			const fs::path& callisto_root_directory);
 
 		ConfigValueType getByKey(const std::string& key) const;
 
 		const bool allow_user_input;
+
+		std::unordered_set<Descriptor> ignored_conflict_symbols{};
 
 		StringConfigVariable config_name{ {"settings", "config_name"} };
 		PathConfigVariable project_root{ {"settings", "project_root"} };
@@ -105,6 +111,10 @@ namespace callisto {
 		PathConfigVariable clean_rom{ {"settings", "clean_rom"} };
 		StringConfigVariable check_conflicts{ {"settings", "check_conflicts"} };
 		PathConfigVariable conflict_log_file { {"settings", "conflict_log_file"} };
+		StringVectorConfigVariable ignored_conflict_symbol_strings{ {"settings", "ignored_conflict_symbols"} };
+
+		BoolConfigVariable enable_automatic_reloads{ {"settings", "enable_automatic_reloads"} };
+		BoolConfigVariable enable_automatic_exports{ {"settings", "enable_automatic_exports"} };
 
 		PathConfigVariable output_rom{ {"output", "output_rom"} };
 		PathConfigVariable temporary_folder{ {"output", "temporary_folder"} };
@@ -137,5 +147,7 @@ namespace callisto {
 		std::map<std::string, ToolConfiguration> generic_tool_configurations{};
 
 		std::map<std::string, EmulatorConfiguration> emulator_configurations{};
+
+		std::map<std::string, ColorConfiguration> color_configurations{};
 	};
 }

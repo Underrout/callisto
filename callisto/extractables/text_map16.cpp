@@ -32,7 +32,7 @@ namespace callisto {
 				);
 			}
 			else {
-				throw ExtractionException(fmt::format(colors::build::EXCEPTION, "Failed to export temporary map16 file to {} from ROM {}",
+				throw ExtractionException(fmt::format(colors::EXCEPTION, "Failed to export temporary map16 file to {} from ROM {}",
 					temp_map16.string(), extracting_rom.string()));
 			}
 		}
@@ -44,7 +44,7 @@ namespace callisto {
 			}
 			catch (const fs::filesystem_error& e) {
 				spdlog::warn(fmt::format(
-					colors::build::WARNING,
+					colors::WARNING,
 					"WARNING: Failed to delete temporary Map16 file {} with exception:\n\r{}",
 					getTemporaryMap16FilePath().string(),
 					e.what()
@@ -53,7 +53,7 @@ namespace callisto {
 		}
 
 		void TextMap16::extract() {
-			spdlog::info(fmt::format(colors::build::REMARK, "Exporting Map16 folder"));
+			spdlog::info(fmt::format(colors::RESOURCE, "Exporting Map16 folder"));
 			spdlog::debug(
 				"Exporting map16 folder {} from ROM {}",
 				map16_folder_path.string(),
@@ -69,12 +69,12 @@ namespace callisto {
 			catch (HumanMap16Exception& e) {
 				fs::current_path(current_path);
 				deleteTemporaryMap16File();
-				throw ExtractionException(fmt::format(colors::build::EXCEPTION, "Failed to convert map16 folder to file with exception:\n\r{}",
+				throw ExtractionException(fmt::format(colors::EXCEPTION, "Failed to convert map16 folder to file with exception:\n\r{}",
 					e.get_detailed_error_message()));
 			}
 
 			fs::current_path(current_path);
-			spdlog::info(fmt::format(colors::build::PARTIAL_SUCCESS, "Successfully exported Map16 folder!"));
+			spdlog::info(fmt::format(colors::PARTIAL_SUCCESS, "Successfully exported Map16 folder!"));
 
 			deleteTemporaryMap16File();
 		}

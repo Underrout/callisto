@@ -1,3 +1,15 @@
+# This config file contains the configuration for all tools used 
+# during the build process
+
+# You can add your own tools or remove the ones that are already
+# here as you please!
+
+# For a tool to work with callisto, all it needs to do is return 
+# a non-zero exit code if it fails and zero if it succeeds. For 
+# the tool to also work with Quickbuild, it should output a file
+# named .dependencies containing paths to the files it depends on, 
+# so that callisto can reapply your tool if any of those files 
+# change!
 
 [tools]
 

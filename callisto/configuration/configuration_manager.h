@@ -32,8 +32,10 @@ namespace callisto {
 	public:
 		ConfigurationManager(const fs::path& callisto_directory);
 
+		ConfigurationManager& operator=(const ConfigurationManager& other);
+
 		std::vector<std::string> getProfileNames() const;
-		std::shared_ptr<Configuration> getConfiguration(std::optional<std::string> current_profile, bool allow_user_input = true) const;
+		std::shared_ptr<Configuration> getConfiguration(std::optional<std::string> current_profile) const;
 
 		std::unordered_map<ConfigurationLevel, std::vector<fs::path>> getConfigFilesToParse(const std::optional<std::string>& profile);
 	};

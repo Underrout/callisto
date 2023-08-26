@@ -19,7 +19,7 @@ namespace callisto {
 	{
 		if (!fs::exists(input_path)) {
 			throw ResourceNotFoundException(fmt::format(
-				colors::build::EXCEPTION,
+				colors::EXCEPTION,
 				"Module {} does not exist",
 				input_path.string()
 			));
@@ -27,7 +27,7 @@ namespace callisto {
 
 		if (!asar_init()) {
 			throw ToolNotFoundException(
-				fmt::format(colors::build::EXCEPTION,
+				fmt::format(colors::EXCEPTION,
 				"Asar library file not found, did you forget to copy it alongside callisto?"
 			));
 		}
@@ -75,21 +75,23 @@ namespace callisto {
 		// delete potential previous dependency report
 		fs::remove(input_path.parent_path() / ".dependencies");
 
-		spdlog::info(fmt::format(colors::build::REMARK, "Inserting module {}", project_relative_path.string()));
+		spdlog::info(fmt::format(colors::RESOURCE, "Inserting module {}", project_relative_path.string()));
 
 		memoryfile patch;
 		patch.path = "temp.asm";
 		patch.buffer = patch_string.c_str();
 		patch.length = patch_string.size();
 
-		std::ifstream rom_file(temporary_rom_path, std::ios::in | std::ios::binary);
-		std::vector<char> rom_bytes((std::istreambuf_iterator<char>(rom_file)), (std::istreambuf_iterator<char>()));
+		const auto rom_size{ fs::file_size(temporary_rom_path) };
+		const auto header_size{ (int)rom_size & 0x7FFF };
+		int unheadered_rom_size{ (int)rom_size - header_size };
+
+		std::vector<char> rom_bytes(unheadered_rom_size);
+		std::vector<char> header(header_size);
+		std::ifstream rom_file(temporary_rom_path, std::ios::binary);
+		rom_file.read(reinterpret_cast<char*>(header.data()), header_size);
+		rom_file.read(reinterpret_cast<char*>(rom_bytes.data()), unheadered_rom_size);
 		rom_file.close();
-
-		int rom_size{ static_cast<int>(rom_bytes.size()) };
-		const auto header_size{ rom_size & 0x7FFF };
-
-		int unheadered_rom_size{ rom_size - header_size };
 
 		spdlog::debug(fmt::format(
 			"Applying module {} to temporary ROM {}:\n\r"
@@ -108,7 +110,7 @@ namespace callisto {
 		const patchparams params{
 			sizeof(struct patchparams),
 			"temp.asm",
-			rom_bytes.data() + header_size,
+			rom_bytes.data(),
 			MAX_ROM_SIZE,
 			&unheadered_rom_size,
 			reinterpret_cast<const char**>(additional_include_paths.data()),
@@ -128,7 +130,7 @@ namespace callisto {
 
 		if (!asar_init()) {
 			throw ToolNotFoundException(
-				fmt::format(colors::build::EXCEPTION,
+				fmt::format(colors::EXCEPTION,
 				"Asar library file not found, did you forget to copy it alongside callisto?"
 			));
 		}
@@ -147,7 +149,7 @@ namespace callisto {
 			const auto warnings{ asar_getwarnings(&warning_count) };
 			bool missing_org_or_freespace{ false };
 			for (int i = 0; i != warning_count; ++i) {
-				spdlog::warn(fmt::format(colors::build::WARNING, warnings[i].fullerrdata));
+				spdlog::warn(fmt::format(colors::WARNING, warnings[i].fullerrdata));
 				if (warnings[i].errid == 1008) {
 					missing_org_or_freespace = true;
 				}
@@ -155,7 +157,7 @@ namespace callisto {
 
 			if (missing_org_or_freespace) {
 				throw InsertionException(fmt::format(
-					colors::build::EXCEPTION,
+					colors::EXCEPTION,
 					"Module {} is missing a freespace command",
 					project_relative_path.string()
 				));
@@ -163,12 +165,14 @@ namespace callisto {
 
 			recordOurAddresses();
 			verifyNonHijacking();
-			verifyWrittenBlockCoverage();
+			
+			verifyWrittenBlockCoverage(rom_bytes);
 
 			std::ofstream out_rom{ temporary_rom_path, std::ios::out | std::ios::binary };
-			out_rom.write(rom_bytes.data(), rom_bytes.size());
+			out_rom.write(header.data(), header_size);
+			out_rom.write(rom_bytes.data(), unheadered_rom_size);
 			out_rom.close();
-			spdlog::info(fmt::format(colors::build::PARTIAL_SUCCESS, "Successfully applied module {}!", project_relative_path.string()));
+			spdlog::info(fmt::format(colors::PARTIAL_SUCCESS, "Successfully applied module {}!", project_relative_path.string()));
 
 			emitOutputFiles();
 			emitPlainAddressFile();
@@ -189,7 +193,7 @@ namespace callisto {
 
 			fs::current_path(prev_folder);
 			throw InsertionException(fmt::format(
-				colors::build::EXCEPTION,
+				colors::EXCEPTION,
 				"Failed to apply module {} with the following error(s):\n\r{}",
 				project_relative_path.string(),
 				error_string.str()
@@ -224,7 +228,7 @@ namespace callisto {
 
 		if (label_number == 0) {
 			throw InsertionException(fmt::format(
-				colors::build::EXCEPTION,
+				colors::EXCEPTION,
 				"Module {} contains no labels, this will cause a freespace leak, please ensure your module contains at least one label",
 				module_name
 			));
@@ -233,7 +237,7 @@ namespace callisto {
 		if (input_path.extension() != ".asm") {
 			if (label_number > 1) {
 				throw InsertionException(fmt::format(
-					colors::build::EXCEPTION,
+					colors::EXCEPTION,
 					"Binary module {} unexpectedly contains more than one label",
 					module_name
 				));
@@ -311,39 +315,134 @@ namespace callisto {
 		}
 	}
 
-	void Module::verifyWrittenBlockCoverage() const {
+	void Module::verifyWrittenBlockCoverage(const std::vector<char>& rom) const {
 		int label_count{};
 		const auto labels{ asar_getalllabels(&label_count) };
 
 		int block_count{};
 		const auto written_blocks{ asar_getwrittenblocks(&block_count) };
-		for (int i{ 0 }; i != block_count; ++i) {
-			const auto start{ written_blocks[i].snesoffset };
-
-			// this is probably imprecise and includes parts of the RATS tag, but who cares
-			const auto end{ start + written_blocks[i].numbytes };
-
+		const auto as_structs{ convertToWrittenBlockVector(written_blocks, block_count) };
+		const auto freespace_areas{ convertToFreespaceAreas(as_structs, rom) };
+		for (const auto& freespace_area : freespace_areas) {
 			bool is_covered{ false };
-			for (int j{ 0 }; j != label_count; ++j) {
-				// uggo but labels can have the bank byte be | $80 or not depending on how the user does things I think?
-				// not sure how this affects sa1 ROMs but I'm guessing it's a niche issue if anything (hopefully not wrong)
-				const auto location_low{ labels[j].location };
-				const auto location_high{ labels[j].location | 0x800000 };
-				if ((location_low >= start && location_low < end) || (location_high >= start && location_high < end)) {
-					is_covered = true;
+			for (const auto& written_block : freespace_area) {
+				for (int j{ 0 }; j != label_count; ++j) {
+					// uggo but labels can have the bank byte be | $80 or not depending on how the user does things I think?
+					// not sure how this affects sa1 ROMs but I'm guessing it's a niche issue if anything (hopefully not wrong)
+					const auto location_low{ labels[j].location };
+					const auto location_high{ labels[j].location | 0x800000 };
+					if ((location_low >= written_block.start_snes && location_low < written_block.end_snes) 
+						|| (location_high >= written_block.start_snes && location_high < written_block.end_snes)) {
+						is_covered = true;
+						break;
+					}
+				}
+				if (is_covered) {
 					break;
 				}
 			}
 
 			if (!is_covered) {
+				auto freespace_start{ freespace_area.front().start_snes + RATS_TAG_SIZE };
+				if ((freespace_start & 0xFFFF) < 0x8000) {
+					freespace_start += 0x8000;
+				}
+
+				const auto freespace_size{ std::accumulate(freespace_area.begin(), freespace_area.end(), 0, 
+					[](int val1, const WrittenBlock& val2) {
+					return val1 + val2.size;
+				}) - RATS_TAG_SIZE };
+
 				throw InsertionException(fmt::format(
-					colors::build::EXCEPTION,
-					"Module {} contains at least one freespace block that does not contain any labels and thus cannot be cleaned up, "
-					"please ensure every freespace block in your module contains at least one label",
-					project_relative_path.string()
+					colors::EXCEPTION,
+					"Module {} contains a freespace block of size 0x{:04X} starting at ${:06X} (unheadered), which does not "
+					"contain any labels, please ensure every freespace block in your modules contains at least one label so that they can be cleaned up by callisto",
+					project_relative_path.string(),
+					freespace_size, freespace_start
 				));
 			}
 		}
+	}
+
+	std::optional<uint16_t> Module::determineFreespaceBlockSize(size_t pc_address, const std::vector<char>& rom) {
+		char potential_tag[5];
+		strncpy(potential_tag, rom.data() + pc_address, 4);
+		potential_tag[4] = '\0';
+
+		if (std::string(potential_tag) != std::string(RATS_TAG_TEXT)) {
+			return {};
+		}
+
+		const auto potential_size{ (((unsigned char)rom[pc_address + 5]) << 8) | ((unsigned char)rom[pc_address + 4]) };
+		const auto potential_size_complement{ (((unsigned char)rom[pc_address + 7]) << 8) | ((unsigned char)rom[pc_address + 6]) };
+
+		if (potential_size + 1 != (potential_size_complement ^ 0xFFFF) + 1) {
+			return {};
+		}
+
+		return potential_size + 1;
+	}
+
+	std::vector<Module::WrittenBlock> Module::convertToWrittenBlockVector(const writtenblockdata* const written_blocks, int block_count) {
+		std::vector<WrittenBlock> written_block_vec{};
+		for (int i{ 0 }; i != block_count; ++i) {
+			const auto& written_block{ written_blocks[i] };
+			written_block_vec.push_back(WrittenBlock(written_block.pcoffset, written_block.snesoffset, written_block.numbytes));
+		}
+		std::sort(written_block_vec.begin(), written_block_vec.end(), [](const WrittenBlock& block1, const WrittenBlock& block2) {
+			// written blocks can't (shouldn't?) overlap, so this is probably fine
+			return block1.start_pc < block2.start_pc;
+		});
+		return written_block_vec;
+	}
+
+	std::vector<Module::FreespaceArea> Module::convertToFreespaceAreas(const std::vector<WrittenBlock>& written_blocks, const std::vector<char>& rom) {
+		std::vector<FreespaceArea> freespace_areas{};
+
+		auto curr_block{ written_blocks.begin() };
+		size_t curr_freespace_size_left{ 0 };
+		size_t curr_pc_offset{ 0 };
+		size_t curr_snes_offset{ 0 };
+		while (curr_block != written_blocks.end()) {
+			curr_pc_offset = curr_block->start_pc;
+			curr_snes_offset = curr_block->start_snes;
+
+			auto size_left_in_curr_block{ curr_block->size };
+
+			while (size_left_in_curr_block != 0) {
+				if (curr_freespace_size_left == 0) {
+					freespace_areas.push_back(std::vector<WrittenBlock>());
+					const auto freespace_size{ determineFreespaceBlockSize(curr_pc_offset, rom) };
+					if (!freespace_size.has_value()) {
+						throw InsertionException(fmt::format(colors::EXCEPTION, "Freespace area at ${:06X} has invalid/no RATS tag", curr_pc_offset));
+					}
+					curr_freespace_size_left = freespace_size.value() + RATS_TAG_SIZE;
+				}
+
+				const auto served_by_block{ std::min(size_left_in_curr_block, curr_freespace_size_left) };
+
+				freespace_areas.back().emplace_back(curr_pc_offset, curr_snes_offset, served_by_block);
+
+				curr_freespace_size_left -= served_by_block;
+				size_left_in_curr_block -= served_by_block;
+				curr_pc_offset += served_by_block;
+				curr_snes_offset += served_by_block;
+			}
+			if (curr_freespace_size_left != 0) {
+				if ((curr_block->end_snes & 0xFFFF) != 0) {
+					// dropping "unused" freespace at end of a written block since
+					// asar apparently *will* reserve more space than it writes for
+					// some reason sometimes if, on the other hand, we just crossed 
+					// a bank border, we *do* need to keep track of the freespace 
+					// still, fun times
+					curr_freespace_size_left = 0;
+				}
+			}
+
+			++curr_block;
+		}
+
+		return freespace_areas;
 	}
 
 	void Module::verifyNonHijacking() const {
@@ -354,7 +453,7 @@ namespace callisto {
 
 			if (start < 0x80000) {
 				throw InsertionException(fmt::format(
-					colors::build::EXCEPTION,
+					colors::EXCEPTION,
 					"Module {} targets SNES address ${:06X} (unheadered), if this is not a mistake consider using a patch instead "
 					"as modules are not intended to modify original game code",
 					project_relative_path.string(), written_blocks[i].snesoffset

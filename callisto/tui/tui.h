@@ -54,6 +54,9 @@ namespace callisto {
 		
 		bool anything_on_command_line{ false };
 
+		bool save_in_progress{ false };
+		int shift{ 0 };
+
 		ScreenInteractive screen;
 
 		Component getConfigOnlyButton(const std::string& button_text, Closure button_func);
@@ -85,6 +88,8 @@ namespace callisto {
 		bool show_modal{ false };
 		Component getModal();
 		void showModal(const std::string& new_title, const std::string& new_text);
+
+		Component getSaveSpinnerComponent();
 
 		std::string choice_modal_title{};
 		std::string choice_modal_text{};
@@ -119,6 +124,7 @@ namespace callisto {
 		void emulatorButton(const std::string& emulator_name);
 		void editButton();
 
+		void saveInProgressSafeguard(std::function<void()> func);
 		void markerSafeguard(const std::string& title, std::function<void()> func);
 
 		Component wrapMenuInEventCatcher(Component full_menu);

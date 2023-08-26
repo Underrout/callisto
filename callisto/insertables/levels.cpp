@@ -16,7 +16,7 @@ namespace callisto {
 
 		if (!fs::exists(levels_folder)) {
 			throw ResourceNotFoundException(fmt::format(
-				colors::build::EXCEPTION,
+				colors::EXCEPTION,
 				"Level folder {} not found",
 				levels_folder.string()
 			));
@@ -29,7 +29,7 @@ namespace callisto {
 
 			if (fs::is_directory(path)) {
 				throw InsertionException(fmt::format(
-					colors::build::EXCEPTION,
+					colors::EXCEPTION,
 					"Directory '{}' found inside levels directory, please remove this directory",
 					path.filename().string()
 				));
@@ -37,7 +37,7 @@ namespace callisto {
 
 			if (path.extension() != ".mwl") {
 				throw InsertionException(fmt::format(
-					colors::build::EXCEPTION,
+					colors::EXCEPTION,
 					"Non-MWL file '{}' found inside levels directory, please remove this file",
 					path.filename().string()
 				));
@@ -46,7 +46,7 @@ namespace callisto {
 			const auto mwl_level_number{ getInternalLevelNumber(path) };
 			if (!mwl_level_number.has_value()) {
 				throw InsertionException(fmt::format(
-					colors::build::EXCEPTION,
+					colors::EXCEPTION,
 					"Could not determine source level number of level file '{}', this level file may be malformed",
 					path.string()
 				));
@@ -57,7 +57,7 @@ namespace callisto {
 				if (allow_user_input) {
 					char answer;
 					spdlog::warn(
-						fmt::format(colors::build::WARNING, 
+						fmt::format(colors::WARNING, 
 						"Level file '{}' (pointing to level {:X}) has malformed filename, what should be done?\n\r"
 						"(a) Rename file to 'level {:03X}.mwl', keep pointing at level {:X}\n\r"
 						"(b) Repoint file to other level\n\r"
@@ -70,7 +70,7 @@ namespace callisto {
 						const auto target_path{ path.parent_path() / fmt::format("level {:03X}.mwl", mwl_level_number.value()) };
 						if (fs::exists(target_path)) {
 							throw InsertionException(fmt::format(
-								colors::build::EXCEPTION,
+								colors::EXCEPTION,
 								"Failed to rename '{}', '{}' already exists",
 								path.filename().string(), target_path.filename().string()
 							));
@@ -80,13 +80,13 @@ namespace callisto {
 						}
 						catch (const std::exception& e) {
 							throw InsertionException(fmt::format(
-								colors::build::EXCEPTION,
+								colors::EXCEPTION,
 								"Failed to rename level file '{}' to '{}' with exception:\n\r{}",
 								path.string(), target_path.string(),
 								e.what()
 							));
 						}
-						spdlog::info(fmt::format(colors::build::PARTIAL_SUCCESS, 
+						spdlog::info(fmt::format(colors::PARTIAL_SUCCESS, 
 							"Successfully renamed '{}' to '{}'", path.filename().string(), target_path.filename().string()));
 						continue;
 					}
@@ -94,7 +94,7 @@ namespace callisto {
 						std::string s;
 						while (true) {
 							spdlog::warn(fmt::format(
-								colors::build::WARNING,
+								colors::WARNING,
 								"What level number should '{}' be made to point to? Enter a level number from 0-1FF or enter 'x' to abort",
 								path.string()
 							));
@@ -103,7 +103,7 @@ namespace callisto {
 
 							if (s == "x") {
 								throw InsertionException(fmt::format(
-									colors::build::EXCEPTION,
+									colors::EXCEPTION,
 									"Level file '{}' (pointing to level {:X}) has malformed filename",
 									path.string(), mwl_level_number.value()
 								));
@@ -115,18 +115,18 @@ namespace callisto {
 									level_number = std::stoi(s, &parsed, 16);
 								}
 								catch (...) {
-									spdlog::error(fmt::format(colors::build::EXCEPTION, "{} is not a valid level number", s));
+									spdlog::error(fmt::format(colors::EXCEPTION, "{} is not a valid level number", s));
 									continue;
 								}
 
 								if (level_number >= 0x200 || parsed != s.size()) {
-									spdlog::error(fmt::format(colors::build::EXCEPTION, "{} is not a valid level number", s));
+									spdlog::error(fmt::format(colors::EXCEPTION, "{} is not a valid level number", s));
 									continue;
 								}
 
 								const auto target_path{ path.parent_path() / fmt::format("level {:03X}.mwl", level_number) };
 								if (fs::exists(target_path)) {
-									spdlog::error(fmt::format(colors::build::EXCEPTION, 
+									spdlog::error(fmt::format(colors::EXCEPTION, 
 										"A level file for number {:03X} already exists at '{}'", level_number, target_path.string()));
 									continue;
 								}
@@ -136,13 +136,13 @@ namespace callisto {
 								}
 								catch (const std::exception& e) {
 									throw InsertionException(fmt::format(
-										colors::build::EXCEPTION,
+										colors::EXCEPTION,
 										"Failed to rename level file '{}' to '{}' with exception:\n\r{}",
 										path.string(), target_path.string(),
 										e.what()
 									));
 								}
-								spdlog::info(fmt::format(colors::build::PARTIAL_SUCCESS,
+								spdlog::info(fmt::format(colors::PARTIAL_SUCCESS,
 									"Successfully renamed '{}' to '{}'", path.filename().string(), target_path.filename().string()));
 
 								try {
@@ -150,13 +150,13 @@ namespace callisto {
 								}
 								catch (const std::exception& e) {
 									throw InsertionException(fmt::format(
-										colors::build::EXCEPTION,
+										colors::EXCEPTION,
 										"Failed to set source level number of level file '{}' to {:X} with exception:\n\r{}",
 										target_path.string(), level_number,
 										e.what()
 									));
 								}
-								spdlog::info(fmt::format(colors::build::PARTIAL_SUCCESS, 
+								spdlog::info(fmt::format(colors::PARTIAL_SUCCESS, 
 									"Successfully changed internal level number of '{}' to {:03X}", target_path.filename().string(), level_number));
 								break;
 							}
@@ -164,7 +164,7 @@ namespace callisto {
 					}
 					else {
 						throw InsertionException(fmt::format(
-							colors::build::EXCEPTION,
+							colors::EXCEPTION,
 							"Level file '{}' (pointing to level {:X}) has malformed filename",
 							path.string(), mwl_level_number.value()
 						));
@@ -172,7 +172,7 @@ namespace callisto {
 					continue;
 				}
 				throw InsertionException(fmt::format(
-					colors::build::EXCEPTION,
+					colors::EXCEPTION,
 					"Level file '{}' (pointing to level {:X}) has malformed filename",
 					path.string(), mwl_level_number.value()
 				));
@@ -181,7 +181,7 @@ namespace callisto {
 			if (file_level_number != mwl_level_number) {
 				if (allow_user_input) {
 					char answer;
-					spdlog::warn(fmt::format(colors::build::WARNING, 
+					spdlog::warn(fmt::format(colors::WARNING, 
 						"Level file '{}' points to level {:X} but filename says it should point to level {:X}, what should be done?\n\r"
 						"(a) Keep filename '{}', but point it at level {:X}\n\r"
 						"(b) Rename file to 'level {:03X}.mwl', keep pointing at level {:X}\n\r"
@@ -198,13 +198,13 @@ namespace callisto {
 						}
 						catch (const std::exception& e) {
 							throw InsertionException(fmt::format(
-								colors::build::EXCEPTION,
+								colors::EXCEPTION,
 								"Failed to set source level number of level file '{}' to {:X} with exception:\n\r{}",
 								path.string(), file_level_number.value(),
 								e.what()
 							));
 						}
-						spdlog::info(fmt::format(colors::build::PARTIAL_SUCCESS,
+						spdlog::info(fmt::format(colors::PARTIAL_SUCCESS,
 							"Successfully set source level number of '{}' to {:X}", path.filename().string(), file_level_number.value()));
 						continue;
 					}
@@ -212,7 +212,7 @@ namespace callisto {
 						const auto target_path{ path.parent_path() / fmt::format("level {:03X}.mwl", mwl_level_number.value()) };
 						if (fs::exists(target_path)) {
 							throw InsertionException(fmt::format(
-								colors::build::EXCEPTION,
+								colors::EXCEPTION,
 								"Failed to rename '{}', '{}' already exists",
 								path.filename().string(), target_path.filename().string()
 							));
@@ -222,19 +222,19 @@ namespace callisto {
 						}
 						catch (const std::exception& e) {
 							throw InsertionException(fmt::format(
-								colors::build::EXCEPTION,
+								colors::EXCEPTION,
 								"Failed to rename level file '{}' to '{}' with exception:\n\r{}",
 								path.string(), target_path.string(),
 								e.what()
 							));
 						}
-						spdlog::info(fmt::format(colors::build::PARTIAL_SUCCESS, 
+						spdlog::info(fmt::format(colors::PARTIAL_SUCCESS, 
 							"Successfully renamed '{}' to '{}'", path.filename().string(), target_path.filename().string()));
 						continue;
 					}
 				}
 				throw InsertionException(fmt::format(
-					colors::build::EXCEPTION,
+					colors::EXCEPTION,
 					"Level file '{}' points to level {:X} but filename says it should point to level {:X}",
 					path.string(), mwl_level_number.value(), file_level_number.value()
 				));
@@ -330,7 +330,7 @@ namespace callisto {
 	}
 
 	void Levels::insert() {
-		spdlog::info(fmt::format(colors::build::REMARK, "Inserting levels"));
+		spdlog::info(fmt::format(colors::RESOURCE, "Inserting levels"));
 
 		bool at_least_one_level{ false };
 		for (const auto& entry : fs::directory_iterator(levels_folder)) {
@@ -341,7 +341,7 @@ namespace callisto {
 		}
 
 		if (!at_least_one_level) {
-			spdlog::info(fmt::format(colors::build::NOTIFICATION, "No levels to insert, skipping level insertion"));
+			spdlog::info(fmt::format(colors::NOTIFICATION, "No levels to insert, skipping level insertion"));
 			return;
 		}
 
@@ -362,7 +362,7 @@ namespace callisto {
 		}
 
 		if (exit_code == 0) {
-			spdlog::info(fmt::format(colors::build::PARTIAL_SUCCESS, "Successfully inserted levels"));
+			spdlog::info(fmt::format(colors::PARTIAL_SUCCESS, "Successfully inserted levels"));
 			spdlog::debug(fmt::format(
 				"Successfully inserted levels from folder {} into temporary ROM {}",
 				levels_folder.string(),
@@ -371,7 +371,7 @@ namespace callisto {
 		}
 		else {
 			throw InsertionException(fmt::format(
-				colors::build::EXCEPTION,
+				colors::EXCEPTION,
 				"Failed to insert level from folder {} into temporary ROM {}",
 				levels_folder.string(),
 				temporary_rom_path.string()

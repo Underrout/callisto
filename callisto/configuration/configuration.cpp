@@ -2,7 +2,11 @@
 
 namespace callisto {
 	Configuration::Configuration(const ConfigFileMap& config_file_map, const VariableFileMap& variable_file_map, 
-		const fs::path& callisto_root_directory, bool allow_user_input) : allow_user_input(allow_user_input) {
+		const fs::path& callisto_root_directory) : allow_user_input(globals::ALLOW_USER_INPUT) {
+
+		for (const auto& config_color_str : colors::configurable_colors) {
+			color_configurations.emplace(config_color_str, ColorConfiguration(config_color_str));
+		}
 
 		const auto user_variables{ parseVariableFiles(variable_file_map) };
 		const auto config_files{ parseConfigFiles(config_file_map) };
@@ -83,7 +87,28 @@ namespace callisto {
 		}
 	}
 
+	void Configuration::transferConfiguredColors() {
+		for (const auto& [color_name, color_config] : color_configurations) {
+			auto& style{ colors::configurableColorStringToStyle(color_name) };
+			if (color_config.fg_color.isSet()) {
+				style = fmt::fg(fmt::color::black);
+				colors::addFgColor(style, color_config.fg_color.getOrThrow());
+			}
+			if (color_config.bg_color.isSet()) {
+				colors::addBgColor(style, color_config.bg_color.getOrThrow());
+			}
+			if (color_config.emphases.isSet()) {
+				for (const auto& emph : color_config.emphases.getOrThrow()) {
+					colors::addEmphasis(style, emph);
+				}
+			}
+		}
+	}
+
 	void Configuration::finalizeBuildOrder() {
+		colors::resetStyles();
+		transferConfiguredColors();
+		
 		verifyModuleExclusivity();
 		verifyPatchModuleExclusivity();
 		verifyPatchUniqueness();
@@ -91,6 +116,11 @@ namespace callisto {
 		for (const auto& symbol : _build_order.getOrDefault({})) {
 			const auto descriptors{ symbolToDescriptor(symbol) };
 			build_order.insert(build_order.end(), descriptors.begin(), descriptors.end());
+		}
+
+		for (const auto& ignored_string : ignored_conflict_symbol_strings.getOrDefault({})) {
+			const auto descriptors{ symbolToDescriptor(ignored_string) };
+			ignored_conflict_symbols.insert(descriptors.begin(), descriptors.end());
 		}
 	}
 
@@ -376,6 +406,9 @@ namespace callisto {
 		const std::map<std::string, std::string>& user_variables) {
 		for (const auto& config_file : config_files) {
 			fillOneConfigurationFile(config_file, level, user_variables);
+		}
+
+		for (const auto& config_file : config_files) {
 			discoverBuildOrder(config_file, level, user_variables);
 		}
 	}
@@ -401,6 +434,7 @@ namespace callisto {
 
 		trySet(check_conflicts, config_file, level, user_variables);
 		trySet(conflict_log_file, config_file, level, root, user_variables);
+		ignored_conflict_symbol_strings.trySet(config_file, level, user_variables);
 
 		trySet(flips_path, config_file, level, root, user_variables);
 
@@ -420,6 +454,9 @@ namespace callisto {
 		trySet(global_exanimation, config_file, level, root, user_variables);
 
 		patches.trySet(config_file, level, root, user_variables);
+
+		trySet(enable_automatic_exports, config_file, level);
+		trySet(enable_automatic_reloads, config_file, level);
 
 		std::optional<toml::array> modules_array;
 		try {
@@ -481,6 +518,12 @@ namespace callisto {
 			tool.static_dependencies.trySet(config_file, level, tool.working_directory, user_variables);
 			tool.dependency_report_file.trySet(config_file, level, tool.working_directory, user_variables);
 			trySet(tool.pass_rom, config_file, level);
+		}
+
+		for (auto& [_, color_config] : color_configurations) {
+			color_config.fg_color.trySet(config_file, level);
+			color_config.bg_color.trySet(config_file, level);
+			color_config.emphases.trySet(config_file, level, user_variables);
 		}
 	}
 
@@ -570,7 +613,10 @@ namespace callisto {
 	}
 
 	std::vector<Descriptor> Configuration::symbolToDescriptor(const std::string& symbol) const {
-		if (symbol == "Graphics") {
+		if (symbol == "InitialPatch") {
+			return { Descriptor(Symbol::INITIAL_PATCH) };
+		}
+		else if (symbol == "Graphics") {
 			return { Descriptor(Symbol::GRAPHICS) };
 		}
 		else if (symbol == "ExGraphics") {

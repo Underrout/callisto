@@ -52,7 +52,7 @@ namespace callisto {
 		return profile_names;
 	}
 
-	std::shared_ptr<Configuration> ConfigurationManager::getConfiguration(std::optional<std::string> current_profile, bool allow_user_input) const {
+	std::shared_ptr<Configuration> ConfigurationManager::getConfiguration(std::optional<std::string> current_profile) const {
 		Configuration::ConfigFileMap config_file_map{};
 		Configuration::VariableFileMap variable_file_map{};
 
@@ -90,6 +90,6 @@ namespace callisto {
 			}
 		}
 
-		return std::make_shared<Configuration>(config_file_map, variable_file_map, callisto_root, allow_user_input);
+		return std::make_shared<Configuration>(config_file_map, variable_file_map, callisto_root);
 	}
 }
