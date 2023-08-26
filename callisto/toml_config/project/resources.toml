@@ -14,6 +14,12 @@ titlescreen = "resources/titlescreen.bps"
 credits = "resources/credits.bps"
 global_exanimation = "resources/global_exanimation.bps"
 
+# Uncomment this and point it to yourse savestate file
+# if you're using custom title screen movement
+# (You also need to edit the build order for this to 
+# have any effect!)
+# titlescreen_movement = "resources/titlescreen_movement.zst"
+
 # If you want to keep your (Ex)GFX next to your ROM like 
 # usual, you can just comment out these two lines
 graphics = "resources/graphics"
