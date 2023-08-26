@@ -247,6 +247,11 @@ add_custom_target(toml_config
 )
 add_dependencies(callisto toml_config)
 
+add_custom_target(initial_patches
+    COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_LIST_DIR}/initial_patches ${CMAKE_CURRENT_BINARY_DIR}/initial_patches
+)
+add_dependencies(callisto initial_patches)
+
 add_custom_command(TARGET callisto POST_BUILD 
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
     "${CMAKE_CURRENT_SOURCE_DIR}/ASAR_LICENSE" $<TARGET_FILE_DIR:callisto>
