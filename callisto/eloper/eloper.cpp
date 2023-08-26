@@ -317,6 +317,7 @@ void handleSave() {
 			"--profile", profile.value(), 
 			"--max-threads", thread_count, 
 			"--allow-user-input", "false",
+			"--check-pending-save", "false",
 			bp::std_out > output, bp::windows::create_no_window, g
 		);
 	}
@@ -326,6 +327,7 @@ void handleSave() {
 			"save", 
 			"--max-threads", thread_count,
 			"--allow-user-input", "false",
+			"--check-pending-save", "false",
 			bp::std_out > output, bp::windows::create_no_window, g
 		);
 	}

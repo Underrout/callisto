@@ -249,7 +249,9 @@ namespace callisto {
 			emulators = Emulators(*config);
 			emulator_names = emulators.getEmulatorNames();
 
-			lunar_magic_wrapper.attemptReattach(config->lunar_magic_path.getOrThrow());
+			if (config->lunar_magic_path.isSet()) {
+				lunar_magic_wrapper.attemptReattach(config->lunar_magic_path.getOrThrow());
+			}
 		}
 		/*
 		else if (profile_names.empty()) {

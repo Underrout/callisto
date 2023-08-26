@@ -2,8 +2,11 @@
 
 namespace callisto {
 	int CLIHandler::run(int argc, char** argv) {
-		const auto callisto_directory{ (fs::path(argv[0])).parent_path() };
+		const auto callisto_path{ fs::path(argv[0]) };
+		const auto callisto_directory{ callisto_path.parent_path() };
 		ConfigurationManager config_manager{ callisto_directory };
+
+		LunarMagicWrapper lunar_magic_wrapper{};
 
 		spdlog::set_level(spdlog::level::info);
 		spdlog::set_pattern("%v");
@@ -13,6 +16,7 @@ namespace callisto {
 
 		std::optional<size_t> max_thread_count;
 		bool allow_user_input{ true };
+		bool check_for_pending_save{ true };
 
 		app.add_option(
 			"--max-threads",
@@ -24,6 +28,12 @@ namespace callisto {
 			"--allow-user-input",
 			allow_user_input,
 			"Whether to allow user input for callisto prompts (default is yes)"
+		);
+
+		app.add_option(
+			"--check-pending-save",
+			check_for_pending_save,
+			"Whether to check for a pending automatic resource export before saving/building"
 		);
 
 		auto init{ [&] {
@@ -65,6 +75,13 @@ namespace callisto {
 			init();
 			const auto config{ config_manager.getConfiguration(profile_name) };
 
+			if (check_for_pending_save && config->lunar_magic_path.isSet()) {
+				lunar_magic_wrapper.attemptReattach(config->lunar_magic_path.getOrThrow());
+				if (lunar_magic_wrapper.pendingEloperSave().has_value()) {
+					throw std::runtime_error("There is a pending automatic resource export, refusing to build to avoid conflicting with it");
+				}
+			}
+
 			if (config->output_rom.isSet() && fs::exists(config->output_rom.getOrThrow())) {
 				const auto needs_extraction{ Marker::getNeededExtractions(config->output_rom.getOrThrow(),
 					config->project_root.getOrThrow(),
@@ -84,17 +101,27 @@ namespace callisto {
 			if (quick_build) {
 				try {
 					QuickBuilder quick_builder{ config->project_root.getOrThrow() };
-					quick_builder.build(*config);
+					const auto result{ quick_builder.build(*config) };
+					if (result == QuickBuilder::Result::SUCCESS && config->lunar_magic_path.isSet() 
+						&& config->enable_automatic_reloads.getOrDefault(true)) {
+						lunar_magic_wrapper.reloadRom(config->output_rom.getOrThrow());
+					}
 				}
 				catch (const MustRebuildException& e) {
 					spdlog::info("Quickbuild cannot continue due to the following reason, rebuilding ROM:\n\r{}", e.what());
 					Rebuilder rebuilder{};
 					rebuilder.build(*config);
+					if (config->lunar_magic_path.isSet() && config->enable_automatic_reloads.getOrDefault(true)) {
+						lunar_magic_wrapper.reloadRom(config->output_rom.getOrThrow());
+					}
 				}
 			}
 			else {
 				Rebuilder rebuilder{};
 				rebuilder.build(*config);
+				if (config->lunar_magic_path.isSet() && config->enable_automatic_reloads.getOrDefault(true)) {
+					lunar_magic_wrapper.reloadRom(config->output_rom.getOrThrow());
+				}
 			}
 			exit(0);
 		});
@@ -108,6 +135,13 @@ namespace callisto {
 		save_sub->callback([&] {
 			init();
 			const auto config{ config_manager.getConfiguration(profile_name) };
+
+			if (check_for_pending_save && config->lunar_magic_path.isSet()) {
+				lunar_magic_wrapper.attemptReattach(config->lunar_magic_path.getOrThrow());
+				if (lunar_magic_wrapper.pendingEloperSave().has_value()) {
+					throw std::runtime_error("There is a pending automatic resource export, refusing to build to avoid conflicting with it");
+				}
+			}
 
 			Saver::exportResources(config->output_rom.getOrThrow(), *config, true);
 			exit(0);
@@ -123,10 +157,9 @@ namespace callisto {
 			init();
 			const auto config{ config_manager.getConfiguration(profile_name) };
 
-			bp::spawn(fmt::format(
-				"\"{}\" \"{}\"",
-				config->lunar_magic_path.getOrThrow().string(), config->output_rom.getOrThrow().string()
-			));
+			lunar_magic_wrapper.attemptReattach(config->lunar_magic_path.getOrThrow());
+			lunar_magic_wrapper.bringToFrontOrOpen(
+				callisto_path, config->lunar_magic_path.getOrThrow(), config->output_rom.getOrThrow());
 			exit(0);
 		});
 
