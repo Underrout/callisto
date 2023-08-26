@@ -101,12 +101,6 @@ namespace callisto {
 		launchInjectedLunarMagic(callisto_path, lunar_magic_path, rom_to_open);
 	}
 
-	void LunarMagicWrapper::setNewProjectRom(const fs::path& project_rom_path) {
-		for (auto& [_, proc_info] : lunar_magic_processes) {
-			proc_info.setProjectRomPath(project_rom_path);
-		}
-	}
-
 	std::optional<bp::group::native_handle_t> LunarMagicWrapper::pendingEloperSave() {
 		for (auto& [_, proc_info] : lunar_magic_processes) {
 			const auto potential_pid{ proc_info.getSaveProcessPid() };

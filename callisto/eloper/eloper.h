@@ -22,6 +22,9 @@ namespace fs = std::filesystem;
 
 #include "../callisto_exception.h"
 
+#include "../configuration/configuration.h"
+#include "../configuration/configuration_manager.h"
+
 #include <Windows.h>
 #include <shellapi.h>
 #include <windows.h>
@@ -53,12 +56,13 @@ LRESULT CALLBACK wndProc(HWND, UINT, WPARAM, LPARAM);
 
 bp::pid_t getLunarMagicPid(HWND message_window_handle);
 
+bool trySetConfig();
+
 void handleNewRom(HWND message_window_hwnd);
 void handleSave();
 
-std::unordered_set<std::string> getProfileNames(const fs::path& callisto_path);
 std::optional<std::string> getLastConfigName(const fs::path& callisto_directory);
-std::optional<std::string> determineSaveProfile(const fs::path& callisto_path);
+std::optional<std::string> determineSaveProfile();
 
 void checkForCallisto(const fs::path& callisto_path);
 

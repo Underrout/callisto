@@ -55,6 +55,21 @@ ignored_conflict_symbols = [
 # (git handles the text-based one much better)
 use_text_map16_format = true
 
+# Set to true to automatically call callisto's "Save" 
+# function in the background whenever you save a level, 
+# map16 or the overworld in Lunar Magic
+#
+# Note that this only works when you launch Lunar Magic
+# through callisto's "Edit" function
+enable_automatic_exports = false
+
+# Set to true to make callisto automatically reload your 
+# output ROM in Lunar Magic whenever a build succeeds
+#
+# Note that this only works when you launch Lunar Magic
+# through callisto's "Edit" function
+enable_automatic_reloads = true
+
 # ROM size to expand to after applying initial patch
 rom_size = "4MB"
 

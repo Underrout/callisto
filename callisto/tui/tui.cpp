@@ -325,8 +325,6 @@ namespace callisto {
 		try {
 			auto new_config{ config_manager.getConfiguration(profile_name) };
 			config = new_config;
-
-			lunar_magic_wrapper.setNewProjectRom(config->output_rom.getOrThrow());
 		}
 		catch (const std::exception&) {
 			config = nullptr;
@@ -505,7 +503,9 @@ namespace callisto {
 				markerSafeguard("Rebuild", [=] {
 					Rebuilder rebuilder{};
 					rebuilder.build(*config);
-					lunar_magic_wrapper.reloadRom(config->output_rom.getOrThrow());
+					if (config->enable_automatic_reloads.getOrDefault(true)) {
+						lunar_magic_wrapper.reloadRom(config->output_rom.getOrThrow());
+					}
 				});
 			}
 		);
@@ -526,14 +526,18 @@ namespace callisto {
 						QuickBuilder quick_builder{ config->project_root.getOrThrow() };
 						const auto result{ quick_builder.build(*config) };
 						if (result == QuickBuilder::Result::SUCCESS) {
-							lunar_magic_wrapper.reloadRom(config->output_rom.getOrThrow());
+							if (config->enable_automatic_reloads.getOrDefault(true)) {
+								lunar_magic_wrapper.reloadRom(config->output_rom.getOrThrow());
+							}
 						}
 					}
 					catch (const MustRebuildException& e) {
 						spdlog::info("Quickbuild cannot continue due to the following reason, rebuilding ROM:\n\r{}", e.what());
 						Rebuilder rebuilder{};
 						rebuilder.build(*config);
-						lunar_magic_wrapper.reloadRom(config->output_rom.getOrThrow());
+						if (config->enable_automatic_reloads.getOrDefault(true)) {
+							lunar_magic_wrapper.reloadRom(config->output_rom.getOrThrow());
+						}
 					}
 				});
 			}

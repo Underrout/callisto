@@ -138,18 +138,6 @@ namespace callisto {
 		shared_memory->save_process_pid_set = false;
 	}
 
-	fs::path ProcessInfo::getProjectRomPath() {
-		bi::scoped_lock<bi::interprocess_mutex>(shared_memory->mutex);
-
-		return shared_memory->project_rom;
-	}
-
-	void ProcessInfo::setProjectRomPath(const fs::path& rom_path) {
-		bi::scoped_lock<bi::interprocess_mutex>(shared_memory->mutex);
-
-		std::strcpy(shared_memory->project_rom, rom_path.string().data());
-	}
-
 	const std::string& ProcessInfo::getSharedMemoryName() const {
 		return shared_memory_name;
 	}

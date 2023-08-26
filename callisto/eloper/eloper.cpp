@@ -11,6 +11,11 @@ callisto::ProcessInfo process_info;
 HWND message_only_window;
 fs::path callisto_path;
 
+using namespace callisto;
+
+std::unique_ptr<ConfigurationManager> config_manager;
+std::shared_ptr<Configuration> config;
+
 std::atomic<bool> cancel{ false };
 std::mutex m;
 
@@ -50,6 +55,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 	const auto& usertoolbar_path{ argv[3] };
 	restoreUsertoolbar(usertoolbar_path);
 
+	config_manager = std::make_unique<ConfigurationManager>(callisto_path.parent_path());
+
 	const auto& lm_verification_string{ argv[1] };
 
 	const auto [hwnd, verification_code] = extractHandleAndVerificationCode(lm_verification_string);
@@ -62,7 +69,6 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 
 	const auto& current_rom{ argv[2] };
 	process_info.setCurrentLunarMagicRomPath(current_rom);
-	process_info.setProjectRomPath(current_rom);
 
 	MSG msg;
 
@@ -162,25 +168,22 @@ LRESULT CALLBACK wndProc(HWND hwnd, UINT umsg, WPARAM wparam, LPARAM lparam) {
 	return DefWindowProc(hwnd, umsg, wparam, lparam);
 }
 
+bool trySetConfig() {
+	const auto profiles{ config_manager->getProfileNames() };
+	const auto profile{ profiles.empty() ? std::nullopt : std::make_optional(*profiles.begin()) };
 
-std::unordered_set<std::string> getProfileNames(const fs::path& callisto_path) {
-	if (fs::exists(callisto_path)) {
-		bp::ipstream ip;
-		bp::child profiles_process(callisto_path.string(), "--profiles", bp::std_out > ip, bp::windows::create_no_window);
-
-		std::unordered_set<std::string> profile_names{};
-		std::string line;
-		while (std::getline(ip, line)) {
-			profile_names.insert(line.substr(line.size() - 1));  // drop newline from end of line
-		}
-
-		profiles_process.wait();
-
-		return profile_names;
+	try {
+		config = config_manager->getConfiguration(determineSaveProfile());
 	}
-	else {
-		throw EloperException(fmt::format("Callisto not found at path '{}', cannot get profile names", callisto_path.string()));
+	catch (const std::exception&) {
+		MessageBox(NULL, "Invalid configuration",
+			"Your callisto configuration is invalid. To use automatic exports and/or reloads, "
+			"your configuration must be fixed. Please reload your configuration in callisto to get "
+			"additional details on what's wrong.", MB_OK | MB_ICONWARNING);
+		return false;
 	}
+
+	return true;
 }
 
 std::pair<HWND, uint16_t> extractHandleAndVerificationCode(const std::string& lm_string) {
@@ -221,14 +224,13 @@ void handleNewRom(HWND message_window_hwnd) {
 	process_info.setCurrentLunarMagicRomPath(rom_path);
 }
 
-std::optional<std::string> determineSaveProfile(const fs::path& callisto_path) {
-	const auto profile_names{ getProfileNames(callisto_path) };
-	if (profile_names.empty()) {
+std::optional<std::string> determineSaveProfile() {
+	const auto profiles{ config_manager->getProfileNames() };
+	if (profiles.empty()) {
 		return {};
 	}
-	else {
-		return *profile_names.begin();
-	}
+
+	return *profiles.begin();
 
 	/* 
 	* TODO the commented out portion here almost handles different profile 
@@ -266,9 +268,17 @@ std::optional<std::string> determineSaveProfile(const fs::path& callisto_path) {
 }
 
 void handleSave() {
+	if (!trySetConfig()) {
+		return;
+	}
+
+	if (!config->enable_automatic_exports.getOrDefault(false)) {
+		return;
+	}
+
 	const auto id{ std::hash<std::thread::id>{}(std::this_thread::get_id()) };
 
-	if (process_info.getCurrentLunarMagicRomPath().value() != process_info.getProjectRomPath()) {
+	if (process_info.getCurrentLunarMagicRomPath().value() != config->output_rom.getOrThrow()) {
 		// save of non-project ROM, skip
 		return;
 	}
@@ -282,7 +292,7 @@ void handleSave() {
 		return;
 	}
 
-	const auto profile{ determineSaveProfile(callisto_path) };
+	const auto profile{ determineSaveProfile() };
 
 	const auto callisto_save_process_pid{ process_info.getSaveProcessPid() };
 

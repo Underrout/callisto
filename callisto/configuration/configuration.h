@@ -113,6 +113,9 @@ namespace callisto {
 		PathConfigVariable conflict_log_file { {"settings", "conflict_log_file"} };
 		StringVectorConfigVariable ignored_conflict_symbol_strings{ {"settings", "ignored_conflict_symbols"} };
 
+		BoolConfigVariable enable_automatic_reloads{ {"settings", "enable_automatic_reloads"} };
+		BoolConfigVariable enable_automatic_exports{ {"settings", "enable_automatic_exports"} };
+
 		PathConfigVariable output_rom{ {"output", "output_rom"} };
 		PathConfigVariable temporary_folder{ {"output", "temporary_folder"} };
 		PathConfigVariable bps_package{ {"output", "bps_package"} };

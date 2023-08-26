@@ -229,8 +229,20 @@ if (MSVC)
 
     file(WRITE "${CMAKE_CURRENT_SOURCE_DIR}/eloper.rc" "${RC_CONTENTS_ELOPER}")
 
-    add_executable(eloper WIN32 "eloper/eloper.h" "eloper/eloper.cpp" "process_info.h" "process_info.cpp" "eloper.rc")
+    add_executable(eloper WIN32 "eloper/eloper.h" "eloper/eloper.cpp" "process_info.h" "process_info.cpp" "eloper.rc" 
+    "configuration/config_exception.h" "configuration/config_variable.cpp" "configuration/config_variable.h" "configuration/configuration.h"
+    "configuration/configuration_level.h" "configuration/configuration.cpp" "configuration/tool_configuration.h" "configuration/emulator_configuration.h"
+    "configuration/configuration_manager.h" "configuration/configuration_manager.cpp"
+    "path_util.h"
+    "descriptor.h"
+    "configuration/color_configuration.h"
+    "colors.h" "colors.cpp"
+    "globals.h" "globals.cpp")
 
+    target_link_libraries(eloper PRIVATE nlohmann_json::nlohmann_json)
+    target_link_libraries(eloper PUBLIC ordered_map)
+    target_link_libraries(eloper PUBLIC platform_folders)
+    target_link_libraries(eloper PUBLIC toml11::toml11)
     target_link_libraries(eloper PRIVATE fmt::fmt)
     target_link_libraries(eloper PUBLIC spdlog::spdlog)
     target_link_libraries(eloper PRIVATE Boost::system Boost::filesystem Boost::thread Boost::program_options)

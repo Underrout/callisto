@@ -37,7 +37,6 @@ namespace callisto {
 			uint32_t hwnd;
 			uint16_t verification_code;
 			char current_rom[MAX_PATH];
-			char project_rom[MAX_PATH];
 		};
 	protected:
 		std::string shared_memory_name;
@@ -72,9 +71,6 @@ namespace callisto {
 		std::optional<bp::group::native_handle_t> getSaveProcessPid();
 		void setSaveProcessPid(bp::group::native_handle_t pid);
 		void unsetSaveProcessPid();
-
-		fs::path getProjectRomPath();
-		void setProjectRomPath(const fs::path& rom_path);
 
 		const std::string& getSharedMemoryName() const;
 

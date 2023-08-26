@@ -73,8 +73,6 @@ namespace callisto {
 		Result reloadRom(const fs::path& rom_to_reload);
 		void bringToFrontOrOpen(const fs::path& callisto_path, const fs::path& lunar_magic_path, const fs::path& rom_to_open);
 
-		void setNewProjectRom(const fs::path& project_rom_path);
-
 		void attemptReattach(const fs::path& lunar_magic_path);
 
 		std::optional<bp::group::native_handle_t> pendingEloperSave();
