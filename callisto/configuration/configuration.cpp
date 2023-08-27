@@ -404,6 +404,8 @@ namespace callisto {
 
 	void Configuration::fillOneConfigurationLevel(const std::vector<toml::value>& config_files, ConfigurationLevel level,
 		const std::map<std::string, std::string>& user_variables) {
+		module_count = 0;
+
 		for (const auto& config_file : config_files) {
 			fillOneConfigurationFile(config_file, level, user_variables);
 		}

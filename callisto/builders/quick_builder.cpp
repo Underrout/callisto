@@ -98,6 +98,41 @@ namespace callisto {
 					));
 					must_reinsert = true;
 				}
+
+				if (descriptor.symbol == Symbol::MODULE) {
+					std::unordered_set<fs::path> current_output_paths{};
+					for (const auto& [input_path, module_config ] : config.module_configurations) {
+						if (input_path == descriptor.name) {
+							const auto real_output_paths{ module_config.real_output_paths.getOrThrow() };
+							current_output_paths.insert(real_output_paths.begin(), real_output_paths.end());
+							break;
+						}
+					}
+
+					const auto& old_output_paths{ report["module_outputs"][descriptor.name.value()] };
+
+					if (old_output_paths.size() != current_output_paths.size()) {
+						spdlog::info(fmt::format(
+							colors::NOTIFICATION,
+							"{} must be reinserted due to change in its output paths",
+							descriptor_string
+						));
+						must_reinsert = true;
+					}
+					else {
+						for (const auto& entry : old_output_paths) {
+							if (!current_output_paths.contains(entry)) {
+								spdlog::info(fmt::format(
+									colors::NOTIFICATION,
+									"{} must be reinserted due to change in its output paths",
+									descriptor_string
+								));
+								must_reinsert = true;
+								break;
+							}
+						}
+					}
+				}
 			}
 
 			if (must_reinsert) {
