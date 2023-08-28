@@ -107,6 +107,11 @@ namespace callisto {
 		disable_relative_path_warning.warnid = "1001";
 		disable_relative_path_warning.enabled = false;
 
+		const definedata callisto_define{
+			"CALLISTO_ASSEMBLING",
+			"1"
+		};
+
 		const patchparams params{
 			sizeof(struct patchparams),
 			"temp.asm",
@@ -116,8 +121,8 @@ namespace callisto {
 			reinterpret_cast<const char**>(additional_include_paths.data()),
 			static_cast<int>(additional_include_paths.size()),
 			true,
-			nullptr,
-			0,
+			&callisto_define,
+			1,
 			nullptr,
 			nullptr,
 			&disable_relative_path_warning,

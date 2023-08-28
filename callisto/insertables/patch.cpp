@@ -61,6 +61,11 @@ namespace callisto {
 			header_size
 		));
 
+		const definedata callisto_define{
+			"CALLISTO_ASSEMBLING",
+			"1"
+		};
+
 		const patchparams params{
 			sizeof(struct patchparams),
 			str_patch_path.c_str(),
@@ -70,8 +75,8 @@ namespace callisto {
 			reinterpret_cast<const char**>(additional_include_paths.data()),
 			static_cast<int>(additional_include_paths.size()),
 			true,
-			nullptr,
-			0,
+			&callisto_define,
+			1,
 			nullptr,
 			nullptr,
 			nullptr,
