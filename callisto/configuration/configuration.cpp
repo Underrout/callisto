@@ -215,7 +215,7 @@ namespace callisto {
 		}
 		catch (const std::out_of_range&) {
 			// no variable table in file
-			return {};
+			return { previous_user_variables };
 		}
 
 		for (const auto& [key, value] : variables) {
@@ -246,6 +246,7 @@ namespace callisto {
 		}
 
 		user_variables.insert(local_user_variables.begin(), local_user_variables.end());
+		user_variables.insert(previous_user_variables.begin(), previous_user_variables.end());
 		toml_values.insert(local_toml_values.begin(), local_toml_values.end());
 
 		return user_variables;
@@ -266,7 +267,7 @@ namespace callisto {
 					user_variable_map.insert({
 						config_level,
 						parseUserVariables(toml::parse(potential_variable_file), inherited_variables)
-						});
+					});
 				}
 				else {
 					user_variable_map.insert({ config_level, {} });
