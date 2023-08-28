@@ -93,8 +93,8 @@ namespace callisto {
 		static std::map<std::string, std::string> parseUserVariables(const toml::value& table,
 			const std::map<std::string, std::string>& previous_user_variables = {});
 
-		Configuration(const ConfigFileMap& config_file_map, const VariableFileMap& variable_file_map,
-			const fs::path& callisto_root_directory);
+		Configuration(const std::optional<std::string>& profile_name, const ConfigFileMap& config_file_map,
+			const VariableFileMap& variable_file_map, const fs::path& callisto_root_directory);
 
 		ConfigValueType getByKey(const std::string& key) const;
 
@@ -102,7 +102,8 @@ namespace callisto {
 
 		std::unordered_set<Descriptor> ignored_conflict_symbols{};
 
-		StringConfigVariable config_name{ {"settings", "config_name"} };
+		const std::optional<std::string> profile_name{};
+
 		PathConfigVariable project_root{ {"settings", "project_root"} };
 		StringConfigVariable level_import_flag{ {"settings", "level_import_flag"} };
 		StringConfigVariable rom_size{ {"settings", "rom_size"} };

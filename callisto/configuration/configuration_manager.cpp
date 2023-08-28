@@ -90,6 +90,6 @@ namespace callisto {
 			}
 		}
 
-		return std::make_shared<Configuration>(config_file_map, variable_file_map, callisto_root);
+		return std::make_shared<Configuration>(current_profile, config_file_map, variable_file_map, callisto_root);
 	}
 }

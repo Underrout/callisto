@@ -1,8 +1,9 @@
 #include "configuration.h"
 
 namespace callisto {
-	Configuration::Configuration(const ConfigFileMap& config_file_map, const VariableFileMap& variable_file_map, 
-		const fs::path& callisto_root_directory) : allow_user_input(globals::ALLOW_USER_INPUT) {
+	Configuration::Configuration(const std::optional<std::string>& profile_name, const ConfigFileMap& config_file_map, 
+		const VariableFileMap& variable_file_map, const fs::path& callisto_root_directory) 
+		: allow_user_input(globals::ALLOW_USER_INPUT), profile_name(profile_name) {
 
 		for (const auto& config_color_str : colors::configurable_colors) {
 			color_configurations.emplace(config_color_str, ColorConfiguration(config_color_str));
@@ -419,8 +420,6 @@ namespace callisto {
 		const std::map<std::string, std::string>& user_variables) {
 
 		const auto& root{ project_root };
-
-		trySet(config_name, config_file, level, user_variables);
 
 		rom_size.trySet(config_file, level, user_variables);
 
