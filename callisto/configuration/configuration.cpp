@@ -503,7 +503,7 @@ namespace callisto {
 					}
 				}
 
-				module_configurations.insert({ input_path, module_configuration });
+				module_configurations.insert({ module_configuration.input_path.getOrThrow(), module_configuration});
 			}
 		}
 
