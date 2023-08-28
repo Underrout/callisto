@@ -8,7 +8,7 @@ namespace callisto {
 		const std::vector<fs::path>& additional_include_paths) :
 		RomInsertable(config), 
 		input_path(input_path),
-		output_paths(registerConfigurationDependency(config.module_configurations.at(input_path).real_output_paths, Policy::REINSERT).getOrThrow()),
+		output_paths(config.module_configurations.at(input_path).real_output_paths.getOrThrow()),
 		project_relative_path(fs::relative(input_path, registerConfigurationDependency(config.project_root).getOrThrow())),
 		callisto_asm_file(callisto_asm_file),
 		real_module_folder_location(PathUtil::getUserModuleDirectoryPath(config.project_root.getOrThrow())),
