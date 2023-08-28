@@ -43,17 +43,6 @@ namespace callisto {
 			std::unordered_set<std::string> seen_output_paths{};
 			std::unordered_set<fs::path> seen_input_paths{};
 			for (const auto& [_, module_configuration] : module_configurations) {
-				const auto input_path{ module_configuration.input_path.getOrThrow() };
-				if (seen_input_paths.contains(input_path)) {
-					throw ConfigException(fmt::format(
-						"Module '{}' appears in module list(s) multiple times, but modules are only allowed to appear exactly once",
-						input_path.string()
-					));
-				}
-				else {
-					seen_input_paths.insert(input_path);
-				}
-
 				const auto output_paths{ module_configuration.real_output_paths.getOrThrow() };
 				for (const auto& output_path : output_paths) {
 					if (seen_output_paths.contains(output_path.string())) {
@@ -484,6 +473,14 @@ namespace callisto {
 
 			for (const auto& entry : modules_array.value()) {
 				fs::path input_path{ PathUtil::normalize(toml::find<std::string>(entry, "input_path"), project_root.getOrThrow()) };
+				if (module_configurations.contains(input_path)) {
+					throw TomlException(entry,
+						"Duplicate module",
+						{},
+						fmt::format( "Module with input path '{}' appears multiple times in modules list", input_path.string())
+					);
+				}
+				
 				ModuleConfiguration module_configuration{ module_count++ };
 
 				module_configuration.input_path.trySet(config_file, level, project_root, user_variables);
