@@ -56,13 +56,13 @@ LRESULT CALLBACK wndProc(HWND, UINT, WPARAM, LPARAM);
 
 bp::pid_t getLunarMagicPid(HWND message_window_handle);
 
-bool trySetConfig();
+bool trySetConfig(const fs::path& callisto_directory);
 
 void handleNewRom(HWND message_window_hwnd);
 void handleSave();
 
 std::optional<std::string> getLastConfigName(const fs::path& callisto_directory);
-std::optional<std::string> determineSaveProfile();
+std::optional<std::string> determineSaveProfile(const fs::path& callisto_directory);
 
 void checkForCallisto(const fs::path& callisto_path);
 

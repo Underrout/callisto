@@ -168,12 +168,12 @@ LRESULT CALLBACK wndProc(HWND hwnd, UINT umsg, WPARAM wparam, LPARAM lparam) {
 	return DefWindowProc(hwnd, umsg, wparam, lparam);
 }
 
-bool trySetConfig() {
+bool trySetConfig(const std::optional<std::string>& profile_name) {
 	const auto profiles{ config_manager->getProfileNames() };
 	const auto profile{ profiles.empty() ? std::nullopt : std::make_optional(*profiles.begin()) };
 
 	try {
-		config = config_manager->getConfiguration(determineSaveProfile());
+		config = config_manager->getConfiguration(profile_name);
 	}
 	catch (const std::exception&) {
 		MessageBox(NULL, "Invalid configuration",
@@ -224,51 +224,49 @@ void handleNewRom(HWND message_window_hwnd) {
 	process_info.setCurrentLunarMagicRomPath(rom_path);
 }
 
-std::optional<std::string> determineSaveProfile() {
-	const auto profiles{ config_manager->getProfileNames() };
-	if (profiles.empty()) {
-		return {};
+std::optional<std::string> determineSaveProfile(const fs::path& callisto_directory) {
+	const auto path{ callisto_directory / ".cache" / "last_profile.txt" };
+
+	std::optional<std::string> last_used;
+
+	if (fs::exists(path)) {
+		std::ifstream last_profile_file{ path };
+		std::string name;
+		std::getline(last_profile_file, name);
+		last_profile_file.close();
+		last_used = name;
+	}
+	else {
+		last_used = {};
 	}
 
-	return *profiles.begin();
-
-	/* 
-	* TODO the commented out portion here almost handles different profile 
-	* names and such, but honestly if your profile influences how saving works, 
-	* you're probably doing something really weird, so I'm not going to handle
-	* this for now and just return the first profile if there are any and nullopt otherwise
+	const auto profiles{ config_manager->getProfileNames() };
 	
-	const auto last_used{ getLastConfigName(callisto_path.parent_path()) };
-	const auto profile_names{ getProfileNames(callisto_path) };
-
 	if (!last_used.has_value()) {
-		if (profile_names.empty()) {
+		if (profiles.empty()) {
 			return {};
 		}
-		else if (profile_names.size() == 1) {
-			return *profile_names.begin();
+		else {
+			return *profiles.begin();
+		}
+	}
+	else if (!profiles.empty()) {
+		if (std::find(profiles.begin(), profiles.end(), last_used.value()) != profiles.end()) {
+			return last_used.value();
 		}
 		else {
-			// TODO prompt user for which profile to use
+			return *profiles.begin();
 		}
 	}
 	else {
-		const auto& last_used_name{ last_used.value() };
-		if (profile_names.contains(last_used_name)) {
-			return last_used_name;
-		}
-		else if (profile_names.empty()) {
-			return {};
-		}
-		else {
-			// TODO handle profile name no longer being in list, probably prompt user for which profile to use as well
-		}
+		return {};
 	}
-	*/
 }
 
 void handleSave() {
-	if (!trySetConfig()) {
+	const auto profile{ determineSaveProfile(callisto_path.parent_path()) };
+
+	if (!trySetConfig(profile)) {
 		return;
 	}
 
@@ -291,8 +289,6 @@ void handleSave() {
 		MessageBox(NULL, message.data(), "Callisto not found", MB_OK | MB_ICONWARNING);
 		return;
 	}
-
-	const auto profile{ determineSaveProfile() };
 
 	const auto callisto_save_process_pid{ process_info.getSaveProcessPid() };
 
