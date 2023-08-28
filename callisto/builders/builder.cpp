@@ -368,6 +368,11 @@ namespace callisto {
 			"!{}_{}_{} = {}\n\n"
 			"; Define containing path to callisto's module imprint folder\n"
 			"!{}_{} = \"{}\"\n\n"
+			"; Macro which includes the labels of the given module into the current file\n"
+			"macro include_module(module)\n"
+			"\tincsrc \"!{}_{}/<module>\"\n"
+			"endmacro\n\n"
+			"; Macro which calls a module label and automatically sets the data bank register\n"
 			"macro call_module(module_label)\n"
 			"\tPHB\n"
 			"\tLDA.b #<module_label>>>16\n"
@@ -376,8 +381,14 @@ namespace callisto {
 			"\tJSL <module_label>\n"
 			"\tPLB\n"
 			"endmacro\n\n"
-			"macro include_module(module_name)\n"
-			"\tincsrc \"!{}_{}/<module_name>\"\n"
+			"; Macro which can be used to error out if the version number of the Callisto that's in use is lower than the one passed to the macro\n"
+			"macro require_callisto_version(major, minor, patch)\n"
+			"if !{}_{}_{} > <major>\n"
+			"elseif !{}_{}_{} == <major> && !{}_{}_{} > <minor>\n"
+			"elseif !{}_{}_{} == <major> && !{}_{}_{} == <minor> && !{}_{}_{} >= <patch>\n"
+			"else\n"
+			"\terror \"Required Callisto version: <major>.<minor>.<patch>, actual Callisto version: !{}_{}\"\n"
+			"endif\n"
 			"endmacro\n",
 			profile_part,
 			DEFINE_PREFIX, ASSEMBLING_DEFINE_NAME,
@@ -386,7 +397,14 @@ namespace callisto {
 			DEFINE_PREFIX, VERSION_DEFINE_NAME, MINOR_VERSION_DEFINE_NAME, CALLISTO_VERSION_MINOR,
 			DEFINE_PREFIX, VERSION_DEFINE_NAME, PATCH_VERSION_DEFINE_NAME, CALLISTO_VERSION_PATCH,
 			DEFINE_PREFIX, MODULE_FOLDER_PATH_DEFINE_NAME, PathUtil::convertToPosixPath(module_folder).string(),
-			DEFINE_PREFIX, MODULE_FOLDER_PATH_DEFINE_NAME
+			DEFINE_PREFIX, MODULE_FOLDER_PATH_DEFINE_NAME,
+			DEFINE_PREFIX, VERSION_DEFINE_NAME, MAJOR_VERSION_DEFINE_NAME,
+			DEFINE_PREFIX, VERSION_DEFINE_NAME, MAJOR_VERSION_DEFINE_NAME,
+			DEFINE_PREFIX, VERSION_DEFINE_NAME, MINOR_VERSION_DEFINE_NAME,
+			DEFINE_PREFIX, VERSION_DEFINE_NAME, MAJOR_VERSION_DEFINE_NAME,
+			DEFINE_PREFIX, VERSION_DEFINE_NAME, MINOR_VERSION_DEFINE_NAME,
+			DEFINE_PREFIX, VERSION_DEFINE_NAME, PATCH_VERSION_DEFINE_NAME,
+			DEFINE_PREFIX, VERSION_DEFINE_NAME
 		) };
 
 		writeIfDifferent(info_string, PathUtil::getCallistoAsmFilePath(config.project_root.getOrThrow()));
