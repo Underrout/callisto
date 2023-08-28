@@ -503,7 +503,7 @@ namespace callisto {
 		}
 		catch (const std::exception& e) {
 			spdlog::warn("Failed to remove previous build report with the "
-				"following exception, Quickbuild may behave erroneously:\n\r{}");
+				"following exception, Update may behave erroneously:\n\r{}");
 		}
 	}
 }

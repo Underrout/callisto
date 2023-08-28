@@ -6,7 +6,7 @@
 
 # For a tool to work with callisto, all it needs to do is return 
 # a non-zero exit code if it fails and zero if it succeeds. For 
-# the tool to also work with Quickbuild, it should output a file
+# the tool to also work with Update, it should output a file
 # named .dependencies containing paths to the files it depends on, 
 # so that callisto can reapply your tool if any of those files 
 # change!
@@ -42,7 +42,7 @@ options = "-l ../../tools/pixi/list.txt"
 # pass_rom = false
 
 # static_dependencies and dependency_report_file are only
-# used for Quickbuild
+# used for Update
 
 # Files/folders the tool relies on/inserts in any case
 # Path is the path to the file/folder, policy lets you 

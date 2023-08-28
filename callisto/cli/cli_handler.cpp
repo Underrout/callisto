@@ -44,21 +44,21 @@ namespace callisto {
 			globals::ALLOW_USER_INPUT = allow_user_input;
 		} };
 
-		auto build_sub{ app.add_subcommand("build", "Builds a ROM from project files")->fallthrough() };
+		auto build_sub{ app.add_subcommand("rebuild", "Builds your ROM from scratch")->fallthrough() };
+		auto update_sub{ app.add_subcommand("update", "Brings your ROM up to date with project files")->fallthrough() };
 		auto save_sub{ app.add_subcommand("save", "Exports project files from ROM")->fallthrough() };
 		auto edit_sub{ app.add_subcommand("edit", "Opens project ROM in Lunar Magic")->fallthrough() };
 		auto package_sub{ app.add_subcommand("package", "Packages project ROM into a BPS patch")->fallthrough() };
 		auto profiles_sub{ app.add_subcommand("profiles", "Lists available configuration profiles")->fallthrough() };
 
-		bool quick_build{ false };
-		build_sub->add_flag(
-			"-q,--quick", 
-			quick_build,
-			"Only perform required insertions rather than rebuilding ROM from scratch"
-		);
-
 		bool abort_on_unsaved{ false };
 		build_sub->add_flag(
+			"--no-export",
+			abort_on_unsaved,
+			"Will cause the build to abort if there are unsaved resources in the ROM, default is to export them and then build"
+		);
+
+		update_sub->add_flag(
 			"--no-export",
 			abort_on_unsaved,
 			"Will cause the build to abort if there are unsaved resources in the ROM, default is to export them and then build"
@@ -71,6 +71,12 @@ namespace callisto {
 			"The profile to build with"
 		);
 
+		update_sub->add_option(
+			"-p,--profile",
+			profile_name,
+			"The profile to update with"
+		);
+
 		build_sub->callback([&] {
 			init();
 			const auto config{ config_manager.getConfiguration(profile_name) };
@@ -78,7 +84,7 @@ namespace callisto {
 			if (check_for_pending_save && config->lunar_magic_path.isSet()) {
 				lunar_magic_wrapper.attemptReattach(config->lunar_magic_path.getOrThrow());
 				if (lunar_magic_wrapper.pendingEloperSave().has_value()) {
-					throw std::runtime_error("There is a pending automatic resource export, refusing to build to avoid conflicting with it");
+					throw std::runtime_error("There is a pending automatic resource export, refusing to rebuild to avoid conflicting with it");
 				}
 			}
 
@@ -91,39 +97,65 @@ namespace callisto {
 
 				if (!needs_extraction.empty()) {
 					if (abort_on_unsaved) {
-						spdlog::error("There are unsaved resources in ROM '{}', aborting build", config->output_rom.getOrThrow().string());
+						spdlog::error("There are unsaved resources in ROM '{}', aborting rebuild", config->output_rom.getOrThrow().string());
 						exit(2);
 					}
 					Saver::exportResources(config->output_rom.getOrThrow(), *config, true);
 				}
 			}
 
-			if (quick_build) {
-				try {
-					QuickBuilder quick_builder{ config->project_root.getOrThrow() };
-					const auto result{ quick_builder.build(*config) };
-					if (result == QuickBuilder::Result::SUCCESS && config->lunar_magic_path.isSet() 
-						&& config->enable_automatic_reloads.getOrDefault(true)) {
-						lunar_magic_wrapper.reloadRom(config->output_rom.getOrThrow());
-					}
-				}
-				catch (const MustRebuildException& e) {
-					spdlog::info("Quickbuild cannot continue due to the following reason, rebuilding ROM:\n\r{}", e.what());
-					Rebuilder rebuilder{};
-					rebuilder.build(*config);
-					if (config->lunar_magic_path.isSet() && config->enable_automatic_reloads.getOrDefault(true)) {
-						lunar_magic_wrapper.reloadRom(config->output_rom.getOrThrow());
-					}
+			Rebuilder rebuilder{};
+			rebuilder.build(*config);
+			if (config->lunar_magic_path.isSet() && config->enable_automatic_reloads.getOrDefault(true)) {
+				lunar_magic_wrapper.reloadRom(config->output_rom.getOrThrow());
+			}
+
+			exit(0);
+		});
+
+		update_sub->callback([&] {
+			init();
+			const auto config{ config_manager.getConfiguration(profile_name) };
+
+			if (check_for_pending_save && config->lunar_magic_path.isSet()) {
+				lunar_magic_wrapper.attemptReattach(config->lunar_magic_path.getOrThrow());
+				if (lunar_magic_wrapper.pendingEloperSave().has_value()) {
+					throw std::runtime_error("There is a pending automatic resource export, refusing to update to avoid conflicting with it");
 				}
 			}
-			else {
+
+			if (config->output_rom.isSet() && fs::exists(config->output_rom.getOrThrow())) {
+				const auto needs_extraction{ Marker::getNeededExtractions(config->output_rom.getOrThrow(),
+					config->project_root.getOrThrow(),
+					Saver::getExtractableTypes(*config),
+					config->use_text_map16_format.getOrDefault(false))
+				};
+
+				if (!needs_extraction.empty()) {
+					if (abort_on_unsaved) {
+						spdlog::error("There are unsaved resources in ROM '{}', aborting update", config->output_rom.getOrThrow().string());
+						exit(2);
+					}
+					Saver::exportResources(config->output_rom.getOrThrow(), *config, true);
+				}
+			}
+
+			try {
+				QuickBuilder quick_builder{ config->project_root.getOrThrow() };
+				const auto result{ quick_builder.build(*config) };
+				if (result == QuickBuilder::Result::SUCCESS && config->lunar_magic_path.isSet()
+					&& config->enable_automatic_reloads.getOrDefault(true)) {
+					lunar_magic_wrapper.reloadRom(config->output_rom.getOrThrow());
+				}
+			}
+			catch (const MustRebuildException& e) {
+				spdlog::info("Update cannot continue due to the following reason, rebuilding ROM:\n\r{}", e.what());
 				Rebuilder rebuilder{};
 				rebuilder.build(*config);
 				if (config->lunar_magic_path.isSet() && config->enable_automatic_reloads.getOrDefault(true)) {
 					lunar_magic_wrapper.reloadRom(config->output_rom.getOrThrow());
 				}
 			}
-			exit(0);
 		});
 
 		save_sub->add_option(
@@ -139,7 +171,7 @@ namespace callisto {
 			if (check_for_pending_save && config->lunar_magic_path.isSet()) {
 				lunar_magic_wrapper.attemptReattach(config->lunar_magic_path.getOrThrow());
 				if (lunar_magic_wrapper.pendingEloperSave().has_value()) {
-					throw std::runtime_error("There is a pending automatic resource export, refusing to build to avoid conflicting with it");
+					throw std::runtime_error("There is a pending automatic resource export, refusing to save to avoid conflicting with it");
 				}
 			}
 
