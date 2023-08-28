@@ -6,10 +6,6 @@
 
 [settings]
 
-# Name of this configuration,
-# can be anything you like really
-config_name = "main"
-
 # Root directory of the project, this can 
 # be a relative or absolute path, but relative 
 # paths are generally nicer since they will stay 

@@ -344,11 +344,20 @@ namespace callisto {
 	void Builder::generateCallistoAsmFile(const Configuration& config) {
 		const auto module_folder{ PathUtil::getUserModuleDirectoryPath(config.project_root.getOrThrow()) };
 
+		const auto profile_part{
+			config.profile_name.has_value()
+			? fmt::format(
+				"; Define containing the name of the active profile\n"
+				"!{}_{} = \"{}\"\n\n",
+				DEFINE_PREFIX, PROFILE_DEFINE_NAME, config.profile_name.value()
+			)
+			: ""
+		};
+
 		const auto info_string{ fmt::format(
 			"includeonce\n\n"
 			"; Asar compatible file containing information about callisto, can be imported using incsrc as needed\n\n"
-			"; Define containing the name of the active profile\n"
-			"!{}_{} = \"{}\"\n\n"
+			"{}"
 			"; Marker define to determine that callisto is assembling a file\n"
 			"!{}_{} = 1\n\n"
 			"; Define containing callisto's version number as a string\n"
@@ -370,7 +379,7 @@ namespace callisto {
 			"macro include_module(module_name)\n"
 			"\tincsrc \"!{}_{}/<module_name>\"\n"
 			"endmacro\n",
-			DEFINE_PREFIX, PROFILE_DEFINE_NAME, config.config_name.getOrThrow(),
+			profile_part,
 			DEFINE_PREFIX, ASSEMBLING_DEFINE_NAME,
 			DEFINE_PREFIX, VERSION_DEFINE_NAME, CALLISTO_VERSION_MAJOR, CALLISTO_VERSION_MINOR, CALLISTO_VERSION_PATCH,
 			DEFINE_PREFIX, VERSION_DEFINE_NAME, MAJOR_VERSION_DEFINE_NAME, CALLISTO_VERSION_MAJOR,
