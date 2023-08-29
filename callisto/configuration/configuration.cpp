@@ -474,13 +474,6 @@ namespace callisto {
 
 			for (const auto& entry : modules_array.value()) {
 				fs::path input_path{ PathUtil::normalize(toml::find<std::string>(entry, "input_path"), project_root.getOrThrow()) };
-				if (module_configurations.contains(input_path)) {
-					throw TomlException(entry,
-						"Duplicate module",
-						{},
-						fmt::format( "Module with input path '{}' appears multiple times in modules list", input_path.string())
-					);
-				}
 				
 				ModuleConfiguration module_configuration{ module_count++ };
 
@@ -502,6 +495,15 @@ namespace callisto {
 							);
 						}
 					}
+				}
+
+				if (module_configurations.contains(module_configuration.input_path.getOrThrow())) {
+					throw TomlException(entry,
+						"Duplicate module",
+						{},
+						fmt::format("Module with input path '{}' appears multiple times in modules list", 
+							module_configuration.input_path.getOrThrow().string())
+					);
 				}
 
 				module_configurations.insert({ module_configuration.input_path.getOrThrow(), module_configuration});

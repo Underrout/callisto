@@ -94,7 +94,7 @@ namespace callisto {
 			Renderer([] { return separator(); }),
 
 			getConfigOnlyButton("Rebuild (R)", [=] { rebuildButton(); }),
-			getConfigOnlyButton("Quickbuild (Q)", [=] { quickbuildButton(); }),
+			getConfigOnlyButton("Update (U)", [=] { quickbuildButton(); }),
 			getRomOnlyButton("Package (P)", [=] { packageButton(); }),
 
 			Renderer([] { return separator(); }),
@@ -223,7 +223,7 @@ namespace callisto {
 			if (!needs_extraction.empty()) {
 				showChoiceModal("Prompt", fmt::format(
 					"WARNING: Potentially unexported resources present in ROM\n    {}\n\n"
-					"Building anyway could lead to loss of data. Run Save before the build?",
+					"Continuing anyway could lead to loss of data. Run Save before continuing?",
 					config->output_rom.getOrThrow().string()
 				), [=] {
 					runWithLogging(title + " (with Save)", [=] {
@@ -232,7 +232,7 @@ namespace callisto {
 					});
 					},
 					[=] {
-						showModal("Info", "Aborting build to prevent potential data loss");
+						showModal("Info", "Aborting to prevent potential data loss");
 				}
 				);
 				return;
@@ -517,13 +517,13 @@ namespace callisto {
 		trySetConfiguration();
 
 		if (config == nullptr) {
-			showModal("Error", "Current configuration is not valid\nCannot quick build ROM\nUse 'Reload configuration' for a more detailed error message");
+			showModal("Error", "Current configuration is not valid\nCannot quick update ROM\nUse 'Reload configuration' for a more detailed error message");
 			return;
 		}
 
 		saveInProgressSafeguard(
 			[=] {
-				markerSafeguard("Quickbuild", [=] {
+				markerSafeguard("Update", [=] {
 					try {
 						QuickBuilder quick_builder{ config->project_root.getOrThrow() };
 						const auto result{ quick_builder.build(*config) };
@@ -534,7 +534,7 @@ namespace callisto {
 						}
 					}
 					catch (const MustRebuildException& e) {
-						spdlog::info("Quickbuild cannot continue due to the following reason, rebuilding ROM:\n\r{}", e.what());
+						spdlog::info("Update cannot continue due to the following reason, rebuilding ROM:\n\r{}", e.what());
 						Rebuilder rebuilder{};
 						rebuilder.build(*config);
 						if (config->enable_automatic_reloads.getOrDefault(true)) {
@@ -642,19 +642,19 @@ namespace callisto {
 				screen.Exit();
 				return true;
 			}
-			else if (event == Event::Character('s')) {
+			else if (event == Event::Character('s') || event == Event::Character('S')) {
 				saveButton();
 				return true;
 			}
-			else if (event == Event::Character('e')) {
+			else if (event == Event::Character('e') || event == Event::Character('E')) {
 				editButton();
 				return true;
 			}
-			else if (event == Event::Character('c')) {
+			else if (event == Event::Character('c') || event == Event::Character('C')) {
 				trySetConfiguration();
 				return true;
 			}
-			else if (event == Event::Character('v')) {
+			else if (event == Event::Character('v') || event == Event::Character('V')) {
 				screen.WithRestoredIO([&] {
 					waitForEnter(!anything_on_command_line);
 					anything_on_command_line = true;
@@ -669,15 +669,15 @@ namespace callisto {
 				return true;
 			}
 			*/
- 			else if (event == Event::Character('p')) {
+ 			else if (event == Event::Character('p') || event == Event::Character('P')) {
 				packageButton();
 				return true;
 			}
-			else if (event == Event::Character('r')) {
+			else if (event == Event::Character('r') || event == Event::Character('R')) {
 				rebuildButton();
 				return true;
 			}
-			else if (event == Event::Character('q')) {
+			else if (event == Event::Character('u') || event == Event::Character("U")) {
 				quickbuildButton();
 				return true;
 			}

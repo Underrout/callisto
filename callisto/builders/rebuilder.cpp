@@ -4,7 +4,7 @@ namespace callisto {
 	void Rebuilder::build(const Configuration& config) {
 		const auto build_start{ std::chrono::high_resolution_clock::now() };
 
-		spdlog::info(fmt::format(colors::ACTION_START, "Build started"));
+		spdlog::info(fmt::format(colors::ACTION_START, "Rebuild started"));
 		spdlog::info("");
 
 		spdlog::info(fmt::format(colors::CALLISTO, "Checking clean ROM"));
@@ -160,8 +160,8 @@ namespace callisto {
 			}
 		}
 		else {
-			spdlog::info(fmt::format(colors::NOTIFICATION, "{}, Quickbuild not applicable, read the documentation "
-					"on details for how to set up Quickbuild correctly", failed_dependency_report.value().what()));
+			spdlog::info(fmt::format(colors::NOTIFICATION, "{}, Update not applicable, read the documentation "
+					"on details for how to set up Update correctly", failed_dependency_report.value().what()));
 			removeBuildReport(config.project_root.getOrThrow());
 		}
 
@@ -190,7 +190,7 @@ namespace callisto {
 		
 		fs::remove_all(config.temporary_folder.getOrThrow());
 
-		spdlog::info(fmt::format(colors::SUCCESS, "Build finished successfully in {} \\(^.^)/", 
+		spdlog::info(fmt::format(colors::SUCCESS, "Rebuild finished successfully in {} \\(^.^)/", 
 			TimeUtil::getDurationString(build_end - build_start)));
 	}
 

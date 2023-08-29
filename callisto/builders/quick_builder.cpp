@@ -19,7 +19,7 @@ namespace callisto {
 	QuickBuilder::Result QuickBuilder::build(const Configuration& config) {
 		const auto build_start{ std::chrono::high_resolution_clock::now() };
 
-		spdlog::info(fmt::format(colors::ACTION_START, "Quick Build started"));
+		spdlog::info(fmt::format(colors::ACTION_START, "Update started"));
 		spdlog::info("");
 
 		init(config);
@@ -213,8 +213,8 @@ namespace callisto {
 				writeBuildReport(config.project_root.getOrThrow(), createBuildReport(config, report["dependencies"]));
 			}
 			else {
-				spdlog::warn(fmt::format(colors::WARNING, "{}, Quickbuild not applicable, read the documentation "
-					"on details for how to set up Quickbuild correctly", failed_dependency_report.value().what()));
+				spdlog::warn(fmt::format(colors::WARNING, "{}, Update not applicable, read the documentation "
+					"on details for how to set up Update correctly", failed_dependency_report.value().what()));
 				removeBuildReport(config.project_root.getOrThrow());
 			}
 
@@ -230,7 +230,7 @@ namespace callisto {
 			const auto build_end{ std::chrono::high_resolution_clock::now() };
 
 			spdlog::info(fmt::format(colors::SUCCESS, 
-				"Quickbuild finished successfully in {} \\(^.^)/", TimeUtil::getDurationString(build_end - build_start)));
+				"Update finished successfully in {} \\(^.^)/", TimeUtil::getDurationString(build_end - build_start)));
 			return Result::SUCCESS;
 		}
 		else {
