@@ -88,7 +88,6 @@ namespace callisto {
 	}
 
 	json Builder::createBuildReport(const Configuration& config, const json& dependency_report) {
-		spdlog::info(fmt::format(colors::CALLISTO, "Creating build report"));
 		json report{};
 		report["dependencies"] = dependency_report;
 		report["file_format_version"] = BUILD_REPORT_VERSION;
@@ -134,7 +133,6 @@ namespace callisto {
 	}
 
 	void Builder::writeBuildReport(const fs::path& project_root, const json& j) {
-		spdlog::info(fmt::format(colors::CALLISTO, "Writing build report"));
 		std::ofstream build_report{ PathUtil::getBuildReportPath(project_root) };
 		build_report << std::setw(4) << j << std::endl;
 		build_report.close();
