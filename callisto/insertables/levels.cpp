@@ -343,7 +343,7 @@ namespace callisto {
 		}
 
 		if (!at_least_one_level) {
-			spdlog::info(fmt::format(colors::NOTIFICATION, "No levels to insert, skipping level insertion"));
+			spdlog::info(fmt::format(colors::PARTIAL_SUCCESS, "No levels to insert, skipping level insertion"));
 			return;
 		}
 
