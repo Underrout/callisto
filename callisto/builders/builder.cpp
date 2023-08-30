@@ -195,6 +195,13 @@ namespace callisto {
 				}
 			}
 		}
+		try {
+			fs::remove_all(config.temporary_folder.getOrThrow());
+		}
+		catch (const std::runtime_error& e) {
+			spdlog::warn(fmt::format(colors::WARNING, "Failed to remove temporary folder '{}'",
+				config.temporary_folder.getOrThrow().string()));
+		}
 	}
 	
 	void Builder::init(const Configuration& config) {

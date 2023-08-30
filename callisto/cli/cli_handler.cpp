@@ -149,7 +149,7 @@ namespace callisto {
 				}
 			}
 			catch (const MustRebuildException& e) {
-				spdlog::info("Update cannot continue due to the following reason, rebuilding ROM:\n\r{}", e.what());
+				spdlog::info("Update cannot continue due to the following reason, rebuilding ROM:\n\r{}\n", e.what());
 				Rebuilder rebuilder{};
 				rebuilder.build(*config);
 				if (config->lunar_magic_path.isSet() && config->enable_automatic_reloads.getOrDefault(true)) {

@@ -154,6 +154,16 @@ namespace callisto {
 					catch (const Insertable::NoDependencyReportFound& e) {
 						failed_dependency_report = e;
 					}
+					catch (...) {
+						try {
+							fs::remove_all(config.temporary_folder.getOrThrow());
+						}
+						catch (const std::runtime_error& e) {
+							spdlog::warn(fmt::format(colors::WARNING, "Failed to remove temporary folder '{}'",
+								config.temporary_folder.getOrThrow().string()));
+						}
+						std::rethrow_exception(std::current_exception());
+					}
 					spdlog::info("");
 
 					if (!failed_dependency_report.has_value()) {
@@ -170,8 +180,20 @@ namespace callisto {
 					}
 				}
 				else {
-					insertable->insert();
-					spdlog::info("");
+					try {
+						insertable->insert();
+						spdlog::info("");
+					}
+					catch (...) {
+						try {
+							fs::remove_all(config.temporary_folder.getOrThrow());
+						}
+						catch (const std::runtime_error& e) {
+							spdlog::warn(fmt::format(colors::WARNING, "Failed to remove temporary folder '{}'",
+								config.temporary_folder.getOrThrow().string()));
+						}
+						std::rethrow_exception(std::current_exception());
+					}
 				}
 
 				if (descriptor.symbol == Symbol::PATCH) {
@@ -229,6 +251,14 @@ namespace callisto {
 			return Result::SUCCESS;
 		}
 		else {
+			try {
+				fs::remove_all(config.temporary_folder.getOrThrow());
+			}
+			catch (const std::runtime_error&) {
+				spdlog::warn(fmt::format(colors::WARNING, "Failed to remove temporary folder '{}'",
+					config.temporary_folder.getOrThrow().string()));
+			}
+
 			spdlog::info(fmt::format(colors::NOTIFICATION, "Everything already up to date, no work for me to do (-.-)"));
 			return Result::NO_WORK;
 		}
