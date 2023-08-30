@@ -257,7 +257,7 @@ namespace callisto {
 		return j;
 	}
 
-	void Rebuilder::reportConflicts(const WriteMap& write_map, const std::optional<fs::path>& log_file, 
+	void Rebuilder::reportConflicts(const WriteMap& write_map, const std::optional<fs::path>& log_file_path,
 		Conflicts conflict_policy, std::exception_ptr conflict_exception, const std::unordered_set<Descriptor>& ignored_descriptors, 
 		const fs::path& project_root) {
 		if (conflict_policy == Conflicts::NONE) {
@@ -280,12 +280,9 @@ namespace callisto {
 			ignored_names.insert(descriptor.toString(project_root));
 		}
 
-		std::ofstream log;
+		std::ostringstream log{};
 		int conflicts{ 0 };
-		const auto log_to_file{ log_file.has_value() };
-		if (log_to_file) {
-			log.open(log_file.value());
-		}
+		const auto log_to_file{ log_file_path.has_value() };
 
 		auto current{ write_map.begin() };
 		bool one_logged{ false };
@@ -329,16 +326,17 @@ namespace callisto {
 			}
 		}
 		
-		if (log_to_file) {
-			if (conflicts == 0) {
-				spdlog::info(fmt::format(colors::PARTIAL_SUCCESS, "No conflicts logged to {}", log_file.value().string()));
+		if (conflicts == 0) {
+			if (log_to_file && fs::exists(log_file_path.value())) {
+				fs::remove(log_file_path.value());
 			}
-			else {
-				spdlog::warn(fmt::format(colors::WARNING, "{} conflict(s) logged to {}", conflicts, log_file.value().string()));
-			}
-		}
-		else if (conflicts == 0) {
 			spdlog::info(fmt::format(colors::PARTIAL_SUCCESS, "No conflicts found"));
+		}
+		else if (log_to_file) {
+			std::ofstream log_file{ log_file_path.value() };
+			log_file << log.str();
+			spdlog::warn(fmt::format(colors::WARNING, "{} conflict(s) logged to {}", 
+				conflicts, log_file_path.value().string()));
 		}
 	}
 
