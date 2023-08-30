@@ -106,7 +106,6 @@ namespace callisto {
 
 		PathConfigVariable project_root{ {"settings", "project_root"} };
 		StringConfigVariable level_import_flag{ {"settings", "level_import_flag"} };
-		StringConfigVariable rom_size{ {"settings", "rom_size"} };
 		BoolConfigVariable use_text_map16_format{ {"settings", "use_text_map16_format"} };
 		PathConfigVariable log_file{ {"settings", "log_file"} };
 		PathConfigVariable clean_rom{ {"settings", "clean_rom"} };

@@ -30,5 +30,7 @@ namespace callisto {
 		}
 
 		std::unordered_set<ResourceDependency> determineDependencies() override;
+
+		void checkLunarMagicExists();
 	};
 }

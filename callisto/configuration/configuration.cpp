@@ -411,8 +411,6 @@ namespace callisto {
 
 		const auto& root{ project_root };
 
-		rom_size.trySet(config_file, level, user_variables);
-
 		trySet(use_text_map16_format, config_file, level);
 
 		trySet(clean_rom, config_file, level, root, user_variables);

@@ -23,7 +23,6 @@ namespace callisto {
 
 		void checkBuildReportFormat() const;
 		void checkBuildOrderChange(const Configuration& config) const;
-		void checkRebuildRomSize(const Configuration& config) const;
 		static void checkProblematicLevelChanges(const fs::path& levels_path, const std::unordered_set<int>& old_level_numbers);
 		void checkRebuildConfigDependencies(const json& dependencies, const Configuration& config) const;
 		void checkRebuildResourceDependencies(const json& dependencies, const fs::path& project_root, size_t starting_index = 0) const;

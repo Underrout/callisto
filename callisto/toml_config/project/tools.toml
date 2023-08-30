@@ -115,12 +115,12 @@ dependency_report_file = ".dependencies"
 
 [tools.generic.AddMusicK]
 directory = "tools/addmusick"
-executable = "AddMusicK.exe"
+executable = "AddmusicK.exe"
 
 # AMK doesn't use asar for much, so we need a 
 # lot of static dependencies here, sadly
 static_dependencies = [ 
-    { path = "AddMusicK.exe", policy = "rebuild" },
+    { path = "AddmusicK.exe", policy = "rebuild" },
     { path = "asar.exe", policy = "rebuild" },
 
     { path = "AddMusic_list.txt" },

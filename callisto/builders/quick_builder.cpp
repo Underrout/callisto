@@ -31,11 +31,6 @@ namespace callisto {
 		spdlog::info(fmt::format(colors::PARTIAL_SUCCESS, "ROM from previous build found at '{}'", config.output_rom.getOrThrow().string()));
 		spdlog::info("");
 
-		spdlog::info(fmt::format(colors::CALLISTO, "Checking whether configured ROM size has changed"));
-		checkRebuildRomSize(config);
-		spdlog::info(fmt::format(colors::PARTIAL_SUCCESS, "Configured ROM size has not changed"));
-		spdlog::info("");
-
 		spdlog::info(fmt::format(colors::CALLISTO, "Checking whether build report format has changed"));
 		checkBuildReportFormat();
 		spdlog::info(fmt::format(colors::PARTIAL_SUCCESS, "Build report format has not changed"));
@@ -159,6 +154,16 @@ namespace callisto {
 					catch (const Insertable::NoDependencyReportFound& e) {
 						failed_dependency_report = e;
 					}
+					catch (...) {
+						try {
+							fs::remove_all(config.temporary_folder.getOrThrow());
+						}
+						catch (const std::runtime_error& e) {
+							spdlog::warn(fmt::format(colors::WARNING, "Failed to remove temporary folder '{}'",
+								config.temporary_folder.getOrThrow().string()));
+						}
+						std::rethrow_exception(std::current_exception());
+					}
 					spdlog::info("");
 
 					if (!failed_dependency_report.has_value()) {
@@ -175,8 +180,20 @@ namespace callisto {
 					}
 				}
 				else {
-					insertable->insert();
-					spdlog::info("");
+					try {
+						insertable->insert();
+						spdlog::info("");
+					}
+					catch (...) {
+						try {
+							fs::remove_all(config.temporary_folder.getOrThrow());
+						}
+						catch (const std::runtime_error& e) {
+							spdlog::warn(fmt::format(colors::WARNING, "Failed to remove temporary folder '{}'",
+								config.temporary_folder.getOrThrow().string()));
+						}
+						std::rethrow_exception(std::current_exception());
+					}
 				}
 
 				if (descriptor.symbol == Symbol::PATCH) {
@@ -234,6 +251,14 @@ namespace callisto {
 			return Result::SUCCESS;
 		}
 		else {
+			try {
+				fs::remove_all(config.temporary_folder.getOrThrow());
+			}
+			catch (const std::runtime_error&) {
+				spdlog::warn(fmt::format(colors::WARNING, "Failed to remove temporary folder '{}'",
+					config.temporary_folder.getOrThrow().string()));
+			}
+
 			spdlog::info(fmt::format(colors::NOTIFICATION, "Everything already up to date, no work for me to do (-.-)"));
 			return Result::NO_WORK;
 		}
@@ -256,12 +281,6 @@ namespace callisto {
 			if (old_descriptor != new_descriptor) {
 				throw MustRebuildException(fmt::format(colors::NOTIFICATION, "Build order has changed, must rebuild"));
 			}
-		}
-	}
-
-	void QuickBuilder::checkRebuildRomSize(const Configuration& config) const {
-		if ((report["rom_size"] == nullptr && config.rom_size.isSet()) || report["rom_size"] != config.rom_size.getOrThrow()) {
-			throw MustRebuildException(fmt::format(colors::NOTIFICATION, "{} has changed, must rebuild", config.rom_size.name));
 		}
 	}
 

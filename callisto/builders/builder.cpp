@@ -93,12 +93,6 @@ namespace callisto {
 		report["dependencies"] = dependency_report;
 		report["file_format_version"] = BUILD_REPORT_VERSION;
 		report["build_order"] = std::vector<std::string>();
-		if (config.rom_size.isSet()) {
-			report["rom_size"] = config.rom_size.getOrThrow();
-		}
-		else {
-			report["rom_size"] = nullptr;
-		}
 		report["callisto_version"] = fmt::format("{}.{}.{}",
 			CALLISTO_VERSION_MAJOR, CALLISTO_VERSION_MINOR, CALLISTO_VERSION_PATCH);
 
@@ -200,6 +194,13 @@ namespace callisto {
 					}
 				}
 			}
+		}
+		try {
+			fs::remove_all(config.temporary_folder.getOrThrow());
+		}
+		catch (const std::runtime_error& e) {
+			spdlog::warn(fmt::format(colors::WARNING, "Failed to remove temporary folder '{}'",
+				config.temporary_folder.getOrThrow().string()));
 		}
 	}
 	

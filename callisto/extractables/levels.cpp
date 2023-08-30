@@ -115,13 +115,15 @@ namespace callisto {
 			spdlog::debug("Exporting levels to temporary folder {} from ROM {}", levels_folder.string(), extracting_rom.string());
 
 			const auto modified_offsets{ determineModifiedOffsets(extracting_rom) };
-			std::exception_ptr thread_exception{};
-			std::vector<std::jthread> export_threads{};
-			std::vector<int> exit_codes(max_thread_count, 0);
 
-			for (size_t i{ 0 }; i != max_thread_count; ++i) {
-				export_threads.emplace_back([=, &exit_codes, &modified_offsets, &thread_exception] {
-					try {
+			if (modified_offsets.size() > max_thread_count) { // would be silly to export in threads when we don't even have that many levels 
+				std::exception_ptr thread_exception{};
+				std::vector<std::jthread> export_threads{};
+				std::vector<int> exit_codes(max_thread_count, 0);
+
+				for (size_t i{ 0 }; i != max_thread_count; ++i) {
+					export_threads.emplace_back([=, &exit_codes, &modified_offsets, &thread_exception] {
+						try {
 						const auto temp_rom{ createChunkedRom(temp_folder, i,
 							max_thread_count, extracting_rom, modified_offsets) };
 						const auto exit_code{ callLunarMagic("-ExportMultLevels",
@@ -132,35 +134,61 @@ namespace callisto {
 					catch (...) {
 						thread_exception = std::current_exception();
 					}
-				});
-			}
-
-			for (auto& thread : export_threads) {
-				thread.join();
-			}
-
-			if (thread_exception != nullptr) {
-				std::rethrow_exception(thread_exception);
-			}
-
-			if (std::all_of(exit_codes.begin(), exit_codes.end(), [](auto e) { return e == 0; })) {
-				spdlog::debug("Copying temporary folder {} to {}", temporary_levels_folder.string(), levels_folder.string());
-
-				fs::remove_all(levels_folder);
-				fs::copy(temporary_levels_folder, levels_folder);
-				fs::remove_all(temporary_levels_folder);
-
-				if (strip_source_pointers) {
-					normalize();
+						});
 				}
-				spdlog::info("Successfully exported levels!");
+
+				for (auto& thread : export_threads) {
+					thread.join();
+				}
+
+				if (thread_exception != nullptr) {
+					std::rethrow_exception(thread_exception);
+				}
+
+				if (std::all_of(exit_codes.begin(), exit_codes.end(), [](auto e) { return e == 0; })) {
+					spdlog::debug("Copying temporary folder {} to {}", temporary_levels_folder.string(), levels_folder.string());
+
+					fs::remove_all(levels_folder);
+					fs::copy(temporary_levels_folder, levels_folder);
+					fs::remove_all(temporary_levels_folder);
+
+					if (strip_source_pointers) {
+						normalize();
+					}
+					spdlog::info("Successfully exported levels!");
+				}
+				else {
+					fs::remove_all(temporary_levels_folder);
+					throw ExtractionException(fmt::format(
+						"Failed to export levels from ROM {} to directory {}",
+						extracting_rom.string(), levels_folder.string()
+					));
+				}
 			}
 			else {
-				fs::remove_all(temporary_levels_folder);
-				throw ExtractionException(fmt::format(
-					"Failed to export levels from ROM {} to directory {}",
-					extracting_rom.string(), levels_folder.string()
-				));
+				const auto exit_code{ callLunarMagic("-ExportMultLevels",
+					extracting_rom.string(), (temporary_levels_folder / "level").string())};
+
+				if (exit_code == 0) {
+					// TODO merge this with the finalizing code above, literal code duplication, not a good look
+					spdlog::debug("Copying temporary folder {} to {}", temporary_levels_folder.string(), levels_folder.string());
+
+					fs::remove_all(levels_folder);
+					fs::copy(temporary_levels_folder, levels_folder);
+					fs::remove_all(temporary_levels_folder);
+
+					if (strip_source_pointers) {
+						normalize();
+					}
+					spdlog::info("Successfully exported levels!");
+				}
+				else {
+					fs::remove_all(temporary_levels_folder);
+					throw ExtractionException(fmt::format(
+						"Failed to export levels from ROM {} to directory {}",
+						extracting_rom.string(), levels_folder.string()
+					));
+				}
 			}
 		}
 	}

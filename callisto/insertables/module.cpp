@@ -17,21 +17,6 @@ namespace callisto {
 		module_header_file(registerConfigurationDependency(config.module_header, Policy::REINSERT).isSet() ? 
 			std::make_optional(config.module_header.getOrThrow()) : std::nullopt)
 	{
-		if (!fs::exists(input_path)) {
-			throw ResourceNotFoundException(fmt::format(
-				colors::EXCEPTION,
-				"Module {} does not exist",
-				input_path.string()
-			));
-		}
-
-		if (!asar_init()) {
-			throw ToolNotFoundException(
-				fmt::format(colors::EXCEPTION,
-				"Asar library file not found, did you forget to copy it alongside callisto?"
-			));
-		}
-
 		for (const auto& output_path : output_paths) {
 			fs::create_directories(output_path.parent_path());
 		}
@@ -69,11 +54,26 @@ namespace callisto {
 	// TODO this whole thing is pretty much the same as the Patch.insert() method, probably merge 
 	//      them into a single static method or something later
 	void Module::insert() {
+		if (!fs::exists(input_path)) {
+			throw ResourceNotFoundException(fmt::format(
+				colors::EXCEPTION,
+				"Module {} does not exist",
+				input_path.string()
+			));
+		}
+
+		if (!asar_init()) {
+			throw ToolNotFoundException(
+				fmt::format(colors::EXCEPTION,
+					"Asar library file not found, did you forget to copy it alongside callisto?"
+				));
+		}
+
 		const auto prev_folder{ fs::current_path() };
-		fs::current_path(input_path.parent_path());
+		fs::current_path(temporary_rom_path.parent_path());
 
 		// delete potential previous dependency report
-		fs::remove(input_path.parent_path() / ".dependencies");
+		fs::remove(temporary_rom_path.parent_path() / ".dependencies");
 
 		spdlog::info(fmt::format(colors::RESOURCE, "Inserting module {}", project_relative_path.string()));
 
@@ -296,8 +296,9 @@ namespace callisto {
 	std::unordered_set<ResourceDependency> Module::determineDependencies() {
 		if (input_path.extension() == ".asm") {
 			auto dependencies{ Insertable::extractDependenciesFromReport(
-				input_path.parent_path() / ".dependencies"
+				temporary_rom_path.parent_path() / ".dependencies"
 			) };
+			fs::remove(temporary_rom_path.parent_path() / ".dependencies");
 			if (module_header_file.has_value()) {
 				dependencies.insert(ResourceDependency(module_header_file.value(), Policy::REINSERT));
 			}
@@ -305,7 +306,7 @@ namespace callisto {
 			return dependencies;
 		}
 		else {
-			fs::remove(input_path.parent_path() / ".dependencies");
+			fs::remove(temporary_rom_path.parent_path() / ".dependencies");
 			return { ResourceDependency(input_path, Policy::REINSERT) };
 		}
 		return {};

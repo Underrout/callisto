@@ -12,14 +12,6 @@ namespace callisto {
 		else {
 			registerConfigurationDependency(config.output_rom, Policy::REINSERT);
 		}
-
-		if (!fs::exists(project_exgraphics_folder_path)) {
-			throw ResourceNotFoundException(fmt::format(
-				colors::EXCEPTION,
-				"ExGraphics folder not found at {}",
-				project_exgraphics_folder_path.string()
-			));
-		}
 	}
 
 	std::unordered_set<ResourceDependency> ExGraphics::determineDependencies() {
@@ -32,6 +24,16 @@ namespace callisto {
 	}
 
 	void ExGraphics::insert() {
+		checkLunarMagicExists();
+
+		if (!fs::exists(project_exgraphics_folder_path)) {
+			throw ResourceNotFoundException(fmt::format(
+				colors::EXCEPTION,
+				"ExGraphics folder not found at {}",
+				project_exgraphics_folder_path.string()
+			));
+		}
+
 		if (!fs::exists(project_exgraphics_folder_path)) {
 			throw InsertionException(fmt::format("No ExGraphics folder found at {}", project_exgraphics_folder_path.string()));
 		}

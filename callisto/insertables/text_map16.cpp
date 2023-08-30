@@ -6,14 +6,6 @@ namespace callisto {
 	{
 		registerConfigurationDependency(config.map16, Policy::REINSERT);
 		registerConfigurationDependency(config.use_text_map16_format, Policy::REINSERT);
-
-		if (!fs::exists(map16_folder_path)) {
-			throw ResourceNotFoundException(fmt::format(
-				colors::EXCEPTION,
-				"Map16 folder not found at {}",
-				map16_folder_path.string()
-			));
-		}
 	}
 
 	fs::path TextMap16::getTemporaryMap16FilePath() const {
@@ -69,6 +61,14 @@ namespace callisto {
 	}
 
 	void TextMap16::insert() {
+		if (!fs::exists(map16_folder_path)) {
+			throw ResourceNotFoundException(fmt::format(
+				colors::EXCEPTION,
+				"Map16 folder not found at {}",
+				map16_folder_path.string()
+			));
+		}
+
 		spdlog::info(fmt::format(colors::RESOURCE, "Inserting Map16"));
 		spdlog::debug(fmt::format(
 			"Generating and inserting map16 into temporary ROM at {}",

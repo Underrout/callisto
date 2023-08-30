@@ -12,14 +12,6 @@ namespace callisto {
 		else {
 			registerConfigurationDependency(config.output_rom, Policy::REINSERT);
 		}
-
-		if (!fs::exists(project_graphics_folder_path)) {
-			throw ResourceNotFoundException(fmt::format(
-				colors::EXCEPTION,
-				"Graphics folder not found at {}",
-				project_graphics_folder_path.string()
-			));
-		}
 	}
 
 	std::unordered_set<ResourceDependency> Graphics::determineDependencies() {
@@ -32,6 +24,16 @@ namespace callisto {
 	}
 
 	void Graphics::insert() {
+		checkLunarMagicExists();
+
+		if (!fs::exists(project_graphics_folder_path)) {
+			throw ResourceNotFoundException(fmt::format(
+				colors::EXCEPTION,
+				"Graphics folder not found at {}",
+				project_graphics_folder_path.string()
+			));
+		}
+
 		if (!fs::exists(project_graphics_folder_path)) {
 			throw InsertionException(fmt::format(colors::EXCEPTION, "No Graphics folder found at {}", project_graphics_folder_path.string()));
 		}

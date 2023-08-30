@@ -7,6 +7,22 @@ namespace callisto {
 		clean_rom_path(registerConfigurationDependency(config.clean_rom).getOrThrow()),
 		initial_patch_path(registerConfigurationDependency(config.initial_patch).getOrThrow())
 	{
+
+	}
+
+	std::unordered_set<ResourceDependency> InitialPatch::determineDependencies() {
+		return {
+			ResourceDependency(flips_path, Policy::REBUILD),
+			ResourceDependency(initial_patch_path, Policy::REBUILD),
+			ResourceDependency(clean_rom_path, Policy::REBUILD)
+		};
+	}
+
+	void InitialPatch::insert() {
+		insert(temporary_rom_path);
+	}
+
+	void InitialPatch::insert(const fs::path& target_rom) {
 		if (!fs::exists(flips_path)) {
 			throw ToolNotFoundException(fmt::format(
 				colors::EXCEPTION,
@@ -30,21 +46,7 @@ namespace callisto {
 				initial_patch_path.string()
 			));
 		}
-	}
 
-	std::unordered_set<ResourceDependency> InitialPatch::determineDependencies() {
-		return {
-			ResourceDependency(flips_path, Policy::REBUILD),
-			ResourceDependency(initial_patch_path, Policy::REBUILD),
-			ResourceDependency(clean_rom_path, Policy::REBUILD)
-		};
-	}
-
-	void InitialPatch::insert() {
-		insert(temporary_rom_path);
-	}
-
-	void InitialPatch::insert(const fs::path& target_rom) {
 		spdlog::info(fmt::format(colors::RESOURCE, "Applying initial patch {}", initial_patch_path.string()));
 
 		int exit_code{ bp::system(
