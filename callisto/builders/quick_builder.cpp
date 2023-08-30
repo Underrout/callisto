@@ -59,6 +59,7 @@ namespace callisto {
 		) };
 
 		bool any_work_done{ false };
+		bool anything_ran{ false };
 		std::optional<Insertable::NoDependencyReportFound> failed_dependency_report;
 		size_t i{ 0 };
 		for (auto& entry : json_dependencies) {
@@ -70,11 +71,24 @@ namespace callisto {
 			const auto config_result{ 
 				checkReinsertConfigDependencies(entry["configuration_dependencies"], config)};
 			bool must_reinsert{ false };
+
+			std::string term{ "reinserted" };
+			if (descriptor.symbol == Symbol::EXTERNAL_TOOL) {
+				bool uses_rom{ config.generic_tool_configurations.find(descriptor.name.value())->second.pass_rom.getOrDefault(true) };
+				if (uses_rom) {
+					term = "reapplied";
+				}
+				else {
+					term = "run";
+				}
+			}
+
 			if (config_result.has_value()) {
 				spdlog::info(fmt::format(
 					colors::NOTIFICATION,
-					"{} must be reinserted due to change in configuration variable {}",
+					"{} must be {} due to change in configuration variable {}",
 					descriptor_string,
+					term,
 					config_result.value().config_keys
 				));
 				must_reinsert = true;
@@ -87,8 +101,9 @@ namespace callisto {
 				if (resource_result.has_value()) {
 					spdlog::info(fmt::format(
 						colors::NOTIFICATION,
-						"{} must be reinserted due to change in resource '{}'",
+						"{} must be {} due to change in resource '{}'",
 						descriptor_string,
+						term,
 						(fs::relative(resource_result.value().dependent_path, config.project_root.getOrThrow())).string()
 					));
 					must_reinsert = true;
@@ -109,8 +124,9 @@ namespace callisto {
 					if (old_output_paths.size() != current_output_paths.size()) {
 						spdlog::info(fmt::format(
 							colors::NOTIFICATION,
-							"{} must be reinserted due to change in its output paths",
-							descriptor_string
+							"{} must be {} due to change in its output paths",
+							descriptor_string,
+							term
 						));
 						must_reinsert = true;
 					}
@@ -119,8 +135,9 @@ namespace callisto {
 							if (!current_output_paths.contains(entry)) {
 								spdlog::info(fmt::format(
 									colors::NOTIFICATION,
-									"{} must be reinserted due to change in its output paths",
-									descriptor_string
+									"{} must be {} due to change in its output paths",
+									descriptor_string,
+									term
 								));
 								must_reinsert = true;
 								break;
@@ -210,6 +227,7 @@ namespace callisto {
 					}
 				}
 				
+				anything_ran = true;
 				if (!any_work_done) {
 					if (descriptor.symbol == Symbol::EXTERNAL_TOOL) {
 						if (config.generic_tool_configurations.at(descriptor.name.value()).pass_rom.getOrDefault(true)) {
@@ -235,7 +253,7 @@ namespace callisto {
 			}
 		}
 
-		if (any_work_done) {
+		if (any_work_done || anything_ran) {
 			if (!failed_dependency_report.has_value()) {
 				writeBuildReport(config.project_root.getOrThrow(), createBuildReport(config, report["dependencies"]));
 			}
@@ -245,20 +263,35 @@ namespace callisto {
 				removeBuildReport(config.project_root.getOrThrow());
 			}
 
-			cacheModules(config.project_root.getOrThrow());
-			Saver::writeMarkerToRom(temporary_rom_path, config);
+			if (any_work_done) {
+				cacheModules(config.project_root.getOrThrow());
+				Saver::writeMarkerToRom(temporary_rom_path, config);
 
-			moveTempToOutput(config);
+				moveTempToOutput(config);
+			}
+
 			GraphicsUtil::linkOutputRomToProjectGraphics(config, false);
 			GraphicsUtil::linkOutputRomToProjectGraphics(config, true);
 
-			fs::remove_all(config.temporary_folder.getOrThrow());
+			try {
+				fs::remove_all(config.temporary_folder.getOrThrow());
+			}
+			catch (const std::runtime_error&) {
+				spdlog::warn(fmt::format(colors::WARNING, "Failed to remove temporary folder '{}'",
+					config.temporary_folder.getOrThrow().string()));
+			}
 
 			const auto build_end{ std::chrono::high_resolution_clock::now() };
 
-			spdlog::info(fmt::format(colors::SUCCESS, 
-				"Update finished successfully in {} \\(^.^)/", TimeUtil::getDurationString(build_end - build_start)));
-			return Result::SUCCESS;
+			if (any_work_done) {
+				spdlog::info(fmt::format(colors::SUCCESS,
+					"Update finished successfully in {} \\(^.^)/", TimeUtil::getDurationString(build_end - build_start)));
+				return Result::SUCCESS;
+			}
+			else {
+				spdlog::info(fmt::format(colors::NOTIFICATION, "Everything already up to date, no work for me to do (-.-)"));
+				return Result::NO_WORK;
+			}
 		}
 		else {
 			try {
