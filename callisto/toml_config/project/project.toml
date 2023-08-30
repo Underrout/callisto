@@ -66,9 +66,6 @@ enable_automatic_exports = false
 # through callisto's "Edit" function
 enable_automatic_reloads = true
 
-# ROM size to expand to after applying initial patch
-rom_size = "4MB"
-
 [output]
 
 # Path for the output ROM

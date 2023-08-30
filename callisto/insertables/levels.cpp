@@ -13,14 +13,6 @@ namespace callisto {
 		else {
 			import_flag = std::nullopt;
 		}
-
-		if (!fs::exists(levels_folder)) {
-			throw ResourceNotFoundException(fmt::format(
-				colors::EXCEPTION,
-				"Level folder {} not found",
-				levels_folder.string()
-			));
-		}
 	}
 
 	void Levels::normalizeMwls(const fs::path& levels_folder_path, bool allow_user_input) {
@@ -330,6 +322,16 @@ namespace callisto {
 	}
 
 	void Levels::insert() {
+		checkLunarMagicExists();
+
+		if (!fs::exists(levels_folder)) {
+			throw ResourceNotFoundException(fmt::format(
+				colors::EXCEPTION,
+				"Level folder {} not found",
+				levels_folder.string()
+			));
+		}
+
 		spdlog::info(fmt::format(colors::RESOURCE, "Inserting levels"));
 
 		bool at_least_one_level{ false };

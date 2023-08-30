@@ -4,13 +4,7 @@ namespace callisto {
 	TitleMoves::TitleMoves(const Configuration& config)
 		: LunarMagicInsertable(config), title_moves_path(registerConfigurationDependency(config.title_moves).getOrThrow())
 	{
-		if (!fs::exists(title_moves_path)) {
-			throw ResourceNotFoundException(fmt::format(
-				colors::EXCEPTION,
-				"Title Moves savestate not found at {}",
-				title_moves_path.string()
-			));
-		}
+
 	}
 
 	std::unordered_set<ResourceDependency> TitleMoves::determineDependencies() {
@@ -20,6 +14,14 @@ namespace callisto {
 	}
 
 	void TitleMoves::insert() {
+		if (!fs::exists(title_moves_path)) {
+			throw ResourceNotFoundException(fmt::format(
+				colors::EXCEPTION,
+				"Title Moves savestate not found at {}",
+				title_moves_path.string()
+			));
+		}
+
 		spdlog::info(fmt::format(colors::RESOURCE, "Inserting Title Moves"));
 		spdlog::debug(fmt::format(
 			"Inserting Title Moves from {} into temporary ROM at {}",

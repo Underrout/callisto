@@ -93,12 +93,6 @@ namespace callisto {
 		report["dependencies"] = dependency_report;
 		report["file_format_version"] = BUILD_REPORT_VERSION;
 		report["build_order"] = std::vector<std::string>();
-		if (config.rom_size.isSet()) {
-			report["rom_size"] = config.rom_size.getOrThrow();
-		}
-		else {
-			report["rom_size"] = nullptr;
-		}
 		report["callisto_version"] = fmt::format("{}.{}.{}",
 			CALLISTO_VERSION_MAJOR, CALLISTO_VERSION_MINOR, CALLISTO_VERSION_PATCH);
 

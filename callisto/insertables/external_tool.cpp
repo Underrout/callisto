@@ -15,32 +15,6 @@ namespace callisto {
 		registerConfigurationDependency(tool_config.options, Policy::REINSERT);
 		registerConfigurationDependency(tool_config.working_directory, Policy::REINSERT);
 		registerConfigurationDependency(tool_config.pass_rom, Policy::REINSERT);
-
-		if (!fs::exists(tool_exe_path)) {
-			throw ToolNotFoundException(fmt::format(
-				colors::EXCEPTION,
-				"{} executable not found at {}",
-				tool_name,
-				tool_exe_path.string()
-			));
-		}
-
-		if (!fs::exists(working_directory)) {
-			throw NotFoundException(fmt::format(
-				colors::EXCEPTION,
-				"Working directory {} not found for {}",
-				working_directory.string(),
-				tool_name
-			));
-		}
-
-		if (!fs::exists(temporary_rom)) {
-			throw RomNotFoundException(fmt::format(
-				colors::EXCEPTION,
-				"Temporary ROM not found at {}",
-				temporary_rom.string()
-			));
-		}
 	}
 
 	std::unordered_set<ResourceDependency> ExternalTool::determineDependencies() {
@@ -61,7 +35,7 @@ namespace callisto {
 		// created the initial dependency objects, should probably not use objects at first and just 
 		// do paths, but this is just how it is for now, I guess
 		for (const auto& static_dependency : static_dependencies) {
-			dependencies.insert(ResourceDependency(static_dependency.dependent_path));
+			dependencies.insert(ResourceDependency(static_dependency.dependent_path, static_dependency.policy));
 		}
 
 		const auto reported{ Insertable::extractDependenciesFromReport(dependency_report_file_path.value()) };
@@ -72,6 +46,32 @@ namespace callisto {
 	}
 
 	void ExternalTool::insert() {
+		if (!fs::exists(temporary_rom)) {
+			throw RomNotFoundException(fmt::format(
+				colors::EXCEPTION,
+				"Temporary ROM not found at {}",
+				temporary_rom.string()
+			));
+		}
+
+		if (!fs::exists(tool_exe_path)) {
+			throw ToolNotFoundException(fmt::format(
+				colors::EXCEPTION,
+				"{} executable not found at {}",
+				tool_name,
+				tool_exe_path.string()
+			));
+		}
+
+		if (!fs::exists(working_directory)) {
+			throw NotFoundException(fmt::format(
+				colors::EXCEPTION,
+				"Working directory {} not found for {}",
+				working_directory.string(),
+				tool_name
+			));
+		}
+
 		// delete potential previous dependency report
 		if (dependency_report_file_path.has_value()) {
 			fs::remove(dependency_report_file_path.value());

@@ -5,13 +5,7 @@ namespace callisto {
 		: LunarMagicInsertable(config), 
 		shared_palettes_path(registerConfigurationDependency(config.shared_palettes, Policy::REINSERT).getOrThrow())
 	{
-		if (!fs::exists(shared_palettes_path)) {
-			throw ResourceNotFoundException(fmt::format(
-				colors::EXCEPTION,
-				"Shared Palette file not found at {}",
-				shared_palettes_path.string()
-			));
-		}
+
 	}
 
 	std::unordered_set<ResourceDependency> SharedPalettes::determineDependencies() {
@@ -21,6 +15,14 @@ namespace callisto {
 	}
 
 	void SharedPalettes::insert() {
+		if (!fs::exists(shared_palettes_path)) {
+			throw ResourceNotFoundException(fmt::format(
+				colors::EXCEPTION,
+				"Shared Palette file not found at {}",
+				shared_palettes_path.string()
+			));
+		}
+
 		spdlog::info(fmt::format(colors::RESOURCE, "Inserting Shared Palettes"));
 		spdlog::debug(fmt::format(
 			"Inserting Shared Palette file {} into temporary ROM {}",

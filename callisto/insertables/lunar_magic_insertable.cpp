@@ -4,6 +4,13 @@ namespace callisto {
 	LunarMagicInsertable::LunarMagicInsertable(const Configuration& config)
 		: RomInsertable(config), 
 		lunar_magic_path(registerConfigurationDependency(config.lunar_magic_path, Policy::REINSERT).getOrThrow()) {
+	}
+
+	std::unordered_set<ResourceDependency> LunarMagicInsertable::determineDependencies() {
+		return { ResourceDependency(lunar_magic_path, Policy::REBUILD) };
+	}
+
+	void LunarMagicInsertable::checkLunarMagicExists() {
 		if (!fs::exists(lunar_magic_path)) {
 			throw ToolNotFoundException(fmt::format(
 				colors::EXCEPTION,
@@ -11,9 +18,5 @@ namespace callisto {
 				lunar_magic_path.string()
 			));
 		}
-	}
-
-	std::unordered_set<ResourceDependency> LunarMagicInsertable::determineDependencies() {
-		return { ResourceDependency(lunar_magic_path, Policy::REBUILD) };
 	}
 }

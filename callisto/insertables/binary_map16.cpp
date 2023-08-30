@@ -6,14 +6,6 @@ namespace callisto {
 		map16_file_path(registerConfigurationDependency(config.map16, Policy::REINSERT).getOrThrow())
 	{
 		registerConfigurationDependency(config.use_text_map16_format, Policy::REINSERT);
-
-		if (!fs::exists(map16_file_path)) {
-			throw ResourceNotFoundException(fmt::format(
-				colors::EXCEPTION,
-				"Binary Map16 file not found at {}",
-				map16_file_path.string()
-			));
-		}
 	}
 
 	std::unordered_set<ResourceDependency> BinaryMap16::determineDependencies() {
@@ -23,6 +15,16 @@ namespace callisto {
 	}
 
 	void BinaryMap16::insert() {
+		checkLunarMagicExists();
+
+		if (!fs::exists(map16_file_path)) {
+			throw ResourceNotFoundException(fmt::format(
+				colors::EXCEPTION,
+				"Binary Map16 file not found at {}",
+				map16_file_path.string()
+			));
+		}
+
 		spdlog::info(fmt::format(colors::RESOURCE, "Inserting Map16"));
 		spdlog::debug(fmt::format(
 			"Inserting binary map16 file at {} into temporary ROM at {}",

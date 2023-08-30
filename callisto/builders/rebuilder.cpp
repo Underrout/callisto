@@ -38,16 +38,14 @@ namespace callisto {
 			});
 		}
 
-		WriteMap write_map{};
-		std::vector<char> old_rom;
-		std::vector<char> new_rom;
+		std::shared_ptr<WriteMap> write_map{ std::make_shared<WriteMap>() };
+		auto old_rom{ std::make_shared<std::vector<char>>() };
+		auto new_rom{ std::make_shared<std::vector<char>>() };
 		Conflicts check_conflicts_policy{ determineConflictCheckSetting(config) };
 
 		if (check_conflicts_policy != Conflicts::NONE) {
-			old_rom = getRom(temp_rom_path);
+			*old_rom = getRom(temp_rom_path);
 		}
-
-		expandRom(config);
 
 		size_t i{ 0 };
 		std::optional<Insertable::NoDependencyReportFound> failed_dependency_report{};
@@ -116,17 +114,19 @@ namespace callisto {
 					std::rethrow_exception(conflict_thread_exception);
 				}
 
-				new_rom = getRom(temp_rom_path);
-				conflict_thread = std::jthread([&old_rom, &new_rom, check_conflicts_policy, &write_map, descriptor, &config, &conflict_thread_exception] {
+				*new_rom = getRom(temp_rom_path);
+				const fs::path project_root{ config.project_root.getOrThrow() };
+				conflict_thread = std::jthread([old_rom, new_rom, check_conflicts_policy, write_map, descriptor, project_root, &conflict_thread_exception] {
 					try {
 						updateWrites(old_rom, new_rom, check_conflicts_policy, write_map,
-							descriptor.toString(config.project_root.getOrThrow()));
-						old_rom.swap(new_rom);
+							descriptor.toString(project_root));
+						old_rom->swap(*new_rom);
 					}
 					catch (...) {
 						conflict_thread_exception = std::current_exception();
 					}
 				});
+				// conflict_thread.join();
 			}
 		}
 
@@ -138,7 +138,7 @@ namespace callisto {
 			conflict_thread_created = true;
 			conflict_thread = std::jthread([&] {
 				try {
-					reportConflicts(write_map, config.conflict_log_file.isSet() ?
+					reportConflicts(*write_map, config.conflict_log_file.isSet() ?
 						std::make_optional(config.conflict_log_file.getOrThrow()) :
 						std::nullopt, check_conflicts_policy, conflict_thread_exception, 
 						config.ignored_conflict_symbols, config.project_root.getOrThrow());
@@ -398,12 +398,12 @@ namespace callisto {
 		return unheadered;
 	}
 
-	void Rebuilder::updateWrites(const std::vector<char>& old_rom, const std::vector<char>& new_rom, 
-		Conflicts conflict_policy, WriteMap& write_map, const std::string& descriptor_string) {
+	void Rebuilder::updateWrites(std::shared_ptr<std::vector<char>> old_rom, std::shared_ptr<std::vector<char>> new_rom,
+		Conflicts conflict_policy, std::shared_ptr<WriteMap> write_map, const std::string& descriptor_string) {
 		if (conflict_policy == Conflicts::NONE) {
 			return;
 		}
-		int size{ static_cast<int>(std::min(old_rom.size(), new_rom.size())) };
+		int size{ static_cast<int>(std::min(old_rom->size(), new_rom->size())) };
 
 		if (conflict_policy == Conflicts::HIJACKS) {
 			size = std::min(size, 0x80000);
@@ -416,11 +416,11 @@ namespace callisto {
 				continue;
 			}
 
-			if (i >= old_rom.size() || old_rom.at(i) != new_rom.at(i)) {
-				if (write_map.find(i) == write_map.end() && i < old_rom.size()) {
-					write_map[i].push_back({ "Original bytes", old_rom.at(i)});
+			if (i >= old_rom->size() || old_rom->at(i) != new_rom->at(i)) {
+				if (write_map->find(i) == write_map->end() && i < old_rom->size()) {
+					(*write_map)[i].push_back({ "Original bytes", old_rom->at(i)});
 				}
-				write_map[i].push_back({ descriptor_string, new_rom.at(i) });
+				(*write_map)[i].push_back({ descriptor_string, new_rom->at(i) });
 			}
 		}
 	}
@@ -441,26 +441,6 @@ namespace callisto {
 				"Unknown settings.check_conflicts setting '{}'",
 				setting
 			));
-		}
-	}
-
-	void Rebuilder::expandRom(const Configuration& config) {
-		if (config.rom_size.isSet()) {
-			spdlog::info(fmt::format(colors::RESOURCE, "Expanding ROM to {}", config.rom_size.getOrThrow()));
-			const auto exit_code{ bp::system(
-				config.lunar_magic_path.getOrThrow().string(),
-				"-ExpandROM",
-				(PathUtil::getTemporaryRomPath(config.temporary_folder.getOrThrow(),
-					config.output_rom.getOrThrow())).string(),
-				config.rom_size.getOrThrow()
-			) };
-			if (exit_code == 0) {
-				spdlog::info(fmt::format(colors::PARTIAL_SUCCESS, "Successfully expanded ROM!"));
-				spdlog::info("");
-			}
-			else {
-				throw InsertionException(fmt::format(colors::EXCEPTION, "Failed to expand ROM to {}", config.rom_size.getOrThrow()));
-			}
 		}
 	}
 }

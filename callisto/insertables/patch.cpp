@@ -7,21 +7,6 @@ namespace callisto {
 		project_relative_path(fs::relative(patch_path, registerConfigurationDependency(config.project_root).getOrThrow())),
 		patch_path(patch_path) 
 	{
-		if (!fs::exists(patch_path)) {
-			throw ResourceNotFoundException(fmt::format(
-				colors::EXCEPTION,
-				"Patch {} does not exist",
-				patch_path.string()
-			));
-		}
-
-		if (!asar_init()) {
-			throw ToolNotFoundException(
-				fmt::format(colors::EXCEPTION,
-				"Asar library file not found, did you forget to copy it alongside callisto?"
-			));
-		}
-
 		this->additional_include_paths.reserve(additional_include_paths.size());
 		std::transform(additional_include_paths.begin(), additional_include_paths.end(),
 			std::back_inserter(this->additional_include_paths),
@@ -33,6 +18,21 @@ namespace callisto {
 	}
 
 	void Patch::insert() {
+		if (!fs::exists(patch_path)) {
+			throw ResourceNotFoundException(fmt::format(
+				colors::EXCEPTION,
+				"Patch {} does not exist",
+				patch_path.string()
+			));
+		}
+
+		if (!asar_init()) {
+			throw ToolNotFoundException(
+				fmt::format(colors::EXCEPTION,
+					"Asar library file not found, did you forget to copy it alongside callisto?"
+				));
+		}
+
 		const auto prev_folder{ fs::current_path() };
 		fs::current_path(patch_path.parent_path());
 

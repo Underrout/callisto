@@ -31,11 +31,6 @@ namespace callisto {
 		spdlog::info(fmt::format(colors::PARTIAL_SUCCESS, "ROM from previous build found at '{}'", config.output_rom.getOrThrow().string()));
 		spdlog::info("");
 
-		spdlog::info(fmt::format(colors::CALLISTO, "Checking whether configured ROM size has changed"));
-		checkRebuildRomSize(config);
-		spdlog::info(fmt::format(colors::PARTIAL_SUCCESS, "Configured ROM size has not changed"));
-		spdlog::info("");
-
 		spdlog::info(fmt::format(colors::CALLISTO, "Checking whether build report format has changed"));
 		checkBuildReportFormat();
 		spdlog::info(fmt::format(colors::PARTIAL_SUCCESS, "Build report format has not changed"));
@@ -256,12 +251,6 @@ namespace callisto {
 			if (old_descriptor != new_descriptor) {
 				throw MustRebuildException(fmt::format(colors::NOTIFICATION, "Build order has changed, must rebuild"));
 			}
-		}
-	}
-
-	void QuickBuilder::checkRebuildRomSize(const Configuration& config) const {
-		if ((report["rom_size"] == nullptr && config.rom_size.isSet()) || report["rom_size"] != config.rom_size.getOrThrow()) {
-			throw MustRebuildException(fmt::format(colors::NOTIFICATION, "{} has changed, must rebuild", config.rom_size.name));
 		}
 	}
 

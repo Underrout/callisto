@@ -16,22 +16,6 @@ namespace callisto {
 				needs_exgfx = true;
 			}
 		}
-
-		if (!fs::exists(flips_path)) {
-			throw ToolNotFoundException(fmt::format(
-				colors::EXCEPTION,
-				"FLIPS not found at {}",
-				flips_path.string()
-			));
-		}
-
-		if (!fs::exists(clean_rom_path)) {
-			throw NotFoundException(fmt::format(
-				colors::EXCEPTION,
-				"Clean ROM not found at {}",
-				clean_rom_path.string()
-			));
-		}
 	}
 
 	std::unordered_set<ResourceDependency> FlipsInsertable::determineDependencies() {
@@ -139,6 +123,22 @@ namespace callisto {
 	}
 
 	void FlipsInsertable::insert() {
+		if (!fs::exists(flips_path)) {
+			throw ToolNotFoundException(fmt::format(
+				colors::EXCEPTION,
+				"FLIPS not found at {}",
+				flips_path.string()
+			));
+		}
+
+		if (!fs::exists(clean_rom_path)) {
+			throw NotFoundException(fmt::format(
+				colors::EXCEPTION,
+				"Clean ROM not found at {}",
+				clean_rom_path.string()
+			));
+		}
+
 		spdlog::info(fmt::format(colors::RESOURCE, "Inserting {}", getResourceName()));
 		spdlog::debug(fmt::format(
 			"Inserting {} from BPS patch {} into temporary ROM {}",

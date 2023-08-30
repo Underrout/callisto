@@ -34,10 +34,9 @@ namespace callisto {
 		static int pcToSnes(int address);
 		static std::vector<std::string> getWriters(const Writes& writes);
 		static std::vector<char> getRom(const fs::path& rom_path);
-		static void updateWrites(const std::vector<char>& old_rom, const std::vector<char>& new_rom, 
-			Conflicts conflict_policy, WriteMap& write_map, const std::string& descriptor_string);
+		static void updateWrites(std::shared_ptr<std::vector<char>> old_rom, std::shared_ptr<std::vector<char>> new_rom,
+			Conflicts conflict_policy, std::shared_ptr<WriteMap> write_map, const std::string& descriptor_string);
 		static Conflicts determineConflictCheckSetting(const Configuration& config);
-		static void expandRom(const Configuration& config);
 
 	public:
 		void build(const Configuration& config);
