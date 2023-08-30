@@ -131,8 +131,7 @@ namespace callisto {
 			}
 
 			if (must_reinsert) {
-				if (!any_work_done) {
-					any_work_done = true;
+				if (!fs::exists(temporary_rom_path)) {
 					fs::copy(config.output_rom.getOrThrow(), temporary_rom_path, fs::copy_options::overwrite_existing);
 				}
 				if (descriptor.symbol == Symbol::MODULE) {
@@ -208,6 +207,17 @@ namespace callisto {
 					}
 					else {
 						entry["hijacks"] = new_hijacks;
+					}
+				}
+				
+				if (!any_work_done) {
+					if (descriptor.symbol == Symbol::EXTERNAL_TOOL) {
+						if (config.generic_tool_configurations.at(descriptor.name.value()).pass_rom.getOrDefault(true)) {
+							any_work_done = true;
+						}
+					}
+					else {
+						any_work_done = true;
 					}
 				}
 			}
