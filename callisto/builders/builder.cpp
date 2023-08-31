@@ -354,7 +354,7 @@ namespace callisto {
 		};
 
 		const auto info_string{ fmt::format(
-			"includeonce\n\n"
+			"if not(defined(\"{}_{}\"))\n\n"
 			"; Asar compatible file containing information about callisto, can be imported using incsrc as needed\n\n"
 			"{}"
 			"; Marker define to determine that callisto is assembling a file\n"
@@ -388,7 +388,9 @@ namespace callisto {
 			"else\n"
 			"\terror \"Required Callisto version: <major>.<minor>.<patch>, actual Callisto version: !{}_{}\"\n"
 			"endif\n"
-			"endmacro\n",
+			"endmacro\n\n"
+			"endif\n",
+			DEFINE_PREFIX, ASSEMBLING_DEFINE_NAME,
 			profile_part,
 			DEFINE_PREFIX, ASSEMBLING_DEFINE_NAME,
 			DEFINE_PREFIX, VERSION_DEFINE_NAME, CALLISTO_VERSION_MAJOR, CALLISTO_VERSION_MINOR, CALLISTO_VERSION_PATCH,
