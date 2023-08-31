@@ -164,6 +164,8 @@ namespace callisto {
 				insertable->init();
 				if (!failed_dependency_report.has_value()) {
 					std::unordered_set<ResourceDependency> resource_dependencies;
+
+					const auto curr_path{ fs::current_path() };
 					try {
 						resource_dependencies = insertable->insertWithDependencies();
 					}
@@ -171,6 +173,7 @@ namespace callisto {
 						failed_dependency_report = e;
 					}
 					catch (...) {
+						fs::current_path(curr_path);
 						try {
 							fs::remove_all(config.temporary_folder.getOrThrow());
 						}
@@ -196,11 +199,13 @@ namespace callisto {
 					}
 				}
 				else {
+					const auto curr_path{ fs::current_path() };
 					try {
 						insertable->insert();
 						spdlog::info("");
 					}
 					catch (...) {
+						fs::current_path(curr_path);
 						try {
 							fs::remove_all(config.temporary_folder.getOrThrow());
 						}

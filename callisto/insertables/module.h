@@ -45,6 +45,8 @@ namespace callisto {
 
 		std::string patch_string{};
 
+		const int id;
+
 		std::unordered_set<size_t> our_module_addresses{};
 
 		const fs::path input_path;
@@ -92,6 +94,7 @@ namespace callisto {
 			const fs::path& input_path,
 			const fs::path& callisto_asm_file,
 			const std::unordered_set<int>& other_module_addresses,
+			int id,
 			const std::vector<fs::path>& additional_include_paths = {});
 
 		void init() override;

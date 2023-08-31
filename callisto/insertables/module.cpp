@@ -5,6 +5,7 @@ namespace callisto {
 		const fs::path& input_path,
 		const fs::path& callisto_asm_file,
 		const std::unordered_set<int>& other_module_addresses,
+		int id,
 		const std::vector<fs::path>& additional_include_paths) :
 		RomInsertable(config), 
 		input_path(input_path),
@@ -14,6 +15,7 @@ namespace callisto {
 		real_module_folder_location(PathUtil::getUserModuleDirectoryPath(config.project_root.getOrThrow())),
 		cleanup_folder_location(PathUtil::getModuleCleanupDirectoryPath(config.project_root.getOrThrow())),
 		other_module_addresses(other_module_addresses),
+		id(id),
 		module_header_file(registerConfigurationDependency(config.module_header, Policy::REINSERT).isSet() ? 
 			std::make_optional(config.module_header.getOrThrow()) : std::nullopt)
 	{
@@ -163,7 +165,7 @@ namespace callisto {
 			if (missing_org_or_freespace) {
 				throw InsertionException(fmt::format(
 					colors::EXCEPTION,
-					"Module {} is missing a freespace command",
+					"Module '{}' is missing a freespace command",
 					project_relative_path.string()
 				));
 			}
@@ -222,7 +224,8 @@ namespace callisto {
 	void Module::emitOutputFile(const fs::path& output_path) const {
 		std::ofstream real_output_file{ output_path };
 
-		real_output_file << "includeonce\n\n";
+		auto name{ output_path.string() };
+		real_output_file << fmt::format("if not(defined(\"CALLISTO_MODULE_{}\"))\n\n!CALLISTO_MODULE_{} = 1\n\n", id, id);
 
 		real_output_file << fmt::format("incsrc \"{}\"\n\n", PathUtil::convertToPosixPath(callisto_asm_file).string());
 
@@ -278,6 +281,8 @@ namespace callisto {
 				real_output_file << fmt::format("!{}_{} = ${:06X}", module_name, name, label.location) << std::endl;
 			}
 		}
+
+		real_output_file << "\nendif\n";
 	}
 
 	void Module::emitPlainAddressFile() const {

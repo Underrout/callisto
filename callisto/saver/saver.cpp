@@ -226,7 +226,13 @@ namespace callisto {
 				}
 			}
 
-			fs::remove_all(config.temporary_folder.getOrThrow());
+			try {
+				fs::remove_all(config.temporary_folder.getOrThrow());
+			}
+			catch (const std::runtime_error&) {
+				spdlog::warn(fmt::format(colors::WARNING, "Failed to remove temporary folder '{}'",
+					config.temporary_folder.getOrThrow().string()));
+			}
 
 			const auto export_end{ std::chrono::high_resolution_clock::now() };
 
