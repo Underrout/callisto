@@ -71,6 +71,7 @@ namespace callisto {
 			spdlog::info(fmt::format(colors::CALLISTO, "--- {} ---", descriptor.toString(config.project_root.getOrThrow())));
 
 			if (!failed_dependency_report.has_value()) {
+				const auto curr_path{ fs::current_path() };
 				std::unordered_set<ResourceDependency> resource_dependencies;
 				try {
 					resource_dependencies = insertable->insertWithDependencies();
@@ -79,6 +80,7 @@ namespace callisto {
 					failed_dependency_report = e;
 				}
 				catch (...) {
+					fs::current_path(curr_path);
 					try {
 						fs::remove_all(config.temporary_folder.getOrThrow());
 					}
@@ -108,11 +110,13 @@ namespace callisto {
 				}
 			}
 			else {
+				const auto curr_path{ fs::current_path() };
 				try {
 					insertable->insert();
 					spdlog::info("");
 				}
 				catch (...) {
+					fs::current_path(curr_path);
 					try {
 						fs::remove_all(config.temporary_folder.getOrThrow());
 					}
@@ -210,7 +214,13 @@ namespace callisto {
 			}
 		}
 		
-		fs::remove_all(config.temporary_folder.getOrThrow());
+		try {
+			fs::remove_all(config.temporary_folder.getOrThrow());
+		}
+		catch (const std::runtime_error&) {
+			spdlog::warn(fmt::format(colors::WARNING, "Failed to remove temporary folder '{}'",
+				config.temporary_folder.getOrThrow().string()));
+		}
 
 		spdlog::info(fmt::format(colors::SUCCESS, "Rebuild finished successfully in {} \\(^.^)/", 
 			TimeUtil::getDurationString(build_end - build_start)));
