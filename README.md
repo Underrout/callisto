@@ -1,7 +1,14 @@
-# callisto
+
+<p align="center">
+  <img src="https://github.com/Underrout/callisto/assets/8695490/a83fa818-b294-412e-91dc-da34c827710d" />
+  <br>
+</p>
+
+# Callisto
+
 A build-system for Super Mario World projects with a focus on git-compatibility and flexibility.
 
-For detailed setup/usage instructions and feature descriptions haev a look at [the wiki](https://github.com/Underrout/callisto/wiki).
+For detailed setup/usage instructions and feature descriptions have a look at [the wiki](https://github.com/Underrout/callisto/wiki).
 
 ## Features
 
