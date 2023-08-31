@@ -71,6 +71,7 @@ namespace callisto {
 				name.value(),
 				PathUtil::getCallistoAsmFilePath(config.project_root.getOrThrow()),
 				module_addresses,
+				module_count++,
 				include_paths
 			);
 		}
@@ -203,6 +204,8 @@ namespace callisto {
 	}
 	
 	void Builder::init(const Configuration& config) {
+		module_count = 0;
+
 		spdlog::info(fmt::format(colors::CALLISTO, "Initializing callisto directory"));
 		spdlog::info("");
 		ensureCacheStructure(config);

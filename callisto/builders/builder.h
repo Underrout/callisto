@@ -61,6 +61,7 @@ namespace callisto {
 			std::unordered_set<ConfigurationDependency>>>>;
 
 		std::unordered_set<int> module_addresses{};
+		int module_count{ 0 };
 	
 		Insertables buildOrderToInsertables(const Configuration& config);
 		std::shared_ptr<Insertable> descriptorToInsertable(const Descriptor& descriptor, const Configuration& config);
@@ -71,7 +72,7 @@ namespace callisto {
 		static void cacheModules(const fs::path& project_root);
 		static void moveTempToOutput(const Configuration& config);
 
-		static void init(const Configuration& config);
+		void init(const Configuration& config);
 		static void ensureCacheStructure(const Configuration& config);
 		static void generateCallistoAsmFile(const Configuration& config);
 
