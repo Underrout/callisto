@@ -1,6 +1,6 @@
 
 <p align="center">
-  <img src="https://github.com/Underrout/callisto/assets/8695490/a83fa818-b294-412e-91dc-da34c827710d" />
+  <img src="https://github.com/Underrout/callisto/assets/8695490/11792f73-ec51-4de4-a545-5710e01504f5" />
   <br>
 </p>
 
