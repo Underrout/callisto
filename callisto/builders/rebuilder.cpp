@@ -401,10 +401,9 @@ namespace callisto {
 		return true;
 	}
 
-	// just assuming lorom here, hope nobody gets mad (read: someone will be mad, but it's ok because I saw it coming)
 	int Rebuilder::pcToSnes(int address) {
 		int snes{ ((address << 1) & 0x7F0000) | (address & 0x7FFF) | 0x8000 };
-		return snes | 0x800000;
+		return snes;
 	}
 
 	std::vector<std::string> Rebuilder::getWriters(const Writes& writes) {
