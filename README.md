@@ -10,6 +10,12 @@ A build-system for Super Mario World projects with a focus on git-compatibility 
 
 For detailed setup/usage instructions and feature descriptions have a look at [the wiki](https://github.com/Underrout/callisto/wiki).
 
+## License
+
+Callisto is licensed under the [MIT license](https://github.com/Underrout/callisto/blob/main/callisto/LICENSE).
+
+For specific parts of the project, other licenses may apply. Check the corresponding subdirectories and files.
+
 ## Features
 
 - Automated building and packaging of Super Mario World projects
