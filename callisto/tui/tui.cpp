@@ -105,13 +105,14 @@ namespace callisto {
 			Renderer([] { return separator(); }),
 
 			/*
-			Button("Recent projects (W)", [&] { 
-				recent_projects.reloadList(); 
-				updateProjectsModal(); 
-				show_recent_projects_modal = true; 
+			Button("Recent projects (W)", [&] {
+				recent_projects.reloadList();
+				updateProjectsModal();
+				show_recent_projects_modal = true;
 			}, ButtonOption::Ascii()),
 			*/
-			Button("Reload configuration (C)", [&] { trySetConfiguration(); }, ButtonOption::Ascii()),
+			getConfigReloadButton(),
+
 			Button("Reload profiles", [&] {
 				profile_names = config_manager.getProfileNames();
 				config = nullptr;
@@ -177,6 +178,14 @@ namespace callisto {
 		return Maybe(Renderer([&] {
 			return window(text(""), hbox({ spinner(2, shift / 2), text(" Save in progress...") | color(Color::Cyan) }));
 		}), &save_in_progress);
+	}
+
+	Component TUI::getConfigReloadButton() {
+		return Container::Horizontal({
+			Button("Reload configuration (C)", [&] { trySetConfiguration(); }, ButtonOption::Ascii()),
+			Renderer([] { return filler(); }),
+			Maybe(Renderer([&] { return spinner(2, shift / 2); }), &reloading_config)
+		});
 	}
 
 	void TUI::determineInitialProfile() {
@@ -301,6 +310,8 @@ namespace callisto {
 
 		std::jthread save_in_progress_monitor{ [&] {
 			while (continue_refresh) {
+				reloading_config = show_reload-- > 0;
+
 				if (lunar_magic_wrapper.pendingEloperSave().has_value()) {
 					save_in_progress = true;
 				}
@@ -337,6 +348,7 @@ namespace callisto {
 	}
 
 	void TUI::trySetConfiguration() {
+		show_reload = 10;
 		const bool error_occured{ modalError([&] {
 			if (profile_names.empty()) {
 				setConfiguration({}, callisto_directory);
@@ -350,6 +362,7 @@ namespace callisto {
 			emulator_names = emulators.getEmulatorNames();
 		}
 		else {
+			show_reload = 0;
 			config = nullptr;
 			emulator_names.clear();
 		}

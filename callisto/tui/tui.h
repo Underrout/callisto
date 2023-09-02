@@ -54,6 +54,10 @@ namespace callisto {
 		
 		bool anything_on_command_line{ false };
 
+		bool reloading_config{ false };
+
+		int show_reload{ 0 };
+
 		bool save_in_progress{ false };
 		int shift{ 0 };
 
@@ -90,6 +94,7 @@ namespace callisto {
 		void showModal(const std::string& new_title, const std::string& new_text);
 
 		Component getSaveSpinnerComponent();
+		Component getConfigReloadButton();
 
 		std::string choice_modal_title{};
 		std::string choice_modal_text{};
