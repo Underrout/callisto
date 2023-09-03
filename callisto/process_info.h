@@ -36,7 +36,7 @@ namespace callisto {
 			bp::group::native_handle_t save_process_pid;
 			uint32_t hwnd;
 			uint16_t verification_code;
-			char current_rom[MAX_PATH];
+			char current_rom[260];
 		};
 	protected:
 		std::string shared_memory_name;

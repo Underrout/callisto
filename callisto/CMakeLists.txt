@@ -4,6 +4,8 @@
 
 # Add source to this project's executable.
 
+cmake_minimum_required(VERSION 3.18)
+
 set(CMAKE_CXX_STANDARD 20)
 
 set(VERSION_MAJOR 0)
@@ -96,10 +98,11 @@ if (MSVC)
     "junction/libntfslinks/include/StringUtils.h"
     "junction/libntfslinks/source/StringUtils.cpp"
     "junction/libntfslinks/source/Junction.cpp"
-    "junction/libntfslinks/source/CharUtils.cpp")
+    "junction/libntfslinks/source/CharUtils.cpp"
+    "process_info.h" "process_info.cpp")
 endif()
 
-add_executable (callisto ${CALLISTO_SOURCE_FILES} "recent_projects/recent_projects_manager.h" "cli/cli_handler.h" "prompt_util.h"  "configuration/module_configuration.h" "process_info.h" "process_info.cpp" "colors.cpp" "globals.h" "globals.cpp")
+add_executable (callisto ${CALLISTO_SOURCE_FILES} "recent_projects/recent_projects_manager.h" "cli/cli_handler.h" "prompt_util.h"  "configuration/module_configuration.h" "colors.cpp" "globals.h" "globals.cpp")
 target_link_options(callisto PRIVATE ${CALLISTO_LINK_OPTIONS})
 target_compile_options(callisto PRIVATE ${CALLISTO_COMPILE_OPTIONS})
 target_compile_definitions(callisto PRIVATE ${CALLISTO_COMPILE_DEFINITIONS})
@@ -108,6 +111,11 @@ target_include_directories(callisto PUBLIC ${asar_SOURCE_DIR}/src)
 
 if (MSVC) 
   target_link_options(callisto PRIVATE $<$<CONFIG:RELWITHDEBINFO>:/PROFILE>)
+else()
+  find_package(TBB REQUIRED COMPONENTS tbb)
+  target_link_libraries(callisto PUBLIC tbb)
+
+  set(CMAKE_CXX_LINK_EXECUTABLE "${CMAKE_CXX_LINK_EXECUTABLE} -ldl")
 endif()
 
 FetchContent_Declare(

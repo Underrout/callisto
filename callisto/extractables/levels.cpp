@@ -81,7 +81,7 @@ namespace callisto {
 			const auto skip_end_offset{ chunk_idx == chunk_amount - 1 ? offsets.size() : skip_start_offset + levels_per_chunk };
 			size_t curr_offset{ 0 };
 
-			std::ofstream rom_file(temp_rom_path, std::ios::in || std::ios::out || std::ios::binary);
+			std::ofstream rom_file(temp_rom_path, std::ios::in | std::ios::out | std::ios::binary);
 			while (true) {
 				if (curr_offset == skip_start_offset) {
 					curr_offset = skip_end_offset;

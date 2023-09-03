@@ -1,37 +1,6 @@
 #include "lunar_magic_wrapper.h"
 
 namespace callisto {
-	void LunarMagicWrapper::attemptReattach(const fs::path& lunar_magic_path) {
-		PROCESSENTRY32 entry;
-		entry.dwSize = sizeof(PROCESSENTRY32);
-
-		HANDLE snapshot{ CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0) };
-
-		if (Process32First(snapshot, &entry) == TRUE) {
-			while (Process32Next(snapshot, &entry) == TRUE) {
-				HANDLE module_snapshot{ CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, entry.th32ProcessID) };
-
-				MODULEENTRY32 module_entry;
-				module_entry.dwSize = sizeof(MODULEENTRY32);
-				if (Module32First(module_snapshot, &module_entry)) {
-					if (stricmp(module_entry.szExePath, lunar_magic_path.string().data()) == 0) {
-						if (ProcessInfo::sharedMemoryExistsFor(entry.th32ProcessID)) {
-							lunar_magic_processes.emplace_back(bp::child(entry.th32ProcessID), ProcessInfo(entry.th32ProcessID, true));
-						}
-					}
-				}
-
-				CloseHandle(module_snapshot);
-			}
-		}
-
-		CloseHandle(snapshot);
-	}
-	
-	fs::path LunarMagicWrapper::getUsertoolbarPath(const fs::path& lunar_magic_path) {
-		return lunar_magic_path.parent_path() / LM_USERTOOLBAR_FILE;
-	}
-
 	bp::child LunarMagicWrapper::launchLunarMagic(const fs::path& lunar_magic_path, const fs::path& rom_to_open) {
 		auto process{ bp::child(fmt::format(
 			"\"{}\" \"{}\"",
@@ -39,6 +8,11 @@ namespace callisto {
 		)) };
 		process.detach();
 		return process;
+	}
+
+#ifdef _WIN32
+	fs::path LunarMagicWrapper::getUsertoolbarPath(const fs::path& lunar_magic_path) {
+		return lunar_magic_path.parent_path() / LM_USERTOOLBAR_FILE;
 	}
 
 	void LunarMagicWrapper::launchInjectedLunarMagic(const fs::path& callisto_path, const fs::path& lunar_magic_path, const fs::path& rom_to_open) {
@@ -111,10 +85,36 @@ namespace callisto {
 		return {};
 	}
 
+	void LunarMagicWrapper::attemptReattach(const fs::path& lunar_magic_path) {
+		PROCESSENTRY32 entry;
+		entry.dwSize = sizeof(PROCESSENTRY32);
+
+		HANDLE snapshot{ CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0) };
+
+		if (Process32First(snapshot, &entry) == TRUE) {
+			while (Process32Next(snapshot, &entry) == TRUE) {
+				HANDLE module_snapshot{ CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, entry.th32ProcessID) };
+
+				MODULEENTRY32 module_entry;
+				module_entry.dwSize = sizeof(MODULEENTRY32);
+				if (Module32First(module_snapshot, &module_entry)) {
+					if (stricmp(module_entry.szExePath, lunar_magic_path.string().data()) == 0) {
+						if (ProcessInfo::sharedMemoryExistsFor(entry.th32ProcessID)) {
+							lunar_magic_processes.emplace_back(bp::child(entry.th32ProcessID), ProcessInfo(entry.th32ProcessID, true));
+						}
+					}
+				}
+
+				CloseHandle(module_snapshot);
+			}
+		}
+
+		CloseHandle(snapshot);
+	}
+
 	LunarMagicWrapper::Result LunarMagicWrapper::reloadRom(const fs::path& rom_to_reload) {
 		spdlog::debug("Attempting to reload ROM {}", rom_to_reload.string());
 
-#ifdef _WIN32
 		cleanClosedInstances();
 
 		if (lunar_magic_processes.empty()) {
@@ -160,12 +160,9 @@ namespace callisto {
 		}
 
 		// LM seems to say nothing about the return value of the message, so I'm just ignoring it I guess
-#else
-		spdlog::info("Automatic ROM reloading is not supported on operating systems other than Windows, "
-			"please reload your ROM in Lunar Magic manually if you have it open!");
-#endif
 		return Result::SUCCESS;
 	}
+#endif
 
 	void LunarMagicWrapper::bringToFrontOrOpen(const fs::path& callisto_path, const fs::path& lunar_magic_path, const fs::path& rom_to_open) {
 		spdlog::debug("Attempting to bring Lunar Magic window to front");
@@ -193,14 +190,7 @@ namespace callisto {
 
 		spdlog::debug("Successfully brought main Lunar Magic window to front!");
 #else
-		auto existing_instance{ getLunarMagicWithRomOpen(rom_to_open) };
-
-		if (existing_instance == lunar_magic_processes.end()) {
-			openLunarMagic(callisto_path, lunar_magic_path, rom_to_open);
-		}
-		else {
-			spdlog::info("Bringing Lunar Magic window to top is only supported on Windows, please manually locate your Lunar Magic window!");
-		}
+		launchLunarMagic(lunar_magic_path, rom_to_open);
 #endif
 	}
 }

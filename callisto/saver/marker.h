@@ -44,9 +44,9 @@ namespace callisto {
 
 		struct Extracted {
 			const uint16_t bitfield;
-			const uint64_t timestamp;
+			const long long timestamp;
 
-			Extracted(uint16_t bitfield, uint64_t timestamp) : bitfield(bitfield), timestamp(timestamp) {}
+			Extracted(uint16_t bitfield, long long timestamp) : bitfield(bitfield), timestamp(timestamp) {}
 		};
 
 		static uint16_t extractablesToBitField(const std::vector<ExtractableType>& extractables);

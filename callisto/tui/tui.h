@@ -43,9 +43,7 @@ namespace callisto {
 	protected:
 		RecentProjectsManager recent_projects;
 
-#ifdef _WIN32
 		LunarMagicWrapper lunar_magic_wrapper{};
-#endif
 
 		ConfigurationManager config_manager;
 		std::shared_ptr<Configuration> config;

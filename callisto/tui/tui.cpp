@@ -213,14 +213,18 @@ namespace callisto {
 	}
 	
 	void TUI::saveInProgressSafeguard(std::function<void()> func) {
+#ifdef _WIN32
 		auto potential_save_process{ lunar_magic_wrapper.pendingEloperSave() };
 		if (potential_save_process.has_value()) {
 			showModal("Save in progress", "An automated export of resources from Lunar Magic is currently\n"
 				"in progress. Please wait for the save to finish and try again.");
 		}
 		else {
+#endif
 			func();
+#ifdef _WIN32
 		}
+#endif
 	}
 
 	void TUI::markerSafeguard(const std::string& title, std::function<void()> func) {
@@ -258,9 +262,11 @@ namespace callisto {
 			emulators = Emulators(*config);
 			emulator_names = emulators.getEmulatorNames();
 
+#ifdef _WIN32
 			if (config->lunar_magic_path.isSet()) {
 				lunar_magic_wrapper.attemptReattach(config->lunar_magic_path.getOrThrow());
 			}
+#endif
 		}
 		/*
 		else if (profile_names.empty()) {
@@ -312,12 +318,14 @@ namespace callisto {
 			while (continue_refresh) {
 				reloading_config = show_reload-- > 0;
 
+#ifdef _WIN32
 				if (lunar_magic_wrapper.pendingEloperSave().has_value()) {
 					save_in_progress = true;
 				}
 				else {
 					save_in_progress = false;
 				}
+#endif
 				using namespace std::chrono_literals;
 				std::this_thread::sleep_for(0.05s);
 			}
@@ -518,9 +526,11 @@ namespace callisto {
 				markerSafeguard("Rebuild", [=] {
 					Rebuilder rebuilder{};
 					rebuilder.build(*config);
+#ifdef _WIN32
 					if (config->enable_automatic_reloads.getOrDefault(true)) {
 						lunar_magic_wrapper.reloadRom(config->output_rom.getOrThrow());
 					}
+#endif
 				});
 			}
 		);
@@ -540,19 +550,23 @@ namespace callisto {
 					try {
 						QuickBuilder quick_builder{ config->project_root.getOrThrow() };
 						const auto result{ quick_builder.build(*config) };
+#ifdef _WIN32
 						if (result == QuickBuilder::Result::SUCCESS) {
 							if (config->enable_automatic_reloads.getOrDefault(true)) {
 								lunar_magic_wrapper.reloadRom(config->output_rom.getOrThrow());
 							}
 						}
+#endif
 					}
 					catch (const MustRebuildException& e) {
 						spdlog::info("Update cannot continue due to the following reason, rebuilding ROM:\n\r{}\n", e.what());
 						Rebuilder rebuilder{};
 						rebuilder.build(*config);
+#ifdef _WIN32
 						if (config->enable_automatic_reloads.getOrDefault(true)) {
 							lunar_magic_wrapper.reloadRom(config->output_rom.getOrThrow());
 						}
+#endif
 					}
 				});
 			}
