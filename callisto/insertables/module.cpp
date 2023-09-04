@@ -41,13 +41,15 @@ namespace callisto {
 
 		if (input_path.extension() == ".asm") {
 			if (module_header_file.has_value()) {
-				temp_patch << "incsrc \"" << PathUtil::convertToPosixPath(module_header_file.value()).string() << '"' << std::endl << std::endl;
+				temp_patch << "incsrc \"" << PathUtil::sanitizeForAsar(
+					PathUtil::convertToPosixPath(module_header_file.value())).string() << '"' << std::endl << std::endl;
 			}
 
-			temp_patch << "incsrc \"" << PathUtil::convertToPosixPath(input_path).string() << '"' << std::endl;
+			temp_patch << "incsrc \"" << PathUtil::sanitizeForAsar(PathUtil::convertToPosixPath(input_path)).string() << '"' << std::endl;
 		}
 		else {
-			temp_patch << fmt::format("incbin \"{}\" -> {}", PathUtil::convertToPosixPath(input_path).string(), PLACEHOLDER_LABEL) << std::endl;
+			temp_patch << fmt::format("incbin \"{}\" -> {}", PathUtil::sanitizeForAsar(
+				PathUtil::convertToPosixPath(input_path)).string(), PLACEHOLDER_LABEL) << std::endl;
 		}
 
 		patch_string = temp_patch.str();
@@ -227,7 +229,7 @@ namespace callisto {
 		auto name{ output_path.string() };
 		real_output_file << fmt::format("if not(defined(\"CALLISTO_MODULE_{}\"))\n\n!CALLISTO_MODULE_{} = 1\n\n", id, id);
 
-		real_output_file << fmt::format("incsrc \"{}\"\n\n", PathUtil::convertToPosixPath(callisto_asm_file).string());
+		real_output_file << fmt::format("incsrc \"{}\"\n\n", PathUtil::sanitizeForAsar(PathUtil::convertToPosixPath(callisto_asm_file)).string());
 
 		int label_number{};
 		const auto labels{ asar_getalllabels(&label_number) };

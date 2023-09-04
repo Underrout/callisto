@@ -4,6 +4,8 @@
 
 #include <platform_folders.h>
 
+#include <boost/algorithm/string/replace.hpp>
+
 namespace fs = std::filesystem;
 
 namespace callisto {
@@ -33,6 +35,14 @@ namespace callisto {
 			} 
 
 			return fs::absolute(fs::weakly_canonical(relative_to / path));
+		}
+
+		static fs::path sanitizeForAsar(const fs::path& path) {
+			auto as_string{ path.string() };
+			boost::replace_all(as_string, "!", "\\!");
+			boost::replace_all(as_string, "\"", "\"\"");
+
+			return as_string;
 		}
 
 		static fs::path getUserSettingsPath() {
