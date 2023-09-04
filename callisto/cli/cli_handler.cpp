@@ -2,7 +2,8 @@
 
 namespace callisto {
 	int CLIHandler::run(int argc, char** argv) {
-		const auto callisto_path{ fs::path(argv[0]) };
+		const auto plain_path{ fs::path(argv[0]) };
+		const auto callisto_path{ fs::canonical(plain_path) };
 		const auto callisto_directory{ callisto_path.parent_path() };
 		ConfigurationManager config_manager{ callisto_directory };
 

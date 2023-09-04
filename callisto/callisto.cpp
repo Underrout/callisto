@@ -5,7 +5,9 @@ using namespace callisto;
 int main(int argc, char** argv) {
 	if (argc == 1) {
 		// run in interactive mode
-		TUI tui{ fs::path(std::string(argv[0])) };
+		const auto plain_path{ fs::path(argv[0]) };
+		const auto abs_path{ fs::canonical(plain_path) };
+		TUI tui{ abs_path };
 		tui.run();
 	}
 	else {
