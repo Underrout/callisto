@@ -7,7 +7,7 @@ namespace callisto {
 		working_directory(tool_config.working_directory.getOrThrow()),
 		take_user_input(tool_config.takes_user_input.getOrDefault(false)),
 		pass_rom(tool_config.pass_rom.getOrDefault(true)),
-		temporary_rom(PathUtil::getTemporaryRomPath(config.temporary_folder, config.output_rom.getOrThrow())),
+		temporary_rom(PathUtil::getTemporaryRomPath(config.temporary_folder.getOrThrow(), config.output_rom.getOrThrow())),
 		static_dependencies(tool_config.static_dependencies.getOrDefault({})),
 		dependency_report_file_path(tool_config.dependency_report_file.getOrDefault({}))
 	{

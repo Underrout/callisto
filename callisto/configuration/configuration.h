@@ -117,6 +117,7 @@ namespace callisto {
 		BoolConfigVariable enable_automatic_exports{ {"settings", "enable_automatic_exports"} };
 
 		PathConfigVariable output_rom{ {"output", "output_rom"} };
+		PathConfigVariable temporary_folder{ {"output", "temporary_folder"} };
 		PathConfigVariable bps_package{ {"output", "bps_package"} };
 
 		PathConfigVariable flips_path{ {"tools", "FLIPS", "executable"} };
@@ -135,8 +136,6 @@ namespace callisto {
 		PathConfigVariable title_moves{ {"resources", "titlescreen_movement"} };
 		PathConfigVariable credits{ {"resources", "credits"} };
 		PathConfigVariable global_exanimation{ {"resources", "global_exanimation"} };
-
-		const fs::path temporary_folder{ PathUtil::getTemporaryFolderPath() };
 
 		ExtendablePathVectorConfigVariable patches{ {"resources", "patches"} };
 		tsl::ordered_map<fs::path, ModuleConfiguration> module_configurations{};
