@@ -182,7 +182,7 @@ namespace callisto {
 			}
 			const auto export_start{ std::chrono::high_resolution_clock::now() };
 
-			const auto temporary_rom_path{ PathUtil::getTemporaryRomPath(config.temporary_folder.getOrThrow(),
+			const auto temporary_rom_path{ PathUtil::getTemporaryRomPath(config.temporary_folder,
 				config.output_rom.getOrThrow()) };
 			fs::copy(config.output_rom.getOrThrow(), temporary_rom_path, fs::copy_options::overwrite_existing);
 			const auto extractables{ getExtractables(config, need_extraction, rom_path) };
@@ -227,11 +227,11 @@ namespace callisto {
 			}
 
 			try {
-				fs::remove_all(config.temporary_folder.getOrThrow());
+				fs::remove_all(config.temporary_folder);
 			}
 			catch (const std::runtime_error&) {
 				spdlog::warn(fmt::format(colors::WARNING, "Failed to remove temporary folder '{}'",
-					config.temporary_folder.getOrThrow().string()));
+					config.temporary_folder.string()));
 			}
 
 			const auto export_end{ std::chrono::high_resolution_clock::now() };

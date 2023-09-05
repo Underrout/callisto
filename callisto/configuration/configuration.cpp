@@ -416,7 +416,6 @@ namespace callisto {
 		trySet(clean_rom, config_file, level, root, user_variables);
 
 		trySet(output_rom, config_file, level, root, user_variables);
-		trySet(temporary_folder, config_file, level, root, user_variables);
 		trySet(bps_package, config_file, level, root, user_variables);
 
 		trySet(level_import_flag, config_file, level, user_variables);

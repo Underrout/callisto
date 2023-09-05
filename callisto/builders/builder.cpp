@@ -152,11 +152,11 @@ namespace callisto {
 
 	void Builder::moveTempToOutput(const Configuration& config) {
 		spdlog::info(fmt::format(colors::CALLISTO, "Moving temporary files to final output"));
-		for (const auto& entry : fs::directory_iterator(config.temporary_folder.getOrThrow())) {
+		for (const auto& entry : fs::directory_iterator(config.temporary_folder)) {
 			if (fs::is_regular_file(entry)) {
 				const auto file_name{ entry.path().stem().string() };
 				const auto temporary_rom_name{ (PathUtil::getTemporaryRomPath(
-					config.temporary_folder.getOrThrow(), config.output_rom.getOrThrow())).stem().string() };
+					config.temporary_folder, config.output_rom.getOrThrow())).stem().string() };
 				if (file_name.substr(0, temporary_rom_name.size()) == temporary_rom_name) {
 					const auto source{ entry.path() };
 					const auto target{ config.output_rom.getOrThrow().parent_path() / 
@@ -195,11 +195,11 @@ namespace callisto {
 			}
 		}
 		try {
-			fs::remove_all(config.temporary_folder.getOrThrow());
+			fs::remove_all(config.temporary_folder);
 		}
 		catch (const std::runtime_error& e) {
 			spdlog::warn(fmt::format(colors::WARNING, "Failed to remove temporary folder '{}'",
-				config.temporary_folder.getOrThrow().string()));
+				config.temporary_folder.string()));
 		}
 	}
 	
@@ -210,7 +210,7 @@ namespace callisto {
 		spdlog::info("");
 		ensureCacheStructure(config);
 		generateCallistoAsmFile(config);
-		fs::create_directories(config.temporary_folder.getOrThrow());
+		fs::create_directories(config.temporary_folder);
 		fs::create_directories(config.output_rom.getOrThrow().parent_path());
 
 		tryConvenienceSetup(config);
@@ -263,7 +263,7 @@ namespace callisto {
 	}
 
 	void Builder::convenienceSetup(const Configuration& config) {
-		const auto temp_rom_path{ PathUtil::getTemporaryRomPath(config.temporary_folder.getOrThrow(),
+		const auto temp_rom_path{ PathUtil::getTemporaryRomPath(config.temporary_folder,
 			config.output_rom.getOrThrow())};
 
 		fs::copy(config.clean_rom.getOrThrow(), temp_rom_path, fs::copy_options::overwrite_existing);

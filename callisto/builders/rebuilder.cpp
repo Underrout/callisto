@@ -16,7 +16,7 @@ namespace callisto {
 		DependencyVector dependencies{};
 		PatchHijacksVector patch_hijacks{};
 
-		const auto temp_rom_path{ PathUtil::getTemporaryRomPath(config.temporary_folder.getOrThrow(),
+		const auto temp_rom_path{ PathUtil::getTemporaryRomPath(config.temporary_folder,
 	config.output_rom.getOrThrow()) };
 		fs::copy_file(config.clean_rom.getOrThrow(), temp_rom_path, fs::copy_options::overwrite_existing);
 
@@ -79,17 +79,6 @@ namespace callisto {
 				catch (const Insertable::NoDependencyReportFound& e) {
 					failed_dependency_report = e;
 				}
-				catch (...) {
-					fs::current_path(curr_path);
-					try {
-						fs::remove_all(config.temporary_folder.getOrThrow());
-					}
-					catch (const std::runtime_error& e) {
-						spdlog::warn(fmt::format(colors::WARNING, "Failed to remove temporary folder '{}'",
-							config.temporary_folder.getOrThrow().string()));
-					}
-					std::rethrow_exception(std::current_exception());
-				}
 				spdlog::info("");
 
 				if (descriptor.symbol == Symbol::PATCH) {
@@ -111,21 +100,8 @@ namespace callisto {
 			}
 			else {
 				const auto curr_path{ fs::current_path() };
-				try {
-					insertable->insert();
-					spdlog::info("");
-				}
-				catch (...) {
-					fs::current_path(curr_path);
-					try {
-						fs::remove_all(config.temporary_folder.getOrThrow());
-					}
-					catch (const std::runtime_error& e) {
-						spdlog::warn(fmt::format(colors::WARNING, "Failed to remove temporary folder '{}'",
-							config.temporary_folder.getOrThrow().string()));
-					}
-					std::rethrow_exception(std::current_exception());
-				}
+				insertable->insert();
+				spdlog::info("");
 			}
 
 			if (check_conflicts_policy != Conflicts::NONE) {
@@ -215,11 +191,11 @@ namespace callisto {
 		}
 		
 		try {
-			fs::remove_all(config.temporary_folder.getOrThrow());
+			fs::remove_all(config.temporary_folder);
 		}
 		catch (const std::runtime_error&) {
 			spdlog::warn(fmt::format(colors::WARNING, "Failed to remove temporary folder '{}'",
-				config.temporary_folder.getOrThrow().string()));
+				config.temporary_folder.string()));
 		}
 
 		spdlog::info(fmt::format(colors::SUCCESS, "Rebuild finished successfully in {} \\(^.^)/", 

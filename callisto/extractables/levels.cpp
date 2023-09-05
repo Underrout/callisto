@@ -4,7 +4,7 @@ namespace callisto {
 	namespace extractables {
 		Levels::Levels(const Configuration& config, const fs::path& extracting_rom, size_t max_thread_count)
 			: LunarMagicExtractable(config, extracting_rom), levels_folder(config.levels.getOrThrow()), 
-			temp_folder(config.temporary_folder.getOrThrow() / "chunked_roms"), max_thread_count(max_thread_count) {
+			temp_folder(config.temporary_folder / "chunked_roms"), max_thread_count(max_thread_count) {
 
 			fs::create_directories(temp_folder);
 

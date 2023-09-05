@@ -55,7 +55,7 @@ namespace callisto {
 		spdlog::info("");
 
 		const auto temporary_rom_path{ PathUtil::getTemporaryRomPath(
-			config.temporary_folder.getOrThrow(), config.output_rom.getOrThrow()
+			config.temporary_folder, config.output_rom.getOrThrow()
 		) };
 
 		bool any_work_done{ false };
@@ -172,17 +172,6 @@ namespace callisto {
 					catch (const Insertable::NoDependencyReportFound& e) {
 						failed_dependency_report = e;
 					}
-					catch (...) {
-						fs::current_path(curr_path);
-						try {
-							fs::remove_all(config.temporary_folder.getOrThrow());
-						}
-						catch (const std::runtime_error& e) {
-							spdlog::warn(fmt::format(colors::WARNING, "Failed to remove temporary folder '{}'",
-								config.temporary_folder.getOrThrow().string()));
-						}
-						std::rethrow_exception(std::current_exception());
-					}
 					spdlog::info("");
 
 					if (!failed_dependency_report.has_value()) {
@@ -200,21 +189,8 @@ namespace callisto {
 				}
 				else {
 					const auto curr_path{ fs::current_path() };
-					try {
-						insertable->insert();
-						spdlog::info("");
-					}
-					catch (...) {
-						fs::current_path(curr_path);
-						try {
-							fs::remove_all(config.temporary_folder.getOrThrow());
-						}
-						catch (const std::runtime_error& e) {
-							spdlog::warn(fmt::format(colors::WARNING, "Failed to remove temporary folder '{}'",
-								config.temporary_folder.getOrThrow().string()));
-						}
-						std::rethrow_exception(std::current_exception());
-					}
+					insertable->insert();
+					spdlog::info("");
 				}
 
 				if (descriptor.symbol == Symbol::PATCH) {
@@ -279,11 +255,11 @@ namespace callisto {
 			GraphicsUtil::linkOutputRomToProjectGraphics(config, true);
 
 			try {
-				fs::remove_all(config.temporary_folder.getOrThrow());
+				fs::remove_all(config.temporary_folder);
 			}
 			catch (const std::runtime_error&) {
 				spdlog::warn(fmt::format(colors::WARNING, "Failed to remove temporary folder '{}'",
-					config.temporary_folder.getOrThrow().string()));
+					config.temporary_folder.string()));
 			}
 
 			const auto build_end{ std::chrono::high_resolution_clock::now() };
@@ -300,11 +276,11 @@ namespace callisto {
 		}
 		else {
 			try {
-				fs::remove_all(config.temporary_folder.getOrThrow());
+				fs::remove_all(config.temporary_folder);
 			}
 			catch (const std::runtime_error&) {
 				spdlog::warn(fmt::format(colors::WARNING, "Failed to remove temporary folder '{}'",
-					config.temporary_folder.getOrThrow().string()));
+					config.temporary_folder.string()));
 			}
 
 			spdlog::info(fmt::format(colors::NOTIFICATION, "Everything already up to date, no work for me to do (-.-)"));
