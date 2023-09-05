@@ -105,13 +105,14 @@ namespace callisto {
 			Renderer([] { return separator(); }),
 
 			/*
-			Button("Recent projects (W)", [&] { 
-				recent_projects.reloadList(); 
-				updateProjectsModal(); 
-				show_recent_projects_modal = true; 
+			Button("Recent projects (W)", [&] {
+				recent_projects.reloadList();
+				updateProjectsModal();
+				show_recent_projects_modal = true;
 			}, ButtonOption::Ascii()),
 			*/
-			Button("Reload configuration (C)", [&] { trySetConfiguration(); }, ButtonOption::Ascii()),
+			getConfigReloadButton(),
+
 			Button("Reload profiles", [&] {
 				profile_names = config_manager.getProfileNames();
 				config = nullptr;
@@ -179,6 +180,14 @@ namespace callisto {
 		}), &save_in_progress);
 	}
 
+	Component TUI::getConfigReloadButton() {
+		return Container::Horizontal({
+			Button("Reload configuration (C)", [&] { trySetConfiguration(); }, ButtonOption::Ascii()),
+			Renderer([] { return filler(); }),
+			Maybe(Renderer([&] { return spinner(2, shift / 2); }), &reloading_config)
+		});
+	}
+
 	void TUI::determineInitialProfile() {
 		const auto last_config_name{ getLastConfigName(callisto_directory) };
 		bool used_cached{ false };
@@ -204,14 +213,18 @@ namespace callisto {
 	}
 	
 	void TUI::saveInProgressSafeguard(std::function<void()> func) {
+#ifdef _WIN32
 		auto potential_save_process{ lunar_magic_wrapper.pendingEloperSave() };
 		if (potential_save_process.has_value()) {
 			showModal("Save in progress", "An automated export of resources from Lunar Magic is currently\n"
 				"in progress. Please wait for the save to finish and try again.");
 		}
 		else {
+#endif
 			func();
+#ifdef _WIN32
 		}
+#endif
 	}
 
 	void TUI::markerSafeguard(const std::string& title, std::function<void()> func) {
@@ -249,9 +262,11 @@ namespace callisto {
 			emulators = Emulators(*config);
 			emulator_names = emulators.getEmulatorNames();
 
+#ifdef _WIN32
 			if (config->lunar_magic_path.isSet()) {
 				lunar_magic_wrapper.attemptReattach(config->lunar_magic_path.getOrThrow());
 			}
+#endif
 		}
 		/*
 		else if (profile_names.empty()) {
@@ -301,12 +316,16 @@ namespace callisto {
 
 		std::jthread save_in_progress_monitor{ [&] {
 			while (continue_refresh) {
+				reloading_config = show_reload-- > 0;
+
+#ifdef _WIN32
 				if (lunar_magic_wrapper.pendingEloperSave().has_value()) {
 					save_in_progress = true;
 				}
 				else {
 					save_in_progress = false;
 				}
+#endif
 				using namespace std::chrono_literals;
 				std::this_thread::sleep_for(0.05s);
 			}
@@ -337,6 +356,7 @@ namespace callisto {
 	}
 
 	void TUI::trySetConfiguration() {
+		show_reload = 10;
 		const bool error_occured{ modalError([&] {
 			if (profile_names.empty()) {
 				setConfiguration({}, callisto_directory);
@@ -350,6 +370,7 @@ namespace callisto {
 			emulator_names = emulators.getEmulatorNames();
 		}
 		else {
+			show_reload = 0;
 			config = nullptr;
 			emulator_names.clear();
 		}
@@ -505,9 +526,11 @@ namespace callisto {
 				markerSafeguard("Rebuild", [=] {
 					Rebuilder rebuilder{};
 					rebuilder.build(*config);
+#ifdef _WIN32
 					if (config->enable_automatic_reloads.getOrDefault(true)) {
 						lunar_magic_wrapper.reloadRom(config->output_rom.getOrThrow());
 					}
+#endif
 				});
 			}
 		);
@@ -527,19 +550,23 @@ namespace callisto {
 					try {
 						QuickBuilder quick_builder{ config->project_root.getOrThrow() };
 						const auto result{ quick_builder.build(*config) };
+#ifdef _WIN32
 						if (result == QuickBuilder::Result::SUCCESS) {
 							if (config->enable_automatic_reloads.getOrDefault(true)) {
 								lunar_magic_wrapper.reloadRom(config->output_rom.getOrThrow());
 							}
 						}
+#endif
 					}
 					catch (const MustRebuildException& e) {
 						spdlog::info("Update cannot continue due to the following reason, rebuilding ROM:\n\r{}\n", e.what());
 						Rebuilder rebuilder{};
 						rebuilder.build(*config);
+#ifdef _WIN32
 						if (config->enable_automatic_reloads.getOrDefault(true)) {
 							lunar_magic_wrapper.reloadRom(config->output_rom.getOrThrow());
 						}
+#endif
 					}
 				});
 			}

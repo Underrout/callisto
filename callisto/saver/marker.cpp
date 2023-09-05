@@ -122,7 +122,7 @@ namespace callisto {
 
 				uint64_t timestamp;
 				temp.clear();
-				temp << std::hex << prints[1] << prints[2];
+				temp << fmt::format("{:04X}{:06X}", std::stoi(prints[1], nullptr, 16), std::stoi(prints[2], nullptr, 16));
 				temp >> timestamp;
 
 				spdlog::debug("Marker found in ROM {}, bitfield is 0x{:04X}, timestamp is 0x{:010X}", rom_path.string(), bits, timestamp);
@@ -213,8 +213,7 @@ namespace callisto {
 			return extractables;
 		}
 
-		const auto rom_write_time{ std::chrono::clock_cast<std::chrono::system_clock>(fs::last_write_time(rom_path)) };
-		const auto rom_epoch{ std::chrono::duration_cast<std::chrono::seconds>(rom_write_time.time_since_epoch()).count() };
+		const auto rom_epoch{ std::chrono::duration_cast<std::chrono::seconds>(fs::last_write_time(rom_path).time_since_epoch()).count() };
 		
 		if (rom_epoch != extracted_information.value().timestamp) {
 			// Marker timestamp does not match last ROM write time, export all

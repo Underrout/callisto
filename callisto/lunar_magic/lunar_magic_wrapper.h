@@ -19,13 +19,16 @@
 namespace bp = boost::process;
 namespace fs = std::filesystem;
 
+#ifdef _WIN32
 #include "../process_info.h"
+#endif
 
 #include "../colors.h"
 
 namespace callisto {
 	class LunarMagicWrapper {
 	protected:
+#ifdef _WIN32
 		static constexpr auto LM_MESSAGE_ID{ 0xBECB };
 		static constexpr auto LM_REQUEST_TYPE{ 2 };
 		static constexpr auto LM_USERTOOLBAR_FILE{ "usertoolbar.txt" };
@@ -49,18 +52,17 @@ namespace callisto {
 
 		LunarMagicProcessVector lunar_magic_processes{};
 
-
 		static fs::path getUsertoolbarPath(const fs::path& lunar_magic_path);
-		static bp::child launchLunarMagic(const fs::path& lunar_magic_path, const fs::path& rom_to_open);
 		void launchInjectedLunarMagic(const fs::path& callisto_path, const fs::path& lunar_magic_path, const fs::path& rom_to_open);
+		void openLunarMagic(const fs::path& callisto_path, const fs::path& lunar_magic_path, const fs::path& rom_to_open);
 
 		void appendInjectionStringToUsertoolbar(const std::string& shared_memory_name, const fs::path& callisto_path, const fs::path& usertoolbar_path);
 
 		void cleanClosedInstances();
 
 		LunarMagicProcessVector::iterator getLunarMagicWithRomOpen(const fs::path& desired_rom);
-
-		void openLunarMagic(const fs::path& callisto_path, const fs::path& lunar_magic_path, const fs::path& rom_to_open);
+#endif
+		static bp::child launchLunarMagic(const fs::path& lunar_magic_path, const fs::path& rom_to_open);
 
 	public:
 		enum class Result {
@@ -70,11 +72,14 @@ namespace callisto {
 			NO_INSTANCE
 		};
 
-		Result reloadRom(const fs::path& rom_to_reload);
 		void bringToFrontOrOpen(const fs::path& callisto_path, const fs::path& lunar_magic_path, const fs::path& rom_to_open);
+
+#ifdef _WIN32
+		Result reloadRom(const fs::path& rom_to_reload);
 
 		void attemptReattach(const fs::path& lunar_magic_path);
 
 		std::optional<bp::group::native_handle_t> pendingEloperSave();
+#endif
 	};
 }

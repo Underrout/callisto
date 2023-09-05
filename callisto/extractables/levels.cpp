@@ -4,7 +4,7 @@ namespace callisto {
 	namespace extractables {
 		Levels::Levels(const Configuration& config, const fs::path& extracting_rom, size_t max_thread_count)
 			: LunarMagicExtractable(config, extracting_rom), levels_folder(config.levels.getOrThrow()), 
-			temp_folder(config.temporary_folder.getOrThrow() / "chunked_roms"), max_thread_count(max_thread_count) {
+			temp_folder(config.temporary_folder / "chunked_roms"), max_thread_count(max_thread_count) {
 
 			fs::create_directories(temp_folder);
 
@@ -81,7 +81,7 @@ namespace callisto {
 			const auto skip_end_offset{ chunk_idx == chunk_amount - 1 ? offsets.size() : skip_start_offset + levels_per_chunk };
 			size_t curr_offset{ 0 };
 
-			std::ofstream rom_file(temp_rom_path, std::ios::in || std::ios::out || std::ios::binary);
+			std::ofstream rom_file(temp_rom_path, std::ios::in | std::ios::out | std::ios::binary);
 			while (true) {
 				if (curr_offset == skip_start_offset) {
 					curr_offset = skip_end_offset;

@@ -189,8 +189,7 @@ namespace callisto {
 				Policy policy;
 
 				if (entry.contains("policy")) {
-					const auto policy_value{ toml::find(entry, "policy") };
-					const auto as_string{ toml::get<std::string>(policy_value) };
+					const auto as_string{ toml::find<toml::string>(entry, "policy") };
 					if (as_string == "rebuild") {
 						policy = Policy::REBUILD;
 					}
@@ -199,12 +198,12 @@ namespace callisto {
 					}
 					else {
 						throw TomlException(
-							policy_value,
+							entry,
 							"Unknown policy type",
 							{
 								"Only 'rebuild' or 'reinsert' are allowed as policies"
 							},
-							fmt::format("'{}' is not allowed here", as_string)
+							fmt::format("'{}' is not allowed here", as_string.str)
 						);
 					}
 				}

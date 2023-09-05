@@ -142,13 +142,13 @@ namespace callisto {
 	}
 
 	void Saver::writeMarkerToRom(const fs::path& rom_path, const Configuration& config) {
-		const auto now{ std::chrono::system_clock::now() };
+		const auto now{ std::chrono::file_clock::now() };
 		auto timestamp{ std::chrono::duration_cast<std::chrono::seconds>(now.time_since_epoch()).count() };
 		spdlog::debug("Marker timestamp is {:010X}", timestamp);
 
 		Marker::insertMarkerString(rom_path, getExtractableTypes(config), timestamp);
 
-		fs::last_write_time(rom_path, std::chrono::clock_cast<std::chrono::file_clock>(now));
+		fs::last_write_time(rom_path, now);
 
 		// little uggo to put this here, but I'm essentially storing the timestamp also to a cache file
 		// so that if the ROM is switched with a different ROM that was built at a different time, we can still tell
@@ -182,7 +182,7 @@ namespace callisto {
 			}
 			const auto export_start{ std::chrono::high_resolution_clock::now() };
 
-			const auto temporary_rom_path{ PathUtil::getTemporaryRomPath(config.temporary_folder.getOrThrow(),
+			const auto temporary_rom_path{ PathUtil::getTemporaryRomPath(config.temporary_folder,
 				config.output_rom.getOrThrow()) };
 			fs::copy(config.output_rom.getOrThrow(), temporary_rom_path, fs::copy_options::overwrite_existing);
 			const auto extractables{ getExtractables(config, need_extraction, rom_path) };
@@ -227,11 +227,11 @@ namespace callisto {
 			}
 
 			try {
-				fs::remove_all(config.temporary_folder.getOrThrow());
+				fs::remove_all(config.temporary_folder);
 			}
 			catch (const std::runtime_error&) {
 				spdlog::warn(fmt::format(colors::WARNING, "Failed to remove temporary folder '{}'",
-					config.temporary_folder.getOrThrow().string()));
+					config.temporary_folder.string()));
 			}
 
 			const auto export_end{ std::chrono::high_resolution_clock::now() };

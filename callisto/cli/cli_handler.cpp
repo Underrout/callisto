@@ -2,7 +2,8 @@
 
 namespace callisto {
 	int CLIHandler::run(int argc, char** argv) {
-		const auto callisto_path{ fs::path(argv[0]) };
+		const auto plain_path{ fs::path(argv[0]) };
+		const auto callisto_path{ fs::canonical(plain_path) };
 		const auto callisto_directory{ callisto_path.parent_path() };
 		ConfigurationManager config_manager{ callisto_directory };
 
@@ -81,12 +82,14 @@ namespace callisto {
 			init();
 			const auto config{ config_manager.getConfiguration(profile_name) };
 
+#ifdef _WIN32
 			if (check_for_pending_save && config->lunar_magic_path.isSet()) {
 				lunar_magic_wrapper.attemptReattach(config->lunar_magic_path.getOrThrow());
 				if (lunar_magic_wrapper.pendingEloperSave().has_value()) {
 					throw std::runtime_error("There is a pending automatic resource export, refusing to rebuild to avoid conflicting with it");
 				}
 			}
+#endif
 
 			if (config->output_rom.isSet() && fs::exists(config->output_rom.getOrThrow())) {
 				const auto needs_extraction{ Marker::getNeededExtractions(config->output_rom.getOrThrow(),
@@ -106,9 +109,11 @@ namespace callisto {
 
 			Rebuilder rebuilder{};
 			rebuilder.build(*config);
+#ifdef _WIN32
 			if (config->lunar_magic_path.isSet() && config->enable_automatic_reloads.getOrDefault(true)) {
 				lunar_magic_wrapper.reloadRom(config->output_rom.getOrThrow());
 			}
+#endif
 
 			exit(0);
 		});
@@ -117,13 +122,14 @@ namespace callisto {
 			init();
 			const auto config{ config_manager.getConfiguration(profile_name) };
 
+#ifdef _WIN32
 			if (check_for_pending_save && config->lunar_magic_path.isSet()) {
 				lunar_magic_wrapper.attemptReattach(config->lunar_magic_path.getOrThrow());
 				if (lunar_magic_wrapper.pendingEloperSave().has_value()) {
 					throw std::runtime_error("There is a pending automatic resource export, refusing to update to avoid conflicting with it");
 				}
 			}
-
+#endif
 			if (config->output_rom.isSet() && fs::exists(config->output_rom.getOrThrow())) {
 				const auto needs_extraction{ Marker::getNeededExtractions(config->output_rom.getOrThrow(),
 					config->project_root.getOrThrow(),
@@ -143,18 +149,22 @@ namespace callisto {
 			try {
 				QuickBuilder quick_builder{ config->project_root.getOrThrow() };
 				const auto result{ quick_builder.build(*config) };
+#ifdef _WIN32
 				if (result == QuickBuilder::Result::SUCCESS && config->lunar_magic_path.isSet()
 					&& config->enable_automatic_reloads.getOrDefault(true)) {
 					lunar_magic_wrapper.reloadRom(config->output_rom.getOrThrow());
 				}
+#endif
 			}
 			catch (const MustRebuildException& e) {
 				spdlog::info("Update cannot continue due to the following reason, rebuilding ROM:\n\r{}\n", e.what());
 				Rebuilder rebuilder{};
 				rebuilder.build(*config);
+#ifdef _WIN32
 				if (config->lunar_magic_path.isSet() && config->enable_automatic_reloads.getOrDefault(true)) {
 					lunar_magic_wrapper.reloadRom(config->output_rom.getOrThrow());
 				}
+#endif
 			}
 		});
 
@@ -168,13 +178,14 @@ namespace callisto {
 			init();
 			const auto config{ config_manager.getConfiguration(profile_name) };
 
+#ifdef _WIN32
 			if (check_for_pending_save && config->lunar_magic_path.isSet()) {
 				lunar_magic_wrapper.attemptReattach(config->lunar_magic_path.getOrThrow());
 				if (lunar_magic_wrapper.pendingEloperSave().has_value()) {
 					throw std::runtime_error("There is a pending automatic resource export, refusing to save to avoid conflicting with it");
 				}
 			}
-
+#endif
 			Saver::exportResources(config->output_rom.getOrThrow(), *config, true);
 			exit(0);
 		});
@@ -189,7 +200,9 @@ namespace callisto {
 			init();
 			const auto config{ config_manager.getConfiguration(profile_name) };
 
+#ifdef _WIN32
 			lunar_magic_wrapper.attemptReattach(config->lunar_magic_path.getOrThrow());
+#endif
 			lunar_magic_wrapper.bringToFrontOrOpen(
 				callisto_path, config->lunar_magic_path.getOrThrow(), config->output_rom.getOrThrow());
 			exit(0);

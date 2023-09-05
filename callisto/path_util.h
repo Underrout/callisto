@@ -4,6 +4,9 @@
 
 #include <platform_folders.h>
 
+#include <boost/algorithm/string/replace.hpp>
+#include <boost/filesystem.hpp>
+
 namespace fs = std::filesystem;
 
 namespace callisto {
@@ -26,6 +29,8 @@ namespace callisto {
 		static constexpr auto TEMPORARY_SUFFIX{ "_temp" };
 		static constexpr auto TEMPORARY_RESOURCES_FOLDER_NAME{ "resources" };
 
+		static constexpr auto CALLISTO_TEMP_FOLDER_NAME{ "callisto_build_temp" };
+
 	public:
 		static fs::path normalize(const fs::path& path, const fs::path& relative_to) {
 			if (path.is_absolute()) {
@@ -33,6 +38,14 @@ namespace callisto {
 			} 
 
 			return fs::absolute(fs::weakly_canonical(relative_to / path));
+		}
+
+		static fs::path sanitizeForAsar(const fs::path& path) {
+			auto as_string{ path.string() };
+			boost::replace_all(as_string, "!", "\\!");
+			boost::replace_all(as_string, "\"", "\"\"");
+
+			return as_string;
 		}
 
 		static fs::path getUserSettingsPath() {
@@ -81,6 +94,15 @@ namespace callisto {
 
 		static fs::path getCallistoAsmFilePath(const fs::path& project_root) {
 			return getCallistoDirectoryPath(project_root) / ASSEMBLY_INFO_FILE;
+		}
+
+		static fs::path getTemporaryFolderPath() {
+			const auto path{ fs::temp_directory_path() / CALLISTO_TEMP_FOLDER_NAME };
+			if (fs::exists(path)) {
+				fs::remove_all(path);
+			}
+			fs::create_directory(path);
+			return path;
 		}
 
 		static fs::path getTemporaryRomPath(const fs::path& temporary_folder_path, const fs::path& output_rom_path) {
