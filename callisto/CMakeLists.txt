@@ -10,7 +10,7 @@ set(CMAKE_CXX_STANDARD 20)
 
 set(VERSION_MAJOR 0)
 set(VERSION_MINOR 2)
-set(VERSION_PATCH 1)
+set(VERSION_PATCH 2)
 
 add_definitions(-DCALLISTO_VERSION_MAJOR=${VERSION_MAJOR})
 add_definitions(-DCALLISTO_VERSION_MINOR=${VERSION_MINOR})
@@ -61,7 +61,7 @@ set(ASAR_GEN_DLL_TEST OFF)
 FetchContent_Declare(
 	asar
 	GIT_REPOSITORY https://github.com/Underrout/asar
-	GIT_TAG v1.81
+	GIT_TAG c-v1.81
 	SOURCE_SUBDIR src
 )
 FetchContent_MakeAvailable(asar)
