@@ -57,7 +57,7 @@ namespace callisto {
 
 		const fs::path project_relative_path;
 
-		std::vector<const char*> additional_include_paths;
+		std::vector<fs::path> additional_include_paths;
 
 		const fs::path callisto_asm_file;
 		std::unordered_set<int> other_module_addresses;

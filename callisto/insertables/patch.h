@@ -25,7 +25,7 @@ namespace callisto {
 		static constexpr auto MAX_ROM_SIZE = 16 * 1024 * 1024;
 
 		const fs::path patch_path;
-		std::vector<const char*> additional_include_paths;
+		std::vector<fs::path> additional_include_paths;
 		std::vector<std::pair<size_t, size_t>> hijacks{};
 
 		std::unordered_set<ResourceDependency> determineDependencies() override;
