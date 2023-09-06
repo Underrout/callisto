@@ -15,6 +15,7 @@ namespace callisto {
 		real_module_folder_location(PathUtil::getUserModuleDirectoryPath(config.project_root.getOrThrow())),
 		cleanup_folder_location(PathUtil::getModuleCleanupDirectoryPath(config.project_root.getOrThrow())),
 		other_module_addresses(other_module_addresses),
+		additional_include_paths(additional_include_paths),
 		id(id),
 		module_header_file(registerConfigurationDependency(config.module_header, Policy::REINSERT).isSet() ? 
 			std::make_optional(config.module_header.getOrThrow()) : std::nullopt)
@@ -22,15 +23,6 @@ namespace callisto {
 		for (const auto& output_path : output_paths) {
 			fs::create_directories(output_path.parent_path());
 		}
-
-		this->additional_include_paths.reserve(additional_include_paths.size());
-		std::transform(additional_include_paths.begin(), additional_include_paths.end(),
-		std::back_inserter(this->additional_include_paths),
-		[](const fs::path& path) {
-			char* copy{ new char[path.string().size()] };
-			std::strcpy(copy, path.string().c_str());
-			return copy;
-		});
 	}
 
 	void Module::init() {
@@ -116,14 +108,21 @@ namespace callisto {
 			"1"
 		};
 
+		std::vector<const char*> as_c_strs{};
+		for (const auto& path : additional_include_paths) {
+			auto c_str{ new char[path.string().size() + 1] };
+			std::strcpy(c_str, path.string().c_str());
+			as_c_strs.push_back(c_str);
+		}
+
 		const patchparams params{
 			sizeof(struct patchparams),
 			"temp.asm",
 			rom_bytes.data(),
 			MAX_ROM_SIZE,
 			&unheadered_rom_size,
-			reinterpret_cast<const char**>(additional_include_paths.data()),
-			static_cast<int>(additional_include_paths.size()),
+			reinterpret_cast<const char**>(as_c_strs.data()),
+			static_cast<int>(as_c_strs.size()),
 			true,
 			&callisto_define,
 			1,
@@ -146,6 +145,12 @@ namespace callisto {
 
 		asar_reset();
 		const bool succeeded{ asar_patch_ex(&params) };
+
+		for (auto c_str : as_c_strs) {
+			delete[] c_str;
+		}
+
+		as_c_strs.clear();
 
 		int print_count;
 		const auto prints{ asar_getprints(&print_count) };
