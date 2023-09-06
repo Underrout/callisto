@@ -73,7 +73,7 @@ namespace callisto {
 			rom_bytes.data() + header_size,
 			MAX_ROM_SIZE,
 			&unheadered_rom_size,
-			reinterpret_cast<const char**>(additional_include_paths.data()),
+			reinterpret_cast<const char**>(as_c_strs.data()),
 			static_cast<int>(additional_include_paths.size()),
 			true,
 			&callisto_define,

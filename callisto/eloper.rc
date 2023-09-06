@@ -1,7 +1,7 @@
 1 ICON "icons\eloper.ico" 
     1 VERSIONINFO 
-          FILEVERSION     0, 2, 2, 0
-          PRODUCTVERSION  0, 2, 2, 0
+          FILEVERSION     0, 2, 3, 0
+          PRODUCTVERSION  0, 2, 3, 0
     {
         BLOCK "StringFileInfo" 
         {
@@ -9,11 +9,11 @@
             {
                 VALUE "CompanyName", "callisto developers\0" 
                 VALUE "FileDescription", "eloper - callisto subsystem\0"
-                VALUE "FileVersion", "v0.2.2\0"
+                VALUE "FileVersion", "v0.2.3\0"
                 VALUE "InternalName", "eloper\0" 
                 VALUE "OriginalFilename", "eloper.exe\0" 
                 VALUE "ProductName", "eloper\0" 
-                VALUE "ProductVersion", "v0.2.2\0"
+                VALUE "ProductVersion", "v0.2.3\0"
             }
         }
         BLOCK "VarFileInfo" 
