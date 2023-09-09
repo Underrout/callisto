@@ -53,6 +53,15 @@
          var shiftWindow = function() { scrollBy(0, -60) };
          window.addEventListener("hashchange", shiftWindow);
          function load() { if (window.location.hash) shiftWindow(); }
+
+         const goToTop = () => {
+            document.body.scrollIntoView({
+               behavior: "smooth",
+            });
+         };
+
+         const backToTopButton = document.querySelector(".back-to-top")
+         backToTopButton.addEventListener("click", goToTop)
       </script>
    </body>
 </html>

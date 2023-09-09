@@ -142,8 +142,11 @@ def post_process_doc(html_path: str, other_doc_names: list[str]):
     soup = BeautifulSoup(html, 'html.parser')
 
     for element in soup.find_all('a'):
-        if element['href'] in other_doc_names:
-            element['href'] += '.html'
+        try:
+            if element['href'] in other_doc_names:
+                element['href'] += '.html'
+        except:
+            pass
 
     with open(html_path, 'wb') as out:
         out.write(soup.prettify('utf-8'))

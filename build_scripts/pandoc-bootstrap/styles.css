@@ -59,7 +59,7 @@ blockquote {
     position: absolute;
     bottom: 0;
     width: 100%;
-    max-height: 6rem;
+    /* max-height: 8rem; */
     overflow: visible;
 }
 
