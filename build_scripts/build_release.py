@@ -1,8 +1,9 @@
 import os
 import subprocess
-from shutil import copyfile, rmtree
+from shutil import copyfile, rmtree, make_archive
 from distutils.dir_util import copy_tree
 from pathlib import Path
+import sys
 
 from git import Repo
 
@@ -43,7 +44,7 @@ PANDOC_COMMAND = 'pandoc {} -o {} --template ../pandoc-bootstrap/template.html -
 '--include-after-body ../pandoc-bootstrap/footer.html ' \
 '--standalone --mathjax --toc --toc-depth 2'
 
-NEW_VERSION = (0, 2, 4)  # TODO make this a parameter for the script
+NEW_VERSION = tuple(int(x) for x in sys.argv[1].split('.'))
 
 
 def compile_callisto(output_location: str, callisto_location: str, callisto_build_folder: str, 
@@ -201,6 +202,9 @@ def main(package_path: str):
     ensure_doc_repo(CALLISTO_DOCS_FOLDER, CALLISTO_DOCS_URL)
     create_html_docs_at(f'{package_path}/{CALLISTO_DOCS_OUTPUT_FOLDER}', CALLISTO_DOCS_FOLDER, 
                         PANDOC_COMMAND, package_path, NEW_VERSION)
+    
+    make_archive(package_path, 'zip', package_path)
+    # rmtree(package_path)
 
 
 if __name__ == '__main__':
