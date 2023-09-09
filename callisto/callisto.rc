@@ -5,8 +5,8 @@
 5 ICON "icons\callisto5.ico"
 6 ICON "icons\callisto6.ico"
 1 VERSIONINFO 
-      FILEVERSION     0, 2, 3, 0
-      PRODUCTVERSION  0, 2, 3, 0
+      FILEVERSION     0, 2, 4, 0
+      PRODUCTVERSION  0, 2, 4, 0
 {
     BLOCK "StringFileInfo" 
     {
@@ -14,11 +14,11 @@
         {
             VALUE "CompanyName", "callisto developers\0" 
             VALUE "FileDescription", "callisto - SMW build system\0"
-            VALUE "FileVersion", "v0.2.3\0"
+            VALUE "FileVersion", "v0.2.4\0"
             VALUE "InternalName", "callisto\0" 
             VALUE "OriginalFilename", "callisto.exe\0" 
             VALUE "ProductName", "callisto\0" 
-            VALUE "ProductVersion", "v0.2.3\0"
+            VALUE "ProductVersion", "v0.2.4\0"
         }
     }
     BLOCK "VarFileInfo" 
