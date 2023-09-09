@@ -18,9 +18,34 @@
       $endfor$
    </head>
    <body>
-      $for(include-before)$
-      $include-before$
-      $endfor$
+   <nav class="navbar fixed-top navbar-expand-lg navbar-dark bg-dark">
+      <a class="navbar-brand" href="https://github.com/Underrout/callisto/releases/tag/v$vmajor$.$vminor$.$vpatch$">Callisto <small>v$vmajor$.$vminor$.$vpatch$</small></a>
+      <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarSupportedContent">
+         <ul class="navbar-nav mr-auto">
+            <li class="nav-item">
+               <a class="nav-link" href="Home.html">Home</a>
+            </li>
+            <li class="nav-item dropdown">
+               <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+               Sections
+               </a>
+               <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                  <a class="dropdown-item" href="Callisto-Setup-(new-project).html">Callisto Setup (new project)</a>
+                  <a class="dropdown-item" href="Callisto-Setup-(preexisting-project).html">Callisto Setup (preexisting project)</a>
+                  <a class="dropdown-item" href="Using-Callisto.html">Using Callisto</a>
+                  <div class="dropdown-divider"></div>
+                  <a class="dropdown-item" href="Advanced-Topics.html">Advanced Topics</a>
+                  <div class="dropdown-divider"></div>
+                  <a class="dropdown-item" href="Frequently-Asked-Questions.html">FAQ</a>
+               </div>
+            </li>
+         </ul>
+      </div>
+   </nav>
+
       <div class="container">
          $if(title)$<h1 class="display-4">$title$</h1>$endif$
          $if(toc)$
@@ -34,6 +59,7 @@
          </div>
          $else$$body$$endif$
       </div>
+      <div style="padding-top: 5rem"></div>
       $for(include-after)$
       $include-after$
       $endfor$

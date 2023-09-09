@@ -39,8 +39,8 @@ CALLISTO_BUILD_OUTPUT_FRAGMENTS = [
     ( 'Release/LICENSE', 'LICENSE' )
 ]
 
-PANDOC_COMMAND = 'pandoc {} -o {} --template ../pandoc-bootstrap/template.html --include-in-header ../pandoc-bootstrap/header.html' \
-' --include-before-body ../pandoc-bootstrap/navbar.html --include-after-body ../pandoc-bootstrap/footer.html ' \
+PANDOC_COMMAND = 'pandoc {} -o {} --template ../pandoc-bootstrap/template.html --include-in-header ../pandoc-bootstrap/header.html ' \
+'--include-after-body ../pandoc-bootstrap/footer.html ' \
 '--standalone --mathjax --toc --toc-depth 2'
 
 NEW_VERSION = (0, 2, 4)  # TODO make this a parameter for the script
@@ -152,7 +152,7 @@ def post_process_doc(html_path: str, other_doc_names: list[str]):
         out.write(soup.prettify('utf-8'))
 
 
-def create_html_docs_at(output_folder: str, input_folder: str, pandoc_command: str, package_folder: str):
+def create_html_docs_at(output_folder: str, input_folder: str, pandoc_command: str, package_folder: str, version: tuple[int, int, int]):
     if not os.path.exists(output_folder):
         os.makedirs(output_folder)
 
@@ -168,7 +168,13 @@ def create_html_docs_at(output_folder: str, input_folder: str, pandoc_command: s
         output_path += '.html'
 
         spaced = name.replace('-', ' ')
-        subprocess.run(pandoc_command.format(input_path, output_path).split() + [f'--metadata=title:{spaced}'])
+
+        subprocess.run(pandoc_command.format(input_path, output_path).split() + 
+                       [f'--metadata=title:{spaced}'] +
+                       ['-V', f'vmajor={version[0]}'] +
+                       ['-V', f'vminor={version[1]}'] +
+                       ['-V', f'vpatch={version[2]}']
+        )
 
     for filename in os.listdir(output_folder):
         html_path = os.path.join(output_folder, filename)
@@ -193,7 +199,8 @@ def main(package_path: str):
     compile_callisto(package_path, CALLISTO_REPO_PATH, CALLISTO_BUILD_PATH, CALLISTO_BUILD_OUTPUT_FRAGMENTS, NEW_VERSION)
 
     ensure_doc_repo(CALLISTO_DOCS_FOLDER, CALLISTO_DOCS_URL)
-    create_html_docs_at(f'{package_path}/{CALLISTO_DOCS_OUTPUT_FOLDER}', CALLISTO_DOCS_FOLDER, PANDOC_COMMAND, package_path)
+    create_html_docs_at(f'{package_path}/{CALLISTO_DOCS_OUTPUT_FOLDER}', CALLISTO_DOCS_FOLDER, 
+                        PANDOC_COMMAND, package_path, NEW_VERSION)
 
 
 if __name__ == '__main__':
