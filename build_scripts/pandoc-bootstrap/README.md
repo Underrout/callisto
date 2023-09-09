@@ -4,3 +4,5 @@ Bootstrap 4 template for Pandoc - Converts markdown files into Twitter Bootstrap
 ```
 pandoc test.md -o test.html --template template.html --include-in-header header.html --include-before-body navbar.html --include-after-body footer.html --standalone --mathjax --toc --toc-depth 2
 ```
+
+Modifications by me (underway). All credit for original template goes to the original author.
