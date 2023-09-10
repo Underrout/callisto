@@ -47,7 +47,8 @@ namespace callisto {
 
 		const int id;
 
-		std::unordered_set<size_t> our_module_addresses{};
+		std::shared_ptr<std::unordered_set<int>> current_module_addresses;
+		std::unordered_set<int> our_module_addresses{};
 
 		const fs::path input_path;
 		const std::vector<fs::path> output_paths;
@@ -60,7 +61,6 @@ namespace callisto {
 		std::vector<fs::path> additional_include_paths;
 
 		const fs::path callisto_asm_file;
-		std::unordered_set<int> other_module_addresses;
 		const std::optional<fs::path> module_header_file;
 
 		void emitOutputFiles() const;
@@ -82,10 +82,6 @@ namespace callisto {
 	public:
 		static std::string modulePathToName(const fs::path& path);
 
-		const std::unordered_set<size_t>& getModuleAddresses() const {
-			return our_module_addresses;
-		}
-
 		const std::vector<fs::path>& getOutputPaths() const {
 			return output_paths;
 		};
@@ -93,7 +89,7 @@ namespace callisto {
 		Module(const Configuration& config,
 			const fs::path& input_path,
 			const fs::path& callisto_asm_file,
-			const std::unordered_set<int>& other_module_addresses,
+			std::shared_ptr<std::unordered_set<int>> current_module_addresses,
 			int id,
 			const std::vector<fs::path>& additional_include_paths = {});
 

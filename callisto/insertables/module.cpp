@@ -4,7 +4,7 @@ namespace callisto {
 	Module::Module(const Configuration& config,
 		const fs::path& input_path,
 		const fs::path& callisto_asm_file,
-		const std::unordered_set<int>& other_module_addresses,
+		std::shared_ptr<std::unordered_set<int>> current_module_addresses,
 		int id,
 		const std::vector<fs::path>& additional_include_paths) :
 		RomInsertable(config), 
@@ -14,7 +14,7 @@ namespace callisto {
 		callisto_asm_file(callisto_asm_file),
 		real_module_folder_location(PathUtil::getUserModuleDirectoryPath(config.project_root.getOrThrow())),
 		cleanup_folder_location(PathUtil::getModuleCleanupDirectoryPath(config.project_root.getOrThrow())),
-		other_module_addresses(other_module_addresses),
+		current_module_addresses(current_module_addresses),
 		additional_include_paths(additional_include_paths),
 		id(id),
 		module_header_file(registerConfigurationDependency(config.module_header, Policy::REINSERT).isSet() ? 
@@ -191,6 +191,8 @@ namespace callisto {
 			emitOutputFiles();
 			emitPlainAddressFile();
 
+			current_module_addresses->insert(our_module_addresses.begin(), our_module_addresses.end());
+
 			fs::current_path(prev_folder);
 		}
 		else {
@@ -279,7 +281,7 @@ namespace callisto {
 					continue;
 				}
 
-				if (other_module_addresses.contains(label.location)) {
+				if (current_module_addresses->contains(label.location)) {
 					// label belongs to imported module, skip it
 					continue;
 				}
@@ -329,7 +331,25 @@ namespace callisto {
 		const auto labels{ asar_getalllabels(&label_count) };
 
 		for (int i{ 0 }; i != label_count; ++i) {
-			our_module_addresses.insert(labels[i].location);
+			const auto& label{ labels[i] };
+			const auto name{ std::string(label.name) };
+
+			if (name.at(0) == ':') {
+				// it's a relative label (+, -, ++, ...), skip it
+				continue;
+			}
+
+			if (name.find('.') != std::string::npos) {
+				// it's a struct field (Struct.field), skip it
+				continue;
+			}
+
+			if (current_module_addresses->contains(label.location)) {
+				// label belongs to imported module, skip it
+				continue;
+			}
+
+			our_module_addresses.insert(label.location);
 		}
 	}
 

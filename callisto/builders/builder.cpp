@@ -148,6 +148,14 @@ namespace callisto {
 			fs::remove_all(target);
 			fs::copy(source, target, fs::copy_options::overwrite_existing | fs::copy_options::recursive);
 		}
+
+		const auto cleanup_source{ PathUtil::getModuleCleanupDirectoryPath(project_root) };
+		const auto cleanup_target{ PathUtil::getModuleCleanupCacheDirectoryPath(project_root) };
+		fs::create_directories(cleanup_target);
+		if (fs::exists(cleanup_source)) {
+			fs::remove_all(cleanup_target);
+			fs::copy(cleanup_source, cleanup_target, fs::copy_options::overwrite_existing | fs::copy_options::recursive);
+		}
 	}
 
 	void Builder::moveTempToOutput(const Configuration& config) {
@@ -337,6 +345,7 @@ namespace callisto {
 		const auto project_root{ config.project_root.getOrThrow() };
 
 		fs::remove_all(PathUtil::getUserModuleDirectoryPath(project_root));
+		fs::remove_all(PathUtil::getModuleCleanupDirectoryPath(project_root));
 
 		fs::create_directories(PathUtil::getModuleCleanupDirectoryPath(project_root));
 		fs::create_directories(PathUtil::getModuleOldSymbolsDirectoryPath(project_root));
