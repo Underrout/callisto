@@ -360,6 +360,8 @@ namespace callisto {
 			"if not(defined(\"{}_{}\"))\n\n"
 			"; Asar compatible file containing information about callisto, can be imported using incsrc as needed\n\n"
 			"{}"
+			"; Marker define to mark that callisto.asm has been included\n"
+			"!{}_{} = 1\n\n"
 			"; Marker define to determine that callisto is assembling a file\n"
 			"!{}_{} = 1\n\n"
 			"; Define containing callisto's version number as a string\n"
@@ -393,8 +395,9 @@ namespace callisto {
 			"endif\n"
 			"endmacro\n\n"
 			"endif\n",
-			DEFINE_PREFIX, ASSEMBLING_DEFINE_NAME,
+			DEFINE_PREFIX, INCLUDED_DEFINE_NAME,
 			profile_part,
+			DEFINE_PREFIX, INCLUDED_DEFINE_NAME,
 			DEFINE_PREFIX, ASSEMBLING_DEFINE_NAME,
 			DEFINE_PREFIX, VERSION_DEFINE_NAME, CALLISTO_VERSION_MAJOR, CALLISTO_VERSION_MINOR, CALLISTO_VERSION_PATCH,
 			DEFINE_PREFIX, VERSION_DEFINE_NAME, MAJOR_VERSION_DEFINE_NAME, CALLISTO_VERSION_MAJOR,

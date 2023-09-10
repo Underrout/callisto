@@ -44,6 +44,7 @@ namespace callisto {
 		static constexpr auto MINOR_VERSION_DEFINE_NAME{ "MINOR" };
 		static constexpr auto PATCH_VERSION_DEFINE_NAME{ "PATCH" };
 		static constexpr auto ASSEMBLING_DEFINE_NAME{ "ASSEMBLING" };
+		static constexpr auto INCLUDED_DEFINE_NAME{ "INCLUDED" };
 		static constexpr auto PROFILE_DEFINE_NAME{ "PROFILE" };
 		static constexpr auto MODULE_FOLDER_PATH_DEFINE_NAME{ "MODULES" };
 
