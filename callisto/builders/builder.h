@@ -61,7 +61,7 @@ namespace callisto {
 		using DependencyVector = std::vector<std::pair<Descriptor, std::pair<std::unordered_set<ResourceDependency>,
 			std::unordered_set<ConfigurationDependency>>>>;
 
-		std::unordered_set<int> module_addresses{};
+		std::shared_ptr<std::unordered_set<int>> module_addresses{ std::make_shared<std::unordered_set<int>>() };
 		int module_count{ 0 };
 	
 		Insertables buildOrderToInsertables(const Configuration& config);

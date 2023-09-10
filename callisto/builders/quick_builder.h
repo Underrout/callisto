@@ -30,7 +30,8 @@ namespace callisto {
 		std::optional<ResourceDependency> checkReinsertResourceDependencies(const json& resource_dependencies) const;
 
 		static void cleanModule(const fs::path& module_source_path, const fs::path& temporary_rom_path, const fs::path& project_root);
-		static void copyOldModuleOutput(const std::vector<fs::path>& module_output_paths, const fs::path& project_root);
+		void copyOldModuleOutput(const std::vector<fs::path>& module_output_paths, const fs::path& module_source_path, 
+			const fs::path& project_root);
 
 		static bool hijacksGoneBad(const std::vector<std::pair<size_t, size_t>>& old_hijacks, 
 			const std::vector<std::pair<size_t, size_t>>& new_hijacks);

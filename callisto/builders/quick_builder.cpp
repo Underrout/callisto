@@ -246,11 +246,13 @@ namespace callisto {
 			}
 			else {
 				if (descriptor.symbol == Symbol::MODULE) {
+
 					std::vector<fs::path> old_outputs{};
 					for (const auto& entry : report["module_outputs"][descriptor.name.value()]) {
 						old_outputs.push_back(entry);
 					}
-					copyOldModuleOutput(old_outputs, config.project_root.getOrThrow());
+					copyOldModuleOutput(old_outputs, descriptor.name.value(), config.project_root.getOrThrow());
+					++module_count;
 				}
 
 				spdlog::info(fmt::format(colors::PARTIAL_SUCCESS, "{} already up to date", descriptor.toString(config.project_root.getOrThrow())));
@@ -454,7 +456,7 @@ namespace callisto {
 
 	void QuickBuilder::cleanModule(const fs::path& module_source_path, const fs::path& temporary_rom_path, const fs::path& project_root) {
 		const auto relative{ fs::relative(module_source_path, project_root) };
-		const auto cleanup_file{ PathUtil::getModuleCleanupDirectoryPath(project_root) / 
+		const auto cleanup_file{ PathUtil::getModuleCleanupCacheDirectoryPath(project_root) /
 			((relative.parent_path() / relative.stem()).string() + ".addr")
 		};
 
@@ -534,7 +536,8 @@ namespace callisto {
 		}
 	}
 
-	void QuickBuilder::copyOldModuleOutput(const std::vector<fs::path>& module_output_paths, const fs::path& project_root) {
+	void QuickBuilder::copyOldModuleOutput(const std::vector<fs::path>& module_output_paths, 
+		const fs::path& module_source_path, const fs::path& project_root) {
 		for (const auto& output_path : module_output_paths) {
 			const auto relative{ fs::relative(output_path, PathUtil::getUserModuleDirectoryPath(project_root)) };
 			const auto source{ PathUtil::getModuleOldSymbolsDirectoryPath(project_root) / relative };
@@ -550,6 +553,24 @@ namespace callisto {
 			const auto target{ PathUtil::getUserModuleDirectoryPath(project_root) / relative };
 			fs::create_directories(target.parent_path());
 			fs::copy_file(source, target, fs::copy_options::overwrite_existing);
+
+			const auto rel_source{ fs::relative(module_source_path, project_root) };
+			const auto cleanup_file{ PathUtil::getModuleCleanupCacheDirectoryPath(project_root) /
+				((rel_source.parent_path() / rel_source.stem()).string() + ".addr")
+			};
+
+			std::ifstream module_cleanup_file{ cleanup_file };
+			std::string line;
+			while (std::getline(module_cleanup_file, line)) {
+				const auto address{ std::stoi(line) };
+				module_addresses->insert(address);
+			}
+
+			module_cleanup_file.close();
+
+			const auto cleanup_target{ PathUtil::getModuleCleanupDirectoryPath(project_root) / rel_source };
+			fs::create_directories(cleanup_target.parent_path());
+			fs::copy_file(cleanup_file, cleanup_target, fs::copy_options::overwrite_existing);
 		}
 	}
 

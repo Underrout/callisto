@@ -17,6 +17,7 @@ namespace callisto {
 
 		static constexpr auto MODULES_DIRECTORY_NAME{ "modules" };
 		static constexpr auto MODULES_CLEANUP_DIRECTORY_NAME{ "cleanup" };
+		static constexpr auto MODULES_CLEANUP_CACHE_DIRECTORY_NAME{ "cleanup_cache" };
 		static constexpr auto MODULES_OLD_DIRECTORY_NAME{ "old" };
 		static constexpr auto MODULES_CURRENT_DIRECTORY_NAME{ "current" };
 
@@ -83,6 +84,10 @@ namespace callisto {
 
 		static fs::path getModuleCleanupDirectoryPath(const fs::path& project_root) {
 			return getModuleCacheDirectoryPath(project_root) / MODULES_CLEANUP_DIRECTORY_NAME;
+		}
+
+		static fs::path getModuleCleanupCacheDirectoryPath(const fs::path& project_root) {
+			return getModuleCacheDirectoryPath(project_root) / MODULES_CLEANUP_CACHE_DIRECTORY_NAME;
 		}
 
 		static fs::path getUserModuleDirectoryPath(const fs::path& project_root) {
