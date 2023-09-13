@@ -568,7 +568,8 @@ namespace callisto {
 
 			module_cleanup_file.close();
 
-			const auto cleanup_target{ PathUtil::getModuleCleanupDirectoryPath(project_root) / rel_source };
+			const fs::path cleanup_target{ (PathUtil::getModuleCleanupDirectoryPath(project_root) / 
+				rel_source.parent_path() / rel_source.stem()).string() + ".addr"};
 			fs::create_directories(cleanup_target.parent_path());
 			fs::copy_file(cleanup_file, cleanup_target, fs::copy_options::overwrite_existing);
 		}
