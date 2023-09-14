@@ -157,12 +157,15 @@ namespace callisto {
 
 		if (check_conflicts_policy != Conflicts::NONE) {
 			conflict_thread_created = true;
-			conflict_thread = std::jthread([&] {
-				try {
-					reportConflicts(*write_map, config.conflict_log_file.isSet() ?
+			const auto conflict_log_file{ config.conflict_log_file.isSet() ?
 						std::make_optional(config.conflict_log_file.getOrThrow()) :
-						std::nullopt, check_conflicts_policy, conflict_thread_exception, 
-						config.ignored_conflict_symbols, config.project_root.getOrThrow());
+						std::nullopt };
+			const auto &ignored_symbols{ config.ignored_conflict_symbols };
+			const auto& project_root{ config.project_root.getOrThrow() };
+			conflict_thread = std::jthread([&conflict_thread_exception, write_map, conflict_log_file, check_conflicts_policy, ignored_symbols, project_root] {
+				try {
+					reportConflicts(write_map, conflict_log_file, check_conflicts_policy, conflict_thread_exception, 
+						ignored_symbols, project_root);
 				}
 				catch (...) {
 					conflict_thread_exception = std::current_exception();
@@ -186,13 +189,13 @@ namespace callisto {
 			removeBuildReport(config.project_root.getOrThrow());
 		}
 
+		GraphicsUtil::linkOutputRomToProjectGraphics(config, false);
+		GraphicsUtil::linkOutputRomToProjectGraphics(config, true);
+
 		cacheModules(config.project_root.getOrThrow());
 
 		Saver::writeMarkerToRom(temp_rom_path, config);
 		moveTempToOutput(config);
-
-		GraphicsUtil::linkOutputRomToProjectGraphics(config, false);
-		GraphicsUtil::linkOutputRomToProjectGraphics(config, true);
 
 		const auto build_end{ std::chrono::high_resolution_clock::now() };
 
@@ -262,7 +265,7 @@ namespace callisto {
 		return j;
 	}
 
-	void Rebuilder::reportConflicts(const WriteMap& write_map, const std::optional<fs::path>& log_file_path,
+	void Rebuilder::reportConflicts(std::shared_ptr<WriteMap> write_map, const std::optional<fs::path>& log_file_path,
 		Conflicts conflict_policy, std::exception_ptr conflict_exception, const std::unordered_set<Descriptor>& ignored_descriptors, 
 		const fs::path& project_root) {
 		if (conflict_policy == Conflicts::NONE) {
@@ -289,9 +292,9 @@ namespace callisto {
 		int conflicts{ 0 };
 		const auto log_to_file{ log_file_path.has_value() };
 
-		auto current{ write_map.begin() };
+		auto current{ write_map->begin() };
 		bool one_logged{ false };
-		while (current != write_map.end()) {
+		while (current != write_map->end()) {
 			auto& pc_offset{ current->first };
 			auto writes{ current->second };
 
@@ -309,7 +312,7 @@ namespace callisto {
 					}
 					++conflict_size;
 					++current;
-				} while (current != write_map.end() && writers == getWriters(current->second) && !writesAreIdentical(current->second, ignored_names));
+				} while (current != write_map->end() && writers == getWriters(current->second) && !writesAreIdentical(current->second, ignored_names));
 				const auto conflict_string{ getConflictString(
 					written_bytes, pc_offset, conflict_size, !log_to_file) };
 				++conflicts;

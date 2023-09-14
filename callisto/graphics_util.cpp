@@ -31,7 +31,7 @@ namespace callisto {
 		}
 
 		const auto original_folder_proxy{ config.output_rom.getOrThrow().parent_path() / fs::path(exgfx_or_gfx) };
-		createSymlink(original_folder_proxy, final_output_path);
+		linkOutputRomToProjectGraphics(config, exgfx);
 	}
 
 	void GraphicsUtil::importResources(const Configuration& config, const fs::path& rom_path, bool exgfx) {
@@ -40,18 +40,14 @@ namespace callisto {
 
 		const auto import_path{ getLunarMagicFolderPath(rom_path, exgfx) };
 
-		if (source_path != import_path) {
-			if (fs::exists(import_path)) {
-				fs::remove_all(import_path);
-			}
-
-			createSymlink(import_path, source_path);
+		if (!fs::exists(import_path) && import_path != source_path) {
+			ensureUsableDestination(import_path, source_path);
 		}
 
 		const auto command{ getImportCommand(exgfx) };
 		const auto exit_code{ callLunarMagic(config, command, rom_path.string()) };
 
-		deleteSymlink(import_path);
+		// cleanUpDestination(import_path);
 
 		if (exit_code != 0) {
 			throw InsertionException(fmt::format(
@@ -91,6 +87,10 @@ namespace callisto {
 					exgfx_or_gfx, old_folder.string(), exgfx_or_gfx
 				));
 			}
+		}
+		else {
+			fs::remove_all(old_folder);
+			fs::rename(new_folder, old_folder);
 		}
 	}
 
@@ -258,7 +258,17 @@ namespace callisto {
 		const auto project_folder{ target.getOrThrow() };
 
 		if (lunar_magic_export_folder != project_folder) {
-			createSymlink(lunar_magic_export_folder, project_folder);
+			try {
+				createSymlink(lunar_magic_export_folder, project_folder);
+			}
+			catch (const std::exception& e) {
+				throw CallistoException(fmt::format(colors::EXCEPTION,
+					"Failed to create symbolic link {} -> {}\n\r"
+					"Customized (Ex)GFX folders may not be supported on your disk format\n\r"
+					"Try commenting out the 'graphics'/'ex_graphics' settings or using a different drive/file system",
+					lunar_magic_export_folder.string(), project_folder.string()
+				));
+			}
 		}
 	}
 }
