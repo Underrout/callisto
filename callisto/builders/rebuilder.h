@@ -25,7 +25,7 @@ namespace callisto {
 		};
 
 		static json getJsonDependencies(const DependencyVector& dependencies, const PatchHijacksVector& hijacks);
-		static void reportConflicts(const WriteMap& write_map, const std::optional<fs::path>& log_file_path,
+		static void reportConflicts(std::shared_ptr<WriteMap> write_map, const std::optional<fs::path>& log_file_path,
 			Conflicts conflict_policy, std::exception_ptr conflict_exception, const std::unordered_set<Descriptor>& ignored_descriptors,
 			const fs::path& project_root);
 		static std::string getConflictString(const ConflictVector& conflict_vector, 

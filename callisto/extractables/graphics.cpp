@@ -13,11 +13,11 @@ namespace callisto {
 			try {
 				GraphicsUtil::exportProjectGraphicsFrom(config, extracting_rom, keep_symlink);
 			}
-			catch (const std::exception&) {
+			catch (const std::exception& e) {
 				throw ExtractionException(fmt::format(
 					colors::EXCEPTION,
-					"Failed to export Graphics from ROM {}",
-					extracting_rom.string()
+					"Failed to export Graphics from ROM {} with exception:\n\r{}",
+					extracting_rom.string(), e.what()
 				));
 			}
 		}

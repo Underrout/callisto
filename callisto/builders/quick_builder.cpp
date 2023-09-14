@@ -274,11 +274,11 @@ namespace callisto {
 				cacheModules(config.project_root.getOrThrow());
 				Saver::writeMarkerToRom(temporary_rom_path, config);
 
+				GraphicsUtil::linkOutputRomToProjectGraphics(config, false);
+				GraphicsUtil::linkOutputRomToProjectGraphics(config, true);
+
 				moveTempToOutput(config);
 			}
-
-			GraphicsUtil::linkOutputRomToProjectGraphics(config, false);
-			GraphicsUtil::linkOutputRomToProjectGraphics(config, true);
 
 			try {
 				fs::remove_all(config.temporary_folder.getOrThrow());

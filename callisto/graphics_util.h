@@ -9,6 +9,7 @@
 
 #ifdef _WIN32
 #include "junction/libntfslinks/include/Junction.h"
+#include "windows.h"
 #endif
 
 #include <spdlog/spdlog.h>
@@ -90,6 +91,36 @@ namespace callisto {
 			return bp::system(config.lunar_magic_path.getOrThrow().string(), args...);
 		}
 
+#ifdef _WIN32
+		static bool canUseJunction(const fs::path& link_name, const fs::path& target_name) {
+			if (link_name.root_name() != target_name.root_name()) {
+				return false;
+			}
+
+			const std::string root{ target_name.root_name().string() + '\\' };
+			char filesystem_name[MAX_PATH];
+			GetVolumeInformation(
+				root.data(),
+				NULL,
+				0,
+				NULL,
+				NULL,
+				NULL,
+				(LPSTR)filesystem_name,
+				MAX_PATH
+			);
+
+			return std::string(filesystem_name) == "NTFS";
+		}
+#endif
+
+		static void _create_symlink(const fs::path& link_name, const fs::path& target_name) {
+			if (fs::exists(link_name)) {
+				fs::remove(link_name);
+			}
+			fs::create_directory_symlink(target_name, link_name);
+		}
+
 	public:
 		static fs::path getExportFolderPath(const Configuration& config, bool exgfx) {
 			const auto& project_folder{ exgfx ? config.ex_graphics : config.graphics };
@@ -99,26 +130,70 @@ namespace callisto {
 			return config.output_rom.getOrThrow().parent_path() / getLunarMagicFolderName(exgfx);
 		}
 
+		static void ensureUsableDestination(const fs::path& destination, const fs::path& source) {
+			try {
+				createSymlink(destination, source);
+			}
+			catch (const std::exception& e) {
+				spdlog::warn(fmt::format(colors::WARNING,
+					"Failed to create symbolic link {} -> {}\n\r"
+					"Using hard copies instead, this can slow down build times\n\r"
+					"Underlying exception:\n\r{}",
+					destination.string(), source.string(),
+					e.what()
+				));
+				
+				try {
+					fs::copy(source, destination, fs::copy_options::overwrite_existing);
+				}
+				catch (const std::exception& e) {
+					throw CallistoException(fmt::format("Failed to create hard copy of folder {} at {}", source.string(), destination.string()));
+				}
+			}
+		}
+
+		static void cleanUpDestination(const fs::path& destination) {
+			try {
+				if (!fs::exists(destination)) {
+					return;
+				}
+
+				if (fs::is_symlink(destination)) {
+					fs::remove(destination);
+					return;
+				}
+
+				if (fs::is_directory(destination)) {
+					fs::remove_all(destination);
+					return;
+				}
+
+#ifdef _WIN32
+				libntfslinks::DeleteJunction(destination.string().c_str());
+#endif
+			}
+			catch (const std::exception& e) {
+				spdlog::warn(fmt::format(colors::WARNING, "Failed to clean up {}", destination.string()));
+			}
+		}
+
 		static void createSymlink(const fs::path& link_name, const fs::path& target_name) {
 #ifndef _WIN32
-			try {
-				if (fs::exists(link_name)) {
-					fs::remove_all(link_name);
-				}
-				fs::create_directory_symlink(target_name, link_name);
-			}
-			catch (const std::exception&) {
-				throw CallistoException(fmt::format("Failed to create symlink {} -> {}", link_name.string(), target_name.string()));
-			}
+			_create_symlink(link_name, target_name);
 #else
-			try {
-				if (fs::exists(link_name)) {
-					libntfslinks::DeleteJunction(link_name.string().c_str());
+			if (canUseJunction(link_name, target_name)) {
+				try {
+					if (fs::exists(link_name)) {
+						libntfslinks::DeleteJunction(link_name.string().c_str());
+					}
+					libntfslinks::CreateJunction(link_name.string().c_str(), target_name.string().c_str());
 				}
-				libntfslinks::CreateJunction(link_name.string().c_str(), target_name.string().c_str());
+				catch (const std::exception&) {
+					_create_symlink(link_name, target_name);
+				}
 			}
-			catch (const std::exception&) {
-				throw CallistoException(fmt::format("Failed to create junction {} -> {}", link_name.string(), target_name.string()));
+			else {
+				_create_symlink(link_name, target_name);
 			}
 #endif
 		}

@@ -142,13 +142,14 @@ namespace callisto {
 	}
 
 	void Saver::writeMarkerToRom(const fs::path& rom_path, const Configuration& config) {
-		const auto now{ std::chrono::file_clock::now() };
+		const auto now{ fs::last_write_time(rom_path) };
 		auto timestamp{ std::chrono::duration_cast<std::chrono::seconds>(now.time_since_epoch()).count() };
+		const auto now_as_seconds{ std::chrono::time_point<std::chrono::file_clock>(std::chrono::seconds(timestamp)) };
 		spdlog::debug("Marker timestamp is {:010X}", timestamp);
 
 		Marker::insertMarkerString(rom_path, getExtractableTypes(config), timestamp);
 
-		fs::last_write_time(rom_path, now);
+		fs::last_write_time(rom_path, now_as_seconds);
 
 		// little uggo to put this here, but I'm essentially storing the timestamp also to a cache file
 		// so that if the ROM is switched with a different ROM that was built at a different time, we can still tell
@@ -200,6 +201,13 @@ namespace callisto {
 			});
 
 			if (thread_exception != nullptr) {
+				try {
+					fs::remove_all(config.temporary_folder.getOrThrow());
+				}
+				catch (const std::runtime_error&) {
+					spdlog::warn(fmt::format(colors::WARNING, "Failed to remove temporary folder '{}'",
+						config.temporary_folder.getOrThrow().string()));
+				}
 				std::rethrow_exception(thread_exception);
 			}
 
