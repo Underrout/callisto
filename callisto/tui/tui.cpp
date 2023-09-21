@@ -81,7 +81,7 @@ namespace callisto {
 				Renderer([=] { 
 					if (config != nullptr && config->project_root.isSet()) {
 						return text(
-							" " + config->project_root.getOrThrow().stem().string() +
+							" " + config->project_root.getOrThrow().filename().string() +
 							" (" + config->project_root.getOrThrow().string() + ") "
 						) | bold;
 					}
