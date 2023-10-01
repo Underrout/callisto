@@ -108,7 +108,7 @@ namespace callisto {
 		void Levels::extract() {
 			spdlog::info(fmt::format(colors::RESOURCE, "Exporting levels"));
 
-			fs::path temporary_levels_folder{ levels_folder.string() + "_temp" };
+			fs::path temporary_levels_folder{ PathUtil::getTemporaryResourcePathFor(temp_folder, "levels") };
 			fs::remove_all(temporary_levels_folder);
 			fs::create_directories(temporary_levels_folder);
 
