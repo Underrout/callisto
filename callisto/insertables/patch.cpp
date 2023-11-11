@@ -35,15 +35,18 @@ namespace callisto {
 		// delete potential previous dependency report
 		fs::remove(patch_path.parent_path() / ".dependencies");
 
-		std::ifstream rom_file(temporary_rom_path, std::ios::in | std::ios::binary);
-		std::vector<char> rom_bytes((std::istreambuf_iterator<char>(rom_file)), (std::istreambuf_iterator<char>()));
-		rom_file.close();
-
-		int rom_size{ static_cast<int>(rom_bytes.size()) };
-		const auto header_size{ rom_size & 0x7FFF };
 		const auto str_patch_path{ patch_path.string() };
 
-		int unheadered_rom_size{ rom_size - header_size };
+		const auto rom_size{ fs::file_size(temporary_rom_path) };
+		const auto header_size{ (int)rom_size & 0x7FFF };
+		int unheadered_rom_size{ (int)rom_size - header_size };
+
+		std::vector<char> rom_bytes(MAX_ROM_SIZE);
+		std::vector<char> header(header_size);
+		std::ifstream rom_file(temporary_rom_path, std::ios::binary);
+		rom_file.read(reinterpret_cast<char*>(header.data()), header_size);
+		rom_file.read(reinterpret_cast<char*>(rom_bytes.data()), unheadered_rom_size);
+		rom_file.close();
 
 		spdlog::debug(fmt::format(
 			"Applying patch {} to temporary ROM {}:\n\r"
@@ -60,6 +63,10 @@ namespace callisto {
 			"1"
 		};
 
+		warnsetting disable_relative_path_warning;
+		disable_relative_path_warning.warnid = "1001";
+		disable_relative_path_warning.enabled = false;
+
 		std::vector<const char*> as_c_strs{};
 		for (const auto& path : additional_include_paths) {
 			auto c_str{ new char[path.string().size() + 1] };
@@ -74,14 +81,14 @@ namespace callisto {
 			MAX_ROM_SIZE,
 			&unheadered_rom_size,
 			reinterpret_cast<const char**>(as_c_strs.data()),
-			static_cast<int>(additional_include_paths.size()),
+			static_cast<int>(as_c_strs.size()),
 			true,
 			&callisto_define,
 			1,
 			nullptr,
 			nullptr,
-			nullptr,
-			0,
+			&disable_relative_path_warning,
+			1,
 			nullptr,
 			0,
 			true,
@@ -118,7 +125,8 @@ namespace callisto {
 				spdlog::warn(warnings[i].fullerrdata);
 			}
 			std::ofstream out_rom{ temporary_rom_path, std::ios::out | std::ios::binary };
-			out_rom.write(rom_bytes.data(), rom_bytes.size());
+			out_rom.write(header.data(), header_size);
+			out_rom.write(rom_bytes.data(), unheadered_rom_size);
 			out_rom.close();
 
 			int written_block_count;

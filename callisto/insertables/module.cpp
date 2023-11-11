@@ -82,7 +82,7 @@ namespace callisto {
 		const auto header_size{ (int)rom_size & 0x7FFF };
 		int unheadered_rom_size{ (int)rom_size - header_size };
 
-		std::vector<char> rom_bytes(unheadered_rom_size);
+		std::vector<char> rom_bytes(MAX_ROM_SIZE);
 		std::vector<char> header(header_size);
 		std::ifstream rom_file(temporary_rom_path, std::ios::binary);
 		rom_file.read(reinterpret_cast<char*>(header.data()), header_size);
@@ -425,6 +425,10 @@ namespace callisto {
 		std::vector<WrittenBlock> written_block_vec{};
 		for (int i{ 0 }; i != block_count; ++i) {
 			const auto& written_block{ written_blocks[i] };
+			if (written_block.pcoffset == 0x07FD7 && written_block.numbytes == 1) {
+				// ROM size byte in header, ignore write since it's usually gonna be Asar expanding the ROM
+				continue;
+			}
 			written_block_vec.push_back(WrittenBlock(written_block.pcoffset, written_block.snesoffset, written_block.numbytes));
 		}
 		std::sort(written_block_vec.begin(), written_block_vec.end(), [](const WrittenBlock& block1, const WrittenBlock& block2) {
@@ -487,14 +491,21 @@ namespace callisto {
 		int block_count{};
 		const auto written_blocks{ asar_getwrittenblocks(&block_count) };
 		for (int i{ 0 }; i != block_count; ++i) {
-			const auto start{ written_blocks[i].pcoffset };
+			const auto& written_block{ written_blocks[i] };
+			const auto start{ written_block.pcoffset };
+
+			if (start == 0x07FD7 && written_block.numbytes == 1) {
+				// Write to the ROM size byte of the SNES header
+				// This is written by Asar if it needs to expand the ROM, so ignore writes here
+				continue;
+			}
 
 			if (start < 0x80000) {
 				throw InsertionException(fmt::format(
 					colors::EXCEPTION,
 					"Module {} targets SNES address ${:06X} (unheadered), if this is not a mistake consider using a patch instead "
 					"as modules are not intended to modify original game code",
-					project_relative_path.string(), written_blocks[i].snesoffset
+					project_relative_path.string(), written_block.snesoffset
 				));
 			}
 		}
