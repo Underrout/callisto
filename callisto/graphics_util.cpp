@@ -161,8 +161,19 @@ namespace callisto {
 	}
 
 	void GraphicsUtil::verifyFilenames(const fs::path& graphics_folder, bool exgfx) {
+		std::vector<fs::path> paths_to_check{};
+
 		for (const auto& entry : fs::directory_iterator(graphics_folder)) {
-			verifyFilename(entry.path(), exgfx);
+			paths_to_check.push_back(entry.path());
+		}
+
+		if (!exgfx && paths_to_check.size() == 1 && paths_to_check[0].filename() == "AllGFX.bin") {
+			// Using AllGFX.bin and it's the only file in the folder, good to go
+			return;
+		}
+		
+		for (const auto& path : paths_to_check) {
+			verifyFilename(path, exgfx);
 		}
 	}
 
@@ -207,7 +218,14 @@ namespace callisto {
 		}
 
 		size_t parsed{};
-		const auto number{ std::stoi(number_part, &parsed, 16) };
+		int number;
+
+		try {
+			number = std::stoi(number_part, &parsed, 16);
+		}
+		catch (const std::exception& e) {
+			throw verification_exception;
+		}
 
 		if (parsed != 2 && parsed != 3) {
 			throw verification_exception;
