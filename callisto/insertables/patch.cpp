@@ -77,7 +77,7 @@ namespace callisto {
 		const patchparams params{
 			sizeof(struct patchparams),
 			str_patch_path.c_str(),
-			rom_bytes.data() + header_size,
+			rom_bytes.data(),
 			MAX_ROM_SIZE,
 			&unheadered_rom_size,
 			reinterpret_cast<const char**>(as_c_strs.data()),
