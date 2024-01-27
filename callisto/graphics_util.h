@@ -98,19 +98,13 @@ namespace callisto {
 			}
 
 			const std::string root{ target_name.root_name().string() + '\\' };
-			char filesystem_name[MAX_PATH];
+			DWORD fsFlags;
 			GetVolumeInformation(
 				root.data(),
-				NULL,
-				0,
-				NULL,
-				NULL,
-				NULL,
-				(LPSTR)filesystem_name,
-				MAX_PATH
+				NULL, 0, NULL, NULL, &fsFlags, NULL, 0
 			);
 
-			return std::string(filesystem_name) == "NTFS";
+			return fsFlags & FILE_SUPPORTS_REPARSE_POINTS;
 		}
 #endif
 
