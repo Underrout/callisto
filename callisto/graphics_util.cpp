@@ -65,6 +65,7 @@ namespace callisto {
 		if (oldAndNewDiffer(new_folder, old_folder, exgfx)) {
 			const auto exgfx_or_gfx{ exgfx ? "ExGFX" : "GFX" };
 			if (allow_user_input) {
+				std::lock_guard<std::mutex> lock(globals::cin_lock);
 				PromptUtil::yesNoPrompt(fmt::format(
 					colors::WARNING,
 					"{} stored at '{}' differ from {} stored in ROM, export {} from the ROM anyway?"

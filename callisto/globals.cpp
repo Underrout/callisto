@@ -14,5 +14,7 @@ namespace callisto {
 				? std::jthread::hardware_concurrency()
 				: proposed_thread_count;
 		}
+
+		std::mutex cin_lock;
 	}
 }
