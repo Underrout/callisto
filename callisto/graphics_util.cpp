@@ -74,8 +74,7 @@ namespace callisto {
 				), [&] {
 					spdlog::info(fmt::format(colors::NOTIFICATION, "Overwriting {} at '{}' with {} from ROM",
 					exgfx_or_gfx, old_folder.string(), exgfx_or_gfx));
-					fs::remove_all(old_folder);
-					fs::rename(new_folder, old_folder);
+					moveWithFallback(new_folder, old_folder);
 					spdlog::info(fmt::format(colors::PARTIAL_SUCCESS, 
 						"Successfully overwrote {} at '{}' with {} from ROM", exgfx_or_gfx, old_folder.string(), exgfx_or_gfx));
 				});
@@ -89,8 +88,7 @@ namespace callisto {
 			}
 		}
 		else {
-			fs::remove_all(old_folder);
-			fs::rename(new_folder, old_folder);
+			moveWithFallback(new_folder, old_folder);
 		}
 	}
 
