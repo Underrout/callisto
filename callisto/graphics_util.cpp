@@ -65,6 +65,7 @@ namespace callisto {
 		if (oldAndNewDiffer(new_folder, old_folder, exgfx)) {
 			const auto exgfx_or_gfx{ exgfx ? "ExGFX" : "GFX" };
 			if (allow_user_input) {
+				std::lock_guard<std::mutex> lock(globals::cin_lock);
 				PromptUtil::yesNoPrompt(fmt::format(
 					colors::WARNING,
 					"{} stored at '{}' differ from {} stored in ROM, export {} from the ROM anyway?"
@@ -74,8 +75,7 @@ namespace callisto {
 				), [&] {
 					spdlog::info(fmt::format(colors::NOTIFICATION, "Overwriting {} at '{}' with {} from ROM",
 					exgfx_or_gfx, old_folder.string(), exgfx_or_gfx));
-					fs::remove_all(old_folder);
-					fs::rename(new_folder, old_folder);
+					moveWithFallback(new_folder, old_folder);
 					spdlog::info(fmt::format(colors::PARTIAL_SUCCESS, 
 						"Successfully overwrote {} at '{}' with {} from ROM", exgfx_or_gfx, old_folder.string(), exgfx_or_gfx));
 				});
@@ -89,8 +89,7 @@ namespace callisto {
 			}
 		}
 		else {
-			fs::remove_all(old_folder);
-			fs::rename(new_folder, old_folder);
+			moveWithFallback(new_folder, old_folder);
 		}
 	}
 

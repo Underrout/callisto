@@ -91,6 +91,35 @@ namespace callisto {
 			return bp::system(config.lunar_magic_path.getOrThrow().string(), args...);
 		}
 
+		static void moveWithFallback(const fs::path& source, const fs::path& target) {
+			try {
+				fs::remove_all(target);
+				fs::rename(source, target);
+			}
+			catch (const fs::filesystem_error &e) {
+				spdlog::warn(fmt::format(colors::WARNING,
+					"Failed to move source folder '{}' to target folder '{}' via renaming, "
+					"you might have a file in '{}' open in another program. Falling back to element-wise overwrite. "
+					"Underlying filesystem error was:\n\r{}",
+					source.string(), target.string(), target.string(),
+					e.what()
+				));
+
+				try {
+					for (const auto& entry : fs::directory_iterator(source)) {
+						const auto destination{ fs::path(target) / entry.path().filename().string() };
+						fs::copy_file(entry.path(), destination, fs::copy_options::overwrite_existing);
+					}
+
+					fs::remove_all(source);
+					spdlog::debug("Successfully performed element-wise overwrite.");
+				}
+				catch (const fs::filesystem_error& ie) {
+					throw CallistoException(fmt::format("Failed to perform element-wise overwrite with underlying exception:\n\r{}", ie.what()));
+				}
+			}
+		}
+
 #ifdef _WIN32
 		static bool canUseJunction(const fs::path& link_name, const fs::path& target_name) {
 			if (link_name.root_name() != target_name.root_name()) {
@@ -98,19 +127,13 @@ namespace callisto {
 			}
 
 			const std::string root{ target_name.root_name().string() + '\\' };
-			char filesystem_name[MAX_PATH];
+			DWORD fsFlags;
 			GetVolumeInformation(
 				root.data(),
-				NULL,
-				0,
-				NULL,
-				NULL,
-				NULL,
-				(LPSTR)filesystem_name,
-				MAX_PATH
+				NULL, 0, NULL, NULL, &fsFlags, NULL, 0
 			);
 
-			return std::string(filesystem_name) == "NTFS";
+			return fsFlags & FILE_SUPPORTS_REPARSE_POINTS;
 		}
 #endif
 
