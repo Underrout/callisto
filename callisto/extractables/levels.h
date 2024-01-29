@@ -30,7 +30,7 @@ namespace callisto {
 			void normalize() const;
 			
 			std::vector<size_t> determineModifiedOffsets(const fs::path& extracting_rom);
-			fs::path createChunkedRom(const fs::path& temp_folder, size_t chunk_idx, size_t chunk_amount,
+			fs::path createChunkedRom(const fs::path& temp_folder, size_t chunk_idx, size_t levels, size_t skip_start_offset,
 				const fs::path& extracting_rom, const std::vector<size_t>& offsets);
 
 		public:

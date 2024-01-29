@@ -47,20 +47,23 @@ namespace callisto {
 			const auto rom_size{ fs::file_size(extracting_rom) };
 			const auto header_size{ rom_size & 0x7FFF };
 
-			std::ifstream rom_file{ extracting_rom };
-			rom_file.seekg(header_size + LAYER_1_POINTERS_OFFSET + LAYER_1_POINTER_SIZE - 1);
+			std::ifstream rom_file(extracting_rom, std::ios::in | std::ios::binary);
+			rom_file.seekg(header_size + LAYER_1_POINTERS_OFFSET);
 
 			std::vector<size_t> modified_offsets{};
 			auto curr_position{ header_size + LAYER_1_POINTERS_OFFSET };
 			for (auto i{ 0 }; i != LAYER_1_POINTERS_AMOUNT; ++i) {
-				char bank_byte;
-				rom_file.read(&bank_byte, 1);
-				if (static_cast<uint8_t>(bank_byte) >= 0x10) {
+				char pointer[LAYER_1_POINTER_SIZE];
+				rom_file.read(pointer, LAYER_1_POINTER_SIZE);
+
+				uint32_t pointer_val{ static_cast<uint32_t>(static_cast<uint8_t>(pointer[0])) |
+					(static_cast<uint32_t>(static_cast<uint8_t>(pointer[1])) << 8) | (static_cast<uint32_t>(static_cast<uint8_t>(pointer[2])) << 16) };
+
+				if (pointer_val >= 0x108000) {
 					modified_offsets.push_back(curr_position);
 				}
 
 				curr_position += LAYER_1_POINTER_SIZE;
-				rom_file.seekg(LAYER_1_POINTER_SIZE - 1, std::ios_base::cur);
 			}
 
 			rom_file.close();
@@ -68,7 +71,7 @@ namespace callisto {
 			return modified_offsets;
 		}
 
-		fs::path Levels::createChunkedRom(const fs::path& temp_folder, size_t chunk_idx, size_t chunk_amount, 
+		fs::path Levels::createChunkedRom(const fs::path& temp_folder, size_t chunk_idx, size_t levels, size_t skip_start_offset,
 			const fs::path& extracting_rom, const std::vector<size_t>& offsets) {
 
 			fs::path temp_rom_path{ (temp_folder / extracting_rom.stem()).string() + '_' 
@@ -76,9 +79,7 @@ namespace callisto {
 
 			fs::copy(extracting_rom, temp_rom_path, fs::copy_options::overwrite_existing);
 
-			const auto levels_per_chunk{ (int)((double)offsets.size() / chunk_amount + 0.5) };  // truncating intentionally
-			const auto skip_start_offset{ levels_per_chunk * chunk_idx };
-			const auto skip_end_offset{ chunk_idx == chunk_amount - 1 ? offsets.size() : skip_start_offset + levels_per_chunk };
+			const auto skip_end_offset{ skip_start_offset + levels };
 			size_t curr_offset{ 0 };
 
 			std::ofstream rom_file(temp_rom_path, std::ios::in | std::ios::out | std::ios::binary);
@@ -89,6 +90,12 @@ namespace callisto {
 
 				if (curr_offset == offsets.size()) {
 					break;
+				}
+
+				if (curr_offset > offsets.size()) {
+					throw ExtractionException(
+						"Something has gone terribly wrong, please open an issue here: https://github.com/Underrout/callisto/issues/new"
+					);
 				}
 
 				const auto modified_offset{ offsets[curr_offset++] };
@@ -120,12 +127,22 @@ namespace callisto {
 				std::exception_ptr thread_exception{};
 				std::vector<std::jthread> export_threads{};
 				std::vector<int> exit_codes(max_thread_count, 0);
+				std::vector<size_t> level_counts(max_thread_count, modified_offsets.size() / max_thread_count);
+				
+				size_t remainder{ modified_offsets.size() % max_thread_count };
+				for (size_t i{ 0 }; i != remainder; ++i) {
+					++level_counts[i];
+				}
+
+				std::vector<size_t> start_offsets(level_counts.size());
+				start_offsets[0] = 0;
+				std::partial_sum(level_counts.begin(), level_counts.end() - 1, start_offsets.begin() + 1);
 
 				for (size_t i{ 0 }; i != max_thread_count; ++i) {
 					export_threads.emplace_back([=, &exit_codes, &modified_offsets, &thread_exception] {
 						try {
 						const auto temp_rom{ createChunkedRom(temp_folder, i,
-							max_thread_count, extracting_rom, modified_offsets) };
+							level_counts.at(i), start_offsets.at(i),  extracting_rom, modified_offsets)};
 						const auto exit_code{ callLunarMagic("-ExportMultLevels",
 						temp_rom.string(), (temporary_levels_folder / "level").string()) };
 						exit_codes[i] = exit_code;

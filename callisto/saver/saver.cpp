@@ -156,6 +156,8 @@ namespace callisto {
 		const auto project_root{ config.project_root.getOrThrow() };
 		const auto last_rom_sync_path{ PathUtil::getLastRomSyncPath(project_root) };
 
+		fs::create_directories(last_rom_sync_path.parent_path());
+
 		json j;
 		j["last_sync_time"] = timestamp;
 
