@@ -15,9 +15,14 @@ VERSION_FORMAT = 'v{}.{}.{}'
 BUILD_FOLDER = 'build'
 
 CUSTOM_ASAR_REPO_URL = 'https://github.com/Underrout/asar.git'
-CUSTOM_ASAR_BRANCH = 'v1.81-callisto'
-CUSTOM_ASAR_TAG = 'c-v1.81'
+CUSTOM_ASAR_BRANCH_181 = 'v1.81-callisto'
+CUSTOM_ASAR_TAG_181 = 'c-v1.81'
 CUSTOM_ASAR_FOLDER_NAME = 'asar'
+BUILT_ASAR_FILE_PATH_181 = 'asar/Release/asar.dll'
+
+CUSTOM_ASAR_BRANCH_19 = 'v1.9-callisto'
+CUSTOM_ASAR_TAG_19 = 'c-v1.9'
+BUILT_ASAR_FILE_PATH_19 = 'asar/lib/Release/asar.dll'
 
 CALLISTO_DOCS_URL = 'https://github.com/Underrout/callisto.wiki.git'
 CALLISTO_DOCS_FOLDER = 'callisto-docs'
@@ -25,7 +30,6 @@ CALLISTO_DOCS_OUTPUT_FOLDER = 'documentation'
 CALLISTO_ICON_FILE = '../../callisto/icons/callisto1.ico'
 
 ASAR_BUILD_FOLDER = 'asar-build'
-BUILT_ASAR_FILE_PATH = 'asar/Release/asar.dll'
 
 CALLISTO_REPO_PATH = '../..'
 CALLISTO_BUILD_PATH = 'callisto'
@@ -82,7 +86,7 @@ def compile_callisto(output_location: str, callisto_location: str, callisto_buil
             copy_tree(rel_build_path, rel_output_path)
 
 
-def compile_custom_asar_at(output_location: str, asar_folder: str, architecture: str):
+def compile_custom_asar181_at(output_location: str, asar_folder: str, architecture: str):
     build_path = f'{ASAR_BUILD_FOLDER}-{architecture}'
 
     if not os.path.exists(build_path):
@@ -104,7 +108,32 @@ def compile_custom_asar_at(output_location: str, asar_folder: str, architecture:
     finally:
         os.chdir(main_dir)
     
-    copyfile(f'./{build_path}/{BUILT_ASAR_FILE_PATH}', output_location)
+    copyfile(f'./{build_path}/{BUILT_ASAR_FILE_PATH_181}', output_location)
+
+
+def compile_custom_asar19_at(output_location: str, asar_folder: str, architecture: str):
+    build_path = f'{ASAR_BUILD_FOLDER}-{architecture}'
+
+    if not os.path.exists(build_path):
+        os.makedirs(build_path)
+
+    main_dir = os.path.abspath(os.curdir)
+
+    os.chdir(build_path)
+
+    try:
+        s = subprocess.run(['cmake', f'-A {architecture}', f'../{asar_folder}/src'])
+        if s.returncode != 0:
+            raise RuntimeError(f'Failed to create build files for asar on architecture {architecture}')
+
+        s = subprocess.run(['cmake', '--build', '.', '--config', 'Release'])
+        if s.returncode != 0:
+            raise RuntimeError(f'Failed to compile asar on architecture {architecture}')
+    
+    finally:
+        os.chdir(main_dir)
+    
+    copyfile(f'./{build_path}/{BUILT_ASAR_FILE_PATH_19}', output_location)
 
 
 def check_unique_version(callisto_repo_path: str, proposed_version: tuple[int, int, int]):
@@ -123,8 +152,9 @@ def get_callisto_version_strings(callisto_repo_path) -> list[str]:
 def ensure_custom_asar_repo(folder_name: str, repo_url: str, branch_name: str, tag: str):
     if os.path.exists(folder_name):
         repo = Repo(folder_name)
-        repo.remotes.origin.pull(f'{branch_name}:{branch_name}')
-        repo.git.checkout(tag)
+        repo.remote().fetch()
+        repo.git.checkout(branch_name)
+        repo.git.reset("--hard", f"origin/{branch_name}")
     else:
         repo = Repo.clone_from(repo_url, folder_name)
         repo.git.checkout(tag)
@@ -190,12 +220,18 @@ def main(package_path: str):
     check_unique_version(CALLISTO_REPO_PATH, NEW_VERSION)
 
     os.makedirs(package_path)
-    os.makedirs(f'{package_path}/asar/32-bit')
-    os.makedirs(f'{package_path}/asar/64-bit')
+    os.makedirs(f'{package_path}/asar/v1.81/32-bit')
+    os.makedirs(f'{package_path}/asar/v1.81/64-bit')
+    os.makedirs(f'{package_path}/asar/v1.9/32-bit')
+    os.makedirs(f'{package_path}/asar/v1.9/64-bit')
 
-    ensure_custom_asar_repo(CUSTOM_ASAR_FOLDER_NAME, CUSTOM_ASAR_REPO_URL, CUSTOM_ASAR_BRANCH, CUSTOM_ASAR_TAG)
-    compile_custom_asar_at(f'{package_path}/asar/64-bit/asar.dll', CUSTOM_ASAR_FOLDER_NAME, 'x64')
-    compile_custom_asar_at(f'{package_path}/asar/32-bit/asar.dll', CUSTOM_ASAR_FOLDER_NAME, 'Win32')
+    ensure_custom_asar_repo(CUSTOM_ASAR_FOLDER_NAME, CUSTOM_ASAR_REPO_URL, CUSTOM_ASAR_BRANCH_181, CUSTOM_ASAR_TAG_181)
+    compile_custom_asar181_at(f'{package_path}/asar/v1.81/64-bit/asar.dll', CUSTOM_ASAR_FOLDER_NAME, 'x64')
+    compile_custom_asar181_at(f'{package_path}/asar/v1.81/32-bit/asar.dll', CUSTOM_ASAR_FOLDER_NAME, 'Win32')
+
+    ensure_custom_asar_repo(CUSTOM_ASAR_FOLDER_NAME, CUSTOM_ASAR_REPO_URL, CUSTOM_ASAR_BRANCH_19, CUSTOM_ASAR_TAG_19)
+    compile_custom_asar19_at(f'{package_path}/asar/v1.9/64-bit/asar.dll', CUSTOM_ASAR_FOLDER_NAME, 'x64')
+    compile_custom_asar19_at(f'{package_path}/asar/v1.9/32-bit/asar.dll', CUSTOM_ASAR_FOLDER_NAME, 'Win32')
 
     compile_callisto(package_path, CALLISTO_REPO_PATH, CALLISTO_BUILD_PATH, CALLISTO_BUILD_OUTPUT_FRAGMENTS, NEW_VERSION)
 
