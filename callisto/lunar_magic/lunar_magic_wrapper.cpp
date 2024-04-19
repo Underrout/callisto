@@ -94,6 +94,9 @@ namespace callisto {
 		if (Process32First(snapshot, &entry) == TRUE) {
 			while (Process32Next(snapshot, &entry) == TRUE) {
 				HANDLE module_snapshot{ CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, entry.th32ProcessID) };
+				if (module_snapshot == INVALID_HANDLE_VALUE) {
+					continue;
+				}
 
 				MODULEENTRY32 module_entry;
 				module_entry.dwSize = sizeof(MODULEENTRY32);
