@@ -58,10 +58,9 @@ namespace callisto {
 			header_size
 		));
 
-		const definedata callisto_define{
-			"CALLISTO_ASSEMBLING",
-			"1"
-		};
+		std::vector<definedata> defines{};
+		defines.emplace_back("CALLISTO_ASSEMBLING", "1");
+		defines.emplace_back("CALLISTO_INSERTION_TYPE", "Patch");
 
 		warnsetting disable_relative_path_warning;
 		disable_relative_path_warning.warnid = "1001";
@@ -83,8 +82,8 @@ namespace callisto {
 			reinterpret_cast<const char**>(as_c_strs.data()),
 			static_cast<int>(as_c_strs.size()),
 			true,
-			&callisto_define,
-			1,
+			defines.data(),
+			defines.size(),
 			nullptr,
 			nullptr,
 			&disable_relative_path_warning,
