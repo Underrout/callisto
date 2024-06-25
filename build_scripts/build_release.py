@@ -21,7 +21,7 @@ CUSTOM_ASAR_FOLDER_NAME = 'asar'
 BUILT_ASAR_FILE_PATH_181 = 'asar/Release/asar.dll'
 
 CUSTOM_ASAR_BRANCH_19 = 'v1.9-callisto'
-CUSTOM_ASAR_TAG_19 = 'c-v1.9'
+CUSTOM_ASAR_TAG_19 = 'c-v1.91'
 BUILT_ASAR_FILE_PATH_19 = 'asar/lib/Release/asar.dll'
 
 CALLISTO_DOCS_URL = 'https://github.com/Underrout/callisto.wiki.git'
@@ -222,16 +222,16 @@ def main(package_path: str):
     os.makedirs(package_path)
     os.makedirs(f'{package_path}/asar/v1.81/32-bit')
     os.makedirs(f'{package_path}/asar/v1.81/64-bit')
-    os.makedirs(f'{package_path}/asar/v1.9/32-bit')
-    os.makedirs(f'{package_path}/asar/v1.9/64-bit')
+    os.makedirs(f'{package_path}/asar/v1.91/32-bit')
+    os.makedirs(f'{package_path}/asar/v1.91/64-bit')
 
     ensure_custom_asar_repo(CUSTOM_ASAR_FOLDER_NAME, CUSTOM_ASAR_REPO_URL, CUSTOM_ASAR_BRANCH_181, CUSTOM_ASAR_TAG_181)
     compile_custom_asar181_at(f'{package_path}/asar/v1.81/64-bit/asar.dll', CUSTOM_ASAR_FOLDER_NAME, 'x64')
     compile_custom_asar181_at(f'{package_path}/asar/v1.81/32-bit/asar.dll', CUSTOM_ASAR_FOLDER_NAME, 'Win32')
 
     ensure_custom_asar_repo(CUSTOM_ASAR_FOLDER_NAME, CUSTOM_ASAR_REPO_URL, CUSTOM_ASAR_BRANCH_19, CUSTOM_ASAR_TAG_19)
-    compile_custom_asar19_at(f'{package_path}/asar/v1.9/64-bit/asar.dll', CUSTOM_ASAR_FOLDER_NAME, 'x64')
-    compile_custom_asar19_at(f'{package_path}/asar/v1.9/32-bit/asar.dll', CUSTOM_ASAR_FOLDER_NAME, 'Win32')
+    compile_custom_asar19_at(f'{package_path}/asar/v1.91/64-bit/asar.dll', CUSTOM_ASAR_FOLDER_NAME, 'x64')
+    compile_custom_asar19_at(f'{package_path}/asar/v1.91/32-bit/asar.dll', CUSTOM_ASAR_FOLDER_NAME, 'Win32')
 
     compile_callisto(package_path, CALLISTO_REPO_PATH, CALLISTO_BUILD_PATH, CALLISTO_BUILD_OUTPUT_FRAGMENTS, NEW_VERSION)
 
