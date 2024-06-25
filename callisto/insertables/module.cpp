@@ -103,10 +103,9 @@ namespace callisto {
 		disable_relative_path_warning.warnid = "1001";
 		disable_relative_path_warning.enabled = false;
 
-		const definedata callisto_define{
-			"CALLISTO_ASSEMBLING",
-			"1"
-		};
+		std::vector<definedata> defines{};
+		defines.emplace_back("CALLISTO_ASSEMBLING", "1");
+		defines.emplace_back("CALLISTO_INSERTION_TYPE", "Module");
 
 		std::vector<const char*> as_c_strs{};
 		for (const auto& path : additional_include_paths) {
@@ -124,8 +123,8 @@ namespace callisto {
 			reinterpret_cast<const char**>(as_c_strs.data()),
 			static_cast<int>(as_c_strs.size()),
 			true,
-			&callisto_define,
-			1,
+			defines.data(),
+			defines.size(),
 			nullptr,
 			nullptr,
 			&disable_relative_path_warning,
