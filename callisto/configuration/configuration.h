@@ -70,7 +70,6 @@ namespace callisto {
 		bool isValidStaticBuildOrderSymbol(const std::string& symbol) const;
 		bool isValidPatchSymbol(const fs::path& patch_path) const;
 		bool isValidModuleSymbol(const fs::path& module_path) const;
-		void verifyPatchModuleExclusivity();
 		void verifyModuleExclusivity();
 		void verifyPatchUniqueness();
 		void finalizeBuildOrder();

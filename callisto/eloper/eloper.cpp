@@ -176,10 +176,10 @@ bool trySetConfig(const std::optional<std::string>& profile_name) {
 		config = config_manager->getConfiguration(profile_name);
 	}
 	catch (const std::exception&) {
-		MessageBox(NULL, "Invalid configuration",
-			"Your callisto configuration is invalid. To use automatic exports and/or reloads, "
+		MessageBox(NULL, "Your callisto configuration is invalid. To use automatic exports and/or reloads, "
 			"your configuration must be fixed. Please reload your configuration in callisto to get "
-			"additional details on what's wrong.", MB_OK | MB_ICONWARNING);
+			"additional details on what's wrong.", "Invalid configuration",
+			MB_OK | MB_ICONWARNING);
 		return false;
 	}
 
