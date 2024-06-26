@@ -23,21 +23,6 @@ namespace callisto {
 		finalizeBuildOrder();
 	}
 
-	void Configuration::verifyPatchModuleExclusivity() {
-		if (patches.isSet() && !module_configurations.empty()) {
-			for (const auto& patch : patches.getOrThrow()) {
-				for (const auto& [_, module_configuration] : module_configurations) {
-					if (patch == module_configuration.input_path.getOrThrow()) {
-						throw ConfigException(fmt::format(
-							"{} cannot be used as a module and patch at the same time",
-							patch.string()
-						));
-					}
-				}
-			}
-		}
-	}
-
 	void Configuration::verifyModuleExclusivity() {
 		if (!module_configurations.empty()) {
 			std::unordered_set<std::string> seen_output_paths{};
@@ -100,7 +85,6 @@ namespace callisto {
 		transferConfiguredColors();
 		
 		verifyModuleExclusivity();
-		verifyPatchModuleExclusivity();
 		verifyPatchUniqueness();
 
 		for (const auto& symbol : _build_order.getOrDefault({})) {
