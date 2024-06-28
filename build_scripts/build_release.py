@@ -16,12 +16,12 @@ BUILD_FOLDER = 'build'
 
 CUSTOM_ASAR_REPO_URL = 'https://github.com/Underrout/asar.git'
 CUSTOM_ASAR_BRANCH_181 = 'v1.81-callisto'
-CUSTOM_ASAR_TAG_181 = 'c-v1.81'
+CUSTOM_ASAR_TAG_181 = 'c-v1.81-2'
 CUSTOM_ASAR_FOLDER_NAME = 'asar'
 BUILT_ASAR_FILE_PATH_181 = 'asar/Release/asar.dll'
 
 CUSTOM_ASAR_BRANCH_19 = 'v1.9-callisto'
-CUSTOM_ASAR_TAG_19 = 'c-v1.91'
+CUSTOM_ASAR_TAG_19 = 'c-v1.91-2'
 BUILT_ASAR_FILE_PATH_19 = 'asar/lib/Release/asar.dll'
 
 CALLISTO_DOCS_URL = 'https://github.com/Underrout/callisto.wiki.git'

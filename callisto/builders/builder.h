@@ -47,6 +47,8 @@ namespace callisto {
 		static constexpr auto INCLUDED_DEFINE_NAME{ "INCLUDED" };
 		static constexpr auto PROFILE_DEFINE_NAME{ "PROFILE" };
 		static constexpr auto MODULE_FOLDER_PATH_DEFINE_NAME{ "MODULES" };
+		static constexpr auto CALLISTO_FOLDER_PATH_DEFINE_NAME{ "PATH" };
+		static constexpr auto PROJECT_ROOT_PATH_DEFINE_NAME{ "ROOT" };
 
 		static constexpr auto CHECKSUM_LOCATION{ 0x7FDE };
 		static constexpr auto CLEAN_ROM_CHECKSUM{ 0xA0DA };

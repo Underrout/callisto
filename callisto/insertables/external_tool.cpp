@@ -3,6 +3,7 @@
 namespace callisto {
 	ExternalTool::ExternalTool(const std::string& name, const Configuration& config, const ToolConfiguration& tool_config)
 		: tool_name(name), tool_exe_path(tool_config.executable.getOrThrow()),
+		callisto_folder_path(PathUtil::getCallistoDirectoryPath(config.project_root.getOrThrow())),
 		tool_options(tool_config.options.getOrDefault("")),
 		working_directory(tool_config.working_directory.getOrThrow()),
 		take_user_input(tool_config.takes_user_input.getOrDefault(false)),
@@ -43,6 +44,22 @@ namespace callisto {
 		dependencies.insert(reported.begin(), reported.end());
 
 		return dependencies;
+	}
+
+	void ExternalTool::createLocalCallistoFile() {
+		const auto callisto_path{ PathUtil::sanitizeForAsar(PathUtil::convertToPosixPath(callisto_folder_path)) };
+		auto local_callisto_file_path{ working_directory };
+		local_callisto_file_path /= ".callisto";
+
+		std::ofstream out{ local_callisto_file_path.string()};
+		out << callisto_path.string();
+	}
+
+	void ExternalTool::deleteLocalCallistoFile() {
+		auto local_callisto_file_path{ working_directory };
+		local_callisto_file_path /= ".callisto";
+
+		fs::remove(local_callisto_file_path);
 	}
 
 	void ExternalTool::insert() {
@@ -87,6 +104,8 @@ namespace callisto {
 
 		const auto prev_folder{ fs::current_path() };
 		fs::current_path(working_directory);
+		deleteLocalCallistoFile();
+		createLocalCallistoFile();
 
 		int exit_code;
 		if (take_user_input) {
@@ -106,6 +125,7 @@ namespace callisto {
 			), bp::std_in < bp::null, bp::std_out > stdout, bp::std_err > stderr);
 		}
 
+		deleteLocalCallistoFile();
 		fs::current_path(prev_folder);
 
 		if (exit_code == 0) {

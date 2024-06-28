@@ -32,8 +32,12 @@ namespace callisto {
 		bool pass_rom;
 		const std::vector<ResourceDependency> static_dependencies;
 		const std::optional<fs::path> dependency_report_file_path;
+		const fs::path callisto_folder_path;
 
 		std::unordered_set<ResourceDependency> determineDependencies() override;
+
+		void createLocalCallistoFile();
+		void deleteLocalCallistoFile();
 
 	public:
 		ExternalTool(const std::string& name, const Configuration& config, const ToolConfiguration& tool_config);

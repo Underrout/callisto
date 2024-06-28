@@ -379,8 +379,20 @@ namespace callisto {
 			"!{}_{}_{} = {}\n"
 			"!{}_{}_{} = {}\n"
 			"!{}_{}_{} = {}\n\n"
+			"; Define containing path to project root\n"
+			"!{}_{} = \"{}\"\n\n"
+			"; Define containing path to .callisto folder\n"
+			"!{}_{} = \"{}\"\n\n"
 			"; Define containing path to callisto's module imprint folder\n"
 			"!{}_{} = \"{}\"\n\n"
+			"; Macro which includes a specified source code file relative to the project root\n"
+			"macro incsrc_file(file_path)\n"
+			"\tincsrc \"!{}_{}/<file_path>\"\n"
+			"endmacro\n\n"
+			"; Macro which includes a specified binary file relative to the project root\n"
+			"macro incbin_file(file_path)\n"
+			"\tincbin \"!{}_{}/<file_path>\"\n"
+			"endmacro\n\n"
 			"; Macro which includes the labels of the given module into the current file\n"
 			"macro include_module(module)\n"
 			"\tincsrc \"!{}_{}/<module>\"\n"
@@ -412,7 +424,11 @@ namespace callisto {
 			DEFINE_PREFIX, VERSION_DEFINE_NAME, MAJOR_VERSION_DEFINE_NAME, CALLISTO_VERSION_MAJOR,
 			DEFINE_PREFIX, VERSION_DEFINE_NAME, MINOR_VERSION_DEFINE_NAME, CALLISTO_VERSION_MINOR,
 			DEFINE_PREFIX, VERSION_DEFINE_NAME, PATCH_VERSION_DEFINE_NAME, CALLISTO_VERSION_PATCH,
+			DEFINE_PREFIX, PROJECT_ROOT_PATH_DEFINE_NAME, PathUtil::sanitizeForAsar(PathUtil::convertToPosixPath(config.project_root.getOrThrow())).string(),
+			DEFINE_PREFIX, CALLISTO_FOLDER_PATH_DEFINE_NAME, PathUtil::sanitizeForAsar(PathUtil::convertToPosixPath(PathUtil::getCallistoDirectoryPath(config.project_root.getOrThrow()))).string(),
 			DEFINE_PREFIX, MODULE_FOLDER_PATH_DEFINE_NAME, PathUtil::sanitizeForAsar(PathUtil::convertToPosixPath(module_folder)).string(),
+			DEFINE_PREFIX, PROJECT_ROOT_PATH_DEFINE_NAME,
+			DEFINE_PREFIX, PROJECT_ROOT_PATH_DEFINE_NAME,
 			DEFINE_PREFIX, MODULE_FOLDER_PATH_DEFINE_NAME,
 			DEFINE_PREFIX, VERSION_DEFINE_NAME, MAJOR_VERSION_DEFINE_NAME,
 			DEFINE_PREFIX, VERSION_DEFINE_NAME, MAJOR_VERSION_DEFINE_NAME,
