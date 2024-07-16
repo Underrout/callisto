@@ -493,6 +493,7 @@ namespace callisto {
 		}
 
 		trySet(module_header, config_file, level, root, user_variables);
+		trySet(callisto_header, config_file, level, root, user_variables);
 
 		for (auto& [_, tool] : generic_tool_configurations) {
 			trySet(tool.executable, config_file, level, tool.working_directory, user_variables);

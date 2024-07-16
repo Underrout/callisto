@@ -14,7 +14,7 @@ titlescreen = "resources/titlescreen.bps"
 credits = "resources/credits.bps"
 global_exanimation = "resources/global_exanimation.bps"
 
-# Uncomment this and point it to yourse savestate file
+# Uncomment this and point it to your savestate file
 # if you're using custom title screen movement
 # (You also need to edit the build order for this to 
 # have any effect!)
@@ -24,3 +24,8 @@ global_exanimation = "resources/global_exanimation.bps"
 # usual, you can just comment out these two lines
 graphics = "resources/graphics"
 ex_graphics = "resources/exgraphics"
+
+# Uncomment the following and point it towards a file
+# if you want it to be automatically incsrc'd whenever
+# you use incsrc "callisto.asm" in any resource
+# callisto_header = "resources/shared_code/callisto_header.asm"
