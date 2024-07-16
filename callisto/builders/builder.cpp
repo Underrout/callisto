@@ -365,6 +365,29 @@ namespace callisto {
 			: ""
 		};
 
+		const auto header_part{ [&]() {
+			if (config.callisto_header.isSet()) {
+				if (!fs::exists(config.callisto_header.getOrThrow())) {
+					throw InsertionException(fmt::format(
+						"Callisto header file \"{}\" does not exist",
+						config.callisto_header.getOrThrow().string()
+					));
+				}
+
+				return fmt::format(
+					"; Define containing path to user-specified header file\n"
+					"!{}_{} = \"{}\"\n\n"
+					"incsrc \"!{}_{}\"\n\n",
+					DEFINE_PREFIX, CALLISTO_HEADER_PATH_DEFINE_NAME,
+					PathUtil::sanitizeForAsar(PathUtil::convertToPosixPath(config.callisto_header.getOrThrow())).string(),
+					DEFINE_PREFIX, CALLISTO_HEADER_PATH_DEFINE_NAME
+				);
+			}
+			else {
+				return std::string("");
+			}
+		}() };
+
 		const auto info_string{ fmt::format(
 			"if not(defined(\"{}_{}\"))\n\n"
 			"; Asar compatible file containing information about callisto, can be imported using incsrc as needed\n\n"
@@ -379,6 +402,7 @@ namespace callisto {
 			"!{}_{}_{} = {}\n"
 			"!{}_{}_{} = {}\n"
 			"!{}_{}_{} = {}\n\n"
+			"{}"
 			"; Define containing path to project root\n"
 			"!{}_{} = \"{}\"\n\n"
 			"; Define containing path to .callisto folder\n"
@@ -424,6 +448,7 @@ namespace callisto {
 			DEFINE_PREFIX, VERSION_DEFINE_NAME, MAJOR_VERSION_DEFINE_NAME, CALLISTO_VERSION_MAJOR,
 			DEFINE_PREFIX, VERSION_DEFINE_NAME, MINOR_VERSION_DEFINE_NAME, CALLISTO_VERSION_MINOR,
 			DEFINE_PREFIX, VERSION_DEFINE_NAME, PATCH_VERSION_DEFINE_NAME, CALLISTO_VERSION_PATCH,
+			header_part,
 			DEFINE_PREFIX, PROJECT_ROOT_PATH_DEFINE_NAME, PathUtil::sanitizeForAsar(PathUtil::convertToPosixPath(config.project_root.getOrThrow())).string(),
 			DEFINE_PREFIX, CALLISTO_FOLDER_PATH_DEFINE_NAME, PathUtil::sanitizeForAsar(PathUtil::convertToPosixPath(PathUtil::getCallistoDirectoryPath(config.project_root.getOrThrow()))).string(),
 			DEFINE_PREFIX, MODULE_FOLDER_PATH_DEFINE_NAME, PathUtil::sanitizeForAsar(PathUtil::convertToPosixPath(module_folder)).string(),

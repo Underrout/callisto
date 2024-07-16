@@ -140,6 +140,8 @@ namespace callisto {
 		tsl::ordered_map<fs::path, ModuleConfiguration> module_configurations{};
 
 		PathConfigVariable module_header{ {"resources", "module_header"} };
+		
+		PathConfigVariable callisto_header{ {"resources", "callisto_header"} };
 
 		BuildOrder build_order{};
 
