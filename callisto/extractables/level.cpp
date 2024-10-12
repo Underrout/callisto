@@ -56,7 +56,7 @@ namespace callisto {
 				return { false, 4 };
 			}
 			if (standard_id == 0x24 || standard_id == 0x25) {
-				return { false, 4 };
+				return { false, 3 };
 			}
 			if (standard_id == 0x26) {
 				return { false, 3 };
