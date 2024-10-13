@@ -125,6 +125,31 @@ namespace callisto {
 			mwl[offset + 4] = bytes & 0xFF;
 		}
 
+		bool Level::canStrip(size_t data_pointer_offset, size_t source_address, size_t data_start_offset, std::vector<unsigned char>& mwl) {
+			if (data_pointer_offset != MWL_L2_DATA_POINTER_OFFSET) {
+				return source_address >> 16 != MLW_NO_STRIP_BANK_BYTE;
+			}
+			else {
+				const auto _0EF310_val{ mwl[data_start_offset] };
+				const auto custom_bg_tilemap_flag_on{ (_0EF310_val & 0b00000010) != 0 };
+				if (custom_bg_tilemap_flag_on) {
+					return true;
+				}
+
+				const auto vanilla_bg_tilemap_flag_on{ (_0EF310_val & 0b00001000) != 0 };
+				if (vanilla_bg_tilemap_flag_on) {
+					return false;
+				}
+
+				const auto lm_version{ (static_cast<uint16_t>(mwl[3]) << 8) | mwl[2] };
+				if (lm_version > 350) {
+					return true;
+				}
+
+				return source_address >> 16 != MLW_NO_STRIP_BANK_BYTE;
+			}
+		}
+
 		void Level::extract() {
 			spdlog::info(fmt::format(colors::RESOURCE, "Exporting level {} to file {}", level_number, mwl_file.string()));
 			spdlog::debug("Exporting level {} from ROM {} to file {}",
@@ -160,11 +185,12 @@ namespace callisto {
 				const auto data_start_offset{ fourBytesToInt(mwl_bytes, data_pointer_table_offset + data_pointer_offset) };
 				const auto source_address_offset{ data_start_offset + MWL_SOURCE_ADDRESS_OFFSET };
 				const auto source_address{ fourBytesToInt(mwl_bytes, source_address_offset) & 0xFFFFFF };
-				if (source_address >> 16 != MLW_NO_STRIP_BANK_BYTE) {
+
+				if (canStrip(data_pointer_offset, source_address, data_start_offset, mwl_bytes)) {
 					for (size_t i{ 0 }; i != MWL_SOURCE_ADDRES_SIZE; ++i) {
 						mwl_bytes[source_address_offset + i] = 0x0;
 					}
-					spdlog::debug("Stripped source address {:06X} at {:08X} in MWL file {}", 
+					spdlog::debug("Stripped source address {:06X} at {:08X} in MWL file {}",
 						source_address, source_address_offset, mwl_path.string());
 				}
 				else {
