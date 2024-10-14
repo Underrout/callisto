@@ -140,7 +140,7 @@ LRESULT CALLBACK wndProc(HWND hwnd, UINT umsg, WPARAM wparam, LPARAM lparam) {
 			if (notification_type < static_cast<int>(LunarMagicNotificationType::NEW_ROM)) {
 				return FALSE;
 			}
-			if (notification_type > static_cast<int>(LunarMagicNotificationType::SAVE_OW)) {
+			if (notification_type > static_cast<int>(LunarMagicNotificationType::DELETE_LEVEL)) {
 				return FALSE;
 			}
 
@@ -150,6 +150,8 @@ LRESULT CALLBACK wndProc(HWND hwnd, UINT umsg, WPARAM wparam, LPARAM lparam) {
 				handleNewRom((HWND)wparam);
 				break;
 
+			case LunarMagicNotificationType::DELETE_LEVEL:
+				[[fallthrough]];
 			case LunarMagicNotificationType::SAVE_LEVEL:
 				[[fallthrough]];
 			case LunarMagicNotificationType::SAVE_MAP16:
