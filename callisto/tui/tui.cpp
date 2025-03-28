@@ -93,7 +93,7 @@ namespace callisto {
 
 			Renderer([] { return separator(); }),
 
-			getConfigOnlyButton("Rebuild (R)", [=] { rebuildButton(); }),
+			getConfigOnlyButton("Rebuild (B)", [=] { rebuildButton(); }),
 			getConfigOnlyButton("Update (U)", [=] { quickbuildButton(); }),
 			getRomOnlyButton("Package (P)", [=] { packageButton(); }),
 
@@ -700,7 +700,7 @@ namespace callisto {
 				packageButton();
 				return true;
 			}
-			else if (event == Event::Character('r') || event == Event::Character('R')) {
+			else if (event == Event::Character('b') || event == Event::Character('B')) {
 				rebuildButton();
 				return true;
 			}
