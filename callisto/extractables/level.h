@@ -40,7 +40,7 @@ namespace callisto {
 			static uint8_t get27_29Size(const std::vector<unsigned char>& bytes, unsigned int offset);
 
 			static void writeFourBytes(std::vector<unsigned char>& mwl, unsigned int offset, unsigned int bytes);
-			static void writeFiveBytes(std::vector<unsigned char>& mwl, unsigned int offset, unsigned int bytes);
+			static void writeFiveBytes(std::vector<unsigned char>& mwl, unsigned int offset, unsigned long long bytes);
 
 
 		public:

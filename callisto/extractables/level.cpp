@@ -117,7 +117,7 @@ namespace callisto {
 			mwl[offset + 3] = bytes & 0xFF;
 		}
 
-		void Level::writeFiveBytes(std::vector<unsigned char>& mwl, unsigned int offset, unsigned int bytes) {
+		void Level::writeFiveBytes(std::vector<unsigned char>& mwl, unsigned int offset, unsigned long long bytes) {
 			mwl[offset] = (bytes >> 32) & 0xFF;
 			mwl[offset + 1] = (bytes >> 24) & 0xFF;
 			mwl[offset + 2] = (bytes >> 16) & 0xFF;
@@ -176,7 +176,7 @@ namespace callisto {
 			std::vector<long long> screen_exits_four{};
 			std::vector<unsigned int> screen_exit_indices_four{};
 			std::vector<bool> has_new_screen_set_four{};
-			std::vector<unsigned int> screen_exits_five{};
+			std::vector<unsigned long long> screen_exits_five{};
 			std::vector<unsigned int> screen_exit_indices_five{};
 			std::vector<bool> has_new_screen_set_five{};
 			auto curr_offset{ fourBytesToInt(mwl_bytes, data_pointer_table_offset + MWL_L1_DATA_POINTER_OFFSET) + 13 };
@@ -220,7 +220,7 @@ namespace callisto {
 			i = 0;
 			for (const auto& exit : screen_exits_five) {
 				const auto masked{ !has_new_screen_set_five.at(i) ? exit : exit | 0x8000000000 };
-				writeFourBytes(mwl_bytes, screen_exit_indices_five.at(i++), masked);
+				writeFiveBytes(mwl_bytes, screen_exit_indices_five.at(i++), masked);
 			}
 
 			std::ofstream out_mwl_file(mwl_path, std::ios::out | std::ios::binary);

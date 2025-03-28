@@ -47,7 +47,8 @@ enum class LunarMagicNotificationType {
 	NEW_ROM = 0,
 	SAVE_LEVEL = 3,
 	SAVE_MAP16 = 4,
-	SAVE_OW = 5
+	SAVE_OW = 5,
+	DELETE_LEVEL = 6
 };
 
 ATOM registerClass(HINSTANCE hInstance);
