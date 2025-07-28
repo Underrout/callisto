@@ -160,7 +160,34 @@ namespace callisto {
 				const auto data_start_offset{ fourBytesToInt(mwl_bytes, data_pointer_table_offset + data_pointer_offset) };
 				const auto source_address_offset{ data_start_offset + MWL_SOURCE_ADDRESS_OFFSET };
 				const auto source_address{ fourBytesToInt(mwl_bytes, source_address_offset) & 0xFFFFFF };
-				if (source_address >> 16 != MLW_NO_STRIP_BANK_BYTE) {
+
+				bool strip_address{ false };
+
+				if (data_pointer_offset == MWL_L2_DATA_POINTER_OFFSET) {
+					const auto first_byte{ mwl_bytes[data_start_offset] };
+					const auto C_flag{ (first_byte & 0b10) == 0b10 };
+					const auto V_flag{ (first_byte & 0b1000) == 0b1000 };
+					const auto LM_lo{ mwl_bytes.at(2) };
+					const auto LM_hi{ mwl_bytes.at(3) };
+					const auto LM_ver{ LM_lo + LM_hi * 0x100 };
+
+					if (C_flag) {
+						strip_address = true;
+					}
+					else if (V_flag) {
+						strip_address = false;
+					}
+					else if (LM_ver >= 0x350) {
+						strip_address = true;
+					}
+					else if (source_address >> 16 != MLW_NO_STRIP_BANK_BYTE) {
+						strip_address = true;
+					}
+				} else if (source_address >> 16 != MLW_NO_STRIP_BANK_BYTE) {
+					strip_address = true;
+				}
+
+				if (strip_address) {
 					for (size_t i{ 0 }; i != MWL_SOURCE_ADDRES_SIZE; ++i) {
 						mwl_bytes[source_address_offset + i] = 0x0;
 					}
