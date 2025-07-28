@@ -18,7 +18,8 @@ namespace callisto {
 		additional_include_paths(additional_include_paths),
 		id(id),
 		module_header_file(registerConfigurationDependency(config.module_header, Policy::REINSERT).isSet() ? 
-			std::make_optional(config.module_header.getOrThrow()) : std::nullopt)
+			std::make_optional(config.module_header.getOrThrow()) : std::nullopt),
+		disable_deprecation_warnings(config.disable_deprecation_warnings.getOrDefault(false))
 	{
 		for (const auto& output_path : output_paths) {
 			fs::create_directories(output_path.parent_path());
@@ -99,8 +100,9 @@ namespace callisto {
 			header_size
 		));
 
-		warnsetting disable_relative_path_warning;
+		std::vector<warnsetting> warn_settings{};
 
+		warnsetting disable_relative_path_warning;
 		if (asar_version() < 10900) {
 			disable_relative_path_warning.warnid = "1001";
 		}
@@ -108,6 +110,16 @@ namespace callisto {
 			disable_relative_path_warning.warnid = "Wrelative_path_used";
 		}
 		disable_relative_path_warning.enabled = false;
+
+		warn_settings.push_back(disable_relative_path_warning);
+
+		warnsetting disable_deprecation;
+
+		if (asar_version() >= 10900 && disable_deprecation_warnings) {
+			disable_deprecation.warnid = "Wfeature_deprecated";
+			disable_deprecation.enabled = false;
+			warn_settings.push_back(disable_deprecation);
+		}
 
 		std::vector<definedata> defines{};
 		defines.emplace_back("CALLISTO_ASSEMBLING", "1");
@@ -133,8 +145,8 @@ namespace callisto {
 			defines.size(),
 			nullptr,
 			nullptr,
-			&disable_relative_path_warning,
-			1,
+			warn_settings.data(),
+			static_cast<int>(warn_settings.size()),
 			&patch,
 			1,
 			true,

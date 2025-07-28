@@ -47,6 +47,8 @@ namespace callisto {
 
 		const int id;
 
+		const bool disable_deprecation_warnings;
+
 		std::shared_ptr<std::unordered_set<int>> current_module_addresses;
 		std::unordered_set<int> our_module_addresses{};
 

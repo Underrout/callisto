@@ -431,6 +431,8 @@ namespace callisto {
 		trySet(enable_automatic_exports, config_file, level);
 		trySet(enable_automatic_reloads, config_file, level);
 
+		trySet(disable_deprecation_warnings, config_file, level);
+
 		std::optional<toml::array> modules_array;
 		try {
 			auto& resources_table{ toml::find(config_file, "resources") };

@@ -112,6 +112,8 @@ namespace callisto {
 		PathConfigVariable conflict_log_file { {"settings", "conflict_log_file"} };
 		StringVectorConfigVariable ignored_conflict_symbol_strings{ {"settings", "ignored_conflict_symbols"} };
 
+		BoolConfigVariable disable_deprecation_warnings{ { "settings", "disable_deprecation_warnings" } };
+
 		BoolConfigVariable enable_automatic_reloads{ {"settings", "enable_automatic_reloads"} };
 		BoolConfigVariable enable_automatic_exports{ {"settings", "enable_automatic_exports"} };
 

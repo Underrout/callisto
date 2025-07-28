@@ -6,7 +6,8 @@ namespace callisto {
 		: RomInsertable(config), 
 		project_relative_path(fs::relative(patch_path, registerConfigurationDependency(config.project_root).getOrThrow())),
 		patch_path(patch_path),
-		additional_include_paths(additional_include_paths)
+		additional_include_paths(additional_include_paths),
+		disable_deprecation_warnings(config.disable_deprecation_warnings.getOrDefault(false))
 	{
 
 	}
@@ -62,7 +63,10 @@ namespace callisto {
 		defines.emplace_back("CALLISTO_ASSEMBLING", "1");
 		defines.emplace_back("CALLISTO_INSERTION_TYPE", "Patch");
 
+		std::vector<warnsetting> warn_settings{};
+
 		warnsetting disable_relative_path_warning;
+
 		if (asar_version() < 10900) {
 			disable_relative_path_warning.warnid = "1001";
 		}
@@ -70,6 +74,16 @@ namespace callisto {
 			disable_relative_path_warning.warnid = "Wrelative_path_used";
 		}
 		disable_relative_path_warning.enabled = false;
+
+		warn_settings.push_back(disable_relative_path_warning);
+
+		warnsetting disable_deprecation;
+
+		if (asar_version() >= 10900 && disable_deprecation_warnings) {
+			disable_deprecation.warnid = "Wfeature_deprecated";
+			disable_deprecation.enabled = false;
+			warn_settings.push_back(disable_deprecation);
+		}
 
 		std::vector<const char*> as_c_strs{};
 		for (const auto& path : additional_include_paths) {
@@ -91,8 +105,8 @@ namespace callisto {
 			defines.size(),
 			nullptr,
 			nullptr,
-			&disable_relative_path_warning,
-			1,
+			warn_settings.data(),
+			static_cast<int>(warn_settings.size()),
 			nullptr,
 			0,
 			true,
