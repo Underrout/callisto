@@ -117,6 +117,8 @@ namespace callisto {
 		BoolConfigVariable enable_automatic_reloads{ {"settings", "enable_automatic_reloads"} };
 		BoolConfigVariable enable_automatic_exports{ {"settings", "enable_automatic_exports"} };
 
+		BoolConfigVariable prefer_user_clean_rom{ {"settings", "prefer_user_clean_rom" } };
+
 		PathConfigVariable output_rom{ {"output", "output_rom"} };
 		PathConfigVariable temporary_folder{ {"output", "temporary_folder"} };
 		PathConfigVariable bps_package{ {"output", "bps_package"} };

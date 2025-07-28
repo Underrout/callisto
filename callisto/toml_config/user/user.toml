@@ -7,6 +7,13 @@
 [settings]
 clean_rom = "path/to/my/clean/rom.smc"
 
+# This will ensure that the path for your clean ROM is not changed by
+# other config files contained in projects or profiles, it's strongly
+# recommended to leave this set to true if you already specified your
+# clean ROM above, as there should never be a need to use a different
+# clean ROM for specific projects unless something is seriously wrong
+prefer_user_clean_rom = true
+
 # You can specify your emulators like this, you can have as many as you want
 # [emulators.Mesen2]
 # executable = "path/to/my/emulators/Mesen.exe"
