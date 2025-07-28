@@ -76,6 +76,15 @@ enable_automatic_reloads = true
 # set this to true.
 disable_deprecation_warnings = false
 
+# Setting this to true will speed up your level
+# exports during Save on Lunar Magic versions
+# before 3.50.
+# If you are using a Lunar Magic version
+# that is 3.50 or newer, this should 
+# ALWAYS be set to false or level exports
+# will very likely break.
+enable_multithreaded_level_export = false
+
 [output]
 
 # Path for the output ROM

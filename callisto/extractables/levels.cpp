@@ -4,7 +4,8 @@ namespace callisto {
 	namespace extractables {
 		Levels::Levels(const Configuration& config, const fs::path& extracting_rom, size_t max_thread_count)
 			: LunarMagicExtractable(config, extracting_rom), levels_folder(config.levels.getOrThrow()), 
-			temp_folder(config.temporary_folder.getOrThrow() / "chunked_roms"), max_thread_count(max_thread_count) {
+			temp_folder(config.temporary_folder.getOrThrow() / "chunked_roms"), max_thread_count(max_thread_count), 
+			multithread_export(config.enable_multithreaded_level_export.getOrDefault(false)) {
 
 			fs::create_directories(temp_folder);
 
@@ -123,7 +124,7 @@ namespace callisto {
 
 			const auto modified_offsets{ determineModifiedOffsets(extracting_rom) };
 
-			if (modified_offsets.size() > max_thread_count) { // would be silly to export in threads when we don't even have that many levels 
+			if (modified_offsets.size() > max_thread_count && multithread_export) { // would be silly to export in threads when we don't even have that many levels 
 				std::exception_ptr thread_exception{};
 				std::vector<std::jthread> export_threads{};
 				std::vector<int> exit_codes(max_thread_count, 0);

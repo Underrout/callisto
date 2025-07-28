@@ -442,6 +442,8 @@ namespace callisto {
 		trySet(enable_automatic_exports, config_file, level);
 		trySet(enable_automatic_reloads, config_file, level);
 
+		trySet(enable_multithreaded_level_export, config_file, level);
+
 		trySet(disable_deprecation_warnings, config_file, level);
 
 		std::optional<toml::array> modules_array;

@@ -116,6 +116,7 @@ namespace callisto {
 
 		BoolConfigVariable enable_automatic_reloads{ {"settings", "enable_automatic_reloads"} };
 		BoolConfigVariable enable_automatic_exports{ {"settings", "enable_automatic_exports"} };
+		BoolConfigVariable enable_multithreaded_level_export{ {"settings", "enable_multithreaded_level_export"} };
 
 		BoolConfigVariable prefer_user_clean_rom{ {"settings", "prefer_user_clean_rom" } };
 
