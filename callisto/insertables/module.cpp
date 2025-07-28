@@ -18,7 +18,8 @@ namespace callisto {
 		additional_include_paths(additional_include_paths),
 		id(id),
 		module_header_file(registerConfigurationDependency(config.module_header, Policy::REINSERT).isSet() ? 
-			std::make_optional(config.module_header.getOrThrow()) : std::nullopt)
+			std::make_optional(config.module_header.getOrThrow()) : std::nullopt),
+		disable_deprecation_warnings(config.disable_deprecation_warnings.getOrDefault(false))
 	{
 		for (const auto& output_path : output_paths) {
 			fs::create_directories(output_path.parent_path());
@@ -28,7 +29,7 @@ namespace callisto {
 	void Module::init() {
 		std::ostringstream temp_patch{};
 
-		temp_patch << "warnings disable W1011\n"
+		temp_patch << "if !assembler_ver < 10900\nwarnings disable W1011\nelse\nwarnings disable Wfreespace_leaked\nendif\n"
 			<< "if read1($00FFD5) == $23\nsa1rom\nelse\nlorom\nendif\n";
 
 		if (input_path.extension() == ".asm") {
@@ -99,9 +100,26 @@ namespace callisto {
 			header_size
 		));
 
+		std::vector<warnsetting> warn_settings{};
+
 		warnsetting disable_relative_path_warning;
-		disable_relative_path_warning.warnid = "1001";
+		if (asar_version() < 10900) {
+			disable_relative_path_warning.warnid = "1001";
+		}
+		else {
+			disable_relative_path_warning.warnid = "Wrelative_path_used";
+		}
 		disable_relative_path_warning.enabled = false;
+
+		warn_settings.push_back(disable_relative_path_warning);
+
+		warnsetting disable_deprecation;
+
+		if (asar_version() >= 10900 && disable_deprecation_warnings) {
+			disable_deprecation.warnid = "Wfeature_deprecated";
+			disable_deprecation.enabled = false;
+			warn_settings.push_back(disable_deprecation);
+		}
 
 		std::vector<definedata> defines{};
 		defines.emplace_back("CALLISTO_ASSEMBLING", "1");
@@ -127,8 +145,8 @@ namespace callisto {
 			defines.size(),
 			nullptr,
 			nullptr,
-			&disable_relative_path_warning,
-			1,
+			warn_settings.data(),
+			static_cast<int>(warn_settings.size()),
 			&patch,
 			1,
 			true,

@@ -19,7 +19,8 @@ namespace callisto {
 		class Level : public LunarMagicExtractable {
 		protected:
 			static constexpr auto MWL_L1_DATA_POINTER_OFFSET{ 0x8 };
-			static constexpr std::array<size_t, 4> MWL_DATA_POINTER_OFFSETS{ MWL_L1_DATA_POINTER_OFFSET, 0x10, 0x18, 0x20 };
+			static constexpr auto MWL_L2_DATA_POINTER_OFFSET{ 0x10 };
+			static constexpr std::array<size_t, 4> MWL_DATA_POINTER_OFFSETS{ MWL_L1_DATA_POINTER_OFFSET, MWL_L2_DATA_POINTER_OFFSET, 0x18, 0x20 };
 			static constexpr auto MWL_HEADER_POINTER_OFFSET{ 0x4 };
 			static constexpr auto MWL_SOURCE_ADDRESS_OFFSET{ 0x4 };
 			static constexpr auto MWL_SOURCE_ADDRES_SIZE{ 0x3 };

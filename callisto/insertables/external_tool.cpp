@@ -47,7 +47,7 @@ namespace callisto {
 	}
 
 	void ExternalTool::createLocalCallistoFile() {
-		const auto callisto_path{ PathUtil::sanitizeForAsar(PathUtil::convertToPosixPath(callisto_folder_path)) };
+		const auto callisto_path{ PathUtil::convertToPosixPath(callisto_folder_path) };
 		auto local_callisto_file_path{ working_directory };
 		local_callisto_file_path /= ".callisto";
 

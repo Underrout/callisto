@@ -112,8 +112,13 @@ namespace callisto {
 		PathConfigVariable conflict_log_file { {"settings", "conflict_log_file"} };
 		StringVectorConfigVariable ignored_conflict_symbol_strings{ {"settings", "ignored_conflict_symbols"} };
 
+		BoolConfigVariable disable_deprecation_warnings{ { "settings", "disable_deprecation_warnings" } };
+
 		BoolConfigVariable enable_automatic_reloads{ {"settings", "enable_automatic_reloads"} };
 		BoolConfigVariable enable_automatic_exports{ {"settings", "enable_automatic_exports"} };
+		BoolConfigVariable enable_multithreaded_level_export{ {"settings", "enable_multithreaded_level_export"} };
+
+		BoolConfigVariable prefer_user_clean_rom{ {"settings", "prefer_user_clean_rom" } };
 
 		PathConfigVariable output_rom{ {"output", "output_rom"} };
 		PathConfigVariable temporary_folder{ {"output", "temporary_folder"} };

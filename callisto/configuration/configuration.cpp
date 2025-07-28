@@ -395,9 +395,20 @@ namespace callisto {
 
 		const auto& root{ project_root };
 
+		bool is_user_level{ level == ConfigurationLevel::USER };
+		bool clean_rom_is_set{ clean_rom.isSet() };
+
+		if (level == ConfigurationLevel::USER) {
+			trySet(prefer_user_clean_rom, config_file, level);
+		}
+
+		bool prefer_user{ prefer_user_clean_rom.getOrDefault(false) };
+
 		trySet(use_text_map16_format, config_file, level);
 
-		trySet(clean_rom, config_file, level, root, user_variables);
+		if (level == ConfigurationLevel::USER || !clean_rom_is_set || !prefer_user) {
+			trySet(clean_rom, config_file, level, root, user_variables);
+		}
 
 		trySet(output_rom, config_file, level, root, user_variables);
 		trySet(temporary_folder, config_file, level, root, user_variables);
@@ -430,6 +441,10 @@ namespace callisto {
 
 		trySet(enable_automatic_exports, config_file, level);
 		trySet(enable_automatic_reloads, config_file, level);
+
+		trySet(enable_multithreaded_level_export, config_file, level);
+
+		trySet(disable_deprecation_warnings, config_file, level);
 
 		std::optional<toml::array> modules_array;
 		try {

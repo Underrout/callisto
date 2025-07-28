@@ -28,6 +28,8 @@ namespace callisto {
 		std::vector<fs::path> additional_include_paths;
 		std::vector<std::pair<size_t, size_t>> hijacks{};
 
+		bool disable_deprecation_warnings;
+
 		std::unordered_set<ResourceDependency> determineDependencies() override;
 
 		void fixAsarMemoryLeak() const;

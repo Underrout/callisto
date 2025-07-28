@@ -27,6 +27,8 @@ namespace callisto {
 			const fs::path temp_folder;
 			const size_t max_thread_count;
 
+			const bool multithread_export;
+
 			void normalize() const;
 			
 			std::vector<size_t> determineModifiedOffsets(const fs::path& extracting_rom);
