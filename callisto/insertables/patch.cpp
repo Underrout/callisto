@@ -63,7 +63,12 @@ namespace callisto {
 		defines.emplace_back("CALLISTO_INSERTION_TYPE", "Patch");
 
 		warnsetting disable_relative_path_warning;
-		disable_relative_path_warning.warnid = "1001";
+		if (asar_version() < 10900) {
+			disable_relative_path_warning.warnid = "1001";
+		}
+		else {
+			disable_relative_path_warning.warnid = "Wrelative_path_used";
+		}
 		disable_relative_path_warning.enabled = false;
 
 		std::vector<const char*> as_c_strs{};

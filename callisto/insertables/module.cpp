@@ -28,7 +28,7 @@ namespace callisto {
 	void Module::init() {
 		std::ostringstream temp_patch{};
 
-		temp_patch << "warnings disable W1011\n"
+		temp_patch << "if !assembler_ver < 10900\nwarnings disable W1011\nelse\nwarnings disable Wfreespace_leaked\nendif\n"
 			<< "if read1($00FFD5) == $23\nsa1rom\nelse\nlorom\nendif\n";
 
 		if (input_path.extension() == ".asm") {
@@ -100,7 +100,13 @@ namespace callisto {
 		));
 
 		warnsetting disable_relative_path_warning;
-		disable_relative_path_warning.warnid = "1001";
+
+		if (asar_version() < 10900) {
+			disable_relative_path_warning.warnid = "1001";
+		}
+		else {
+			disable_relative_path_warning.warnid = "Wrelative_path_used";
+		}
 		disable_relative_path_warning.enabled = false;
 
 		std::vector<definedata> defines{};
