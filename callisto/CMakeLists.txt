@@ -70,7 +70,7 @@ set(ASAR_GEN_DLL_TEST OFF)
 FetchContent_Declare(
 	asar
 	GIT_REPOSITORY https://github.com/Underrout/asar
-	GIT_TAG c-v1.81
+	GIT_TAG c-v1.91
 	SOURCE_SUBDIR src
 )
 FetchContent_MakeAvailable(asar)
