@@ -131,6 +131,9 @@ static_dependencies = [
     { path = "1DFC" }, 
 
 	{ path = "samples" },
-	{ path = "music" }
+	{ path = "music" },
+
+	{ path = "asm/SNES/patch.asm" },
+	{ path = "asm/SNES/patch2.asm" },
 ]
 dependency_report_file = ".dependencies"
