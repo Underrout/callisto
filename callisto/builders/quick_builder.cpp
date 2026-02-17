@@ -181,7 +181,7 @@ namespace callisto {
 							spdlog::warn(fmt::format(colors::WARNING, "Failed to remove temporary folder '{}'",
 								config.temporary_folder.getOrThrow().string()));
 						}
-						std::rethrow_exception(std::current_exception());
+						throw;
 					}
 					spdlog::info("");
 
@@ -213,7 +213,7 @@ namespace callisto {
 							spdlog::warn(fmt::format(colors::WARNING, "Failed to remove temporary folder '{}'",
 								config.temporary_folder.getOrThrow().string()));
 						}
-						std::rethrow_exception(std::current_exception());
+						throw;
 					}
 				}
 
