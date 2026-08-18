@@ -1,4 +1,5 @@
 #include "quick_builder.h"
+#include "must_rebuild_exception.h"
 
 namespace callisto {
 	QuickBuilder::QuickBuilder(const fs::path& project_root) {
@@ -11,9 +12,16 @@ namespace callisto {
 			));
 		}
 
-		std::ifstream build_report{ build_report_path };
-		report = json::parse(build_report);
-		build_report.close();
+		try {
+			std::ifstream build_report{ build_report_path };
+			report = json::parse(build_report);
+			build_report.close();
+		} catch (const std::exception& e) {
+			throw MustRebuildException(fmt::format(
+				colors::EXCEPTION,
+				"Failed to read build report JSON, must rebuild"
+			));
+		}
 	}
 
 	QuickBuilder::Result QuickBuilder::build(const Configuration& config) {
