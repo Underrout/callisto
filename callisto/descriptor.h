@@ -36,9 +36,9 @@ namespace callisto {
 			: symbol(j["symbol"]), name(j["name"].is_null() ? std::nullopt : std::make_optional(j["name"])) {}
 
 		json toJson() const {
-			auto j{ json({
+			auto j = json::object({
 				{"symbol", symbol},
-			}) };
+			});
 
 			if (hasName()) {
 				j["name"] = name.value();

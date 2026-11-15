@@ -113,7 +113,7 @@ namespace callisto {
 
 	void Saver::updateBuildReport(const fs::path& build_report, const std::vector<ExtractableType>& extracted_types) {
 		std::ifstream file{ build_report };
-		json j{ json::parse(file) };
+		json j = json::parse(file);
 
 		std::unordered_set<Symbol> extracted_symbols{};
 		for (const auto& extracted_type : extracted_types) {
