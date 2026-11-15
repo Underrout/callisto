@@ -176,7 +176,7 @@ namespace callisto {
 
 		if (!failed_dependency_report.has_value()) {
 			try {
-				const auto insertion_report{ getJsonDependencies(dependencies, patch_hijacks) };
+				const auto insertion_report = getJsonDependencies(dependencies, patch_hijacks);
 
 				writeBuildReport(config.project_root.getOrThrow(), createBuildReport(config, insertion_report));
 			}
@@ -238,11 +238,11 @@ namespace callisto {
 
 			seen.insert(descriptor);
 
-			auto block{ json({
+			auto block = json::object({
 				{"descriptor", descriptor.toJson()},
 				{"resource_dependencies", std::vector<json>()},
 				{"configuration_dependencies", std::vector<json>()}
-			}) };
+			});
 
 			for (const auto& resource_dependency : pair.first) {
 				block["resource_dependencies"].push_back(resource_dependency.toJson());

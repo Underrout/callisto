@@ -221,8 +221,8 @@ namespace callisto {
 		}
 
 		std::ifstream last_sync_file{ last_rom_sync_path };
-		const auto last_sync_json{ json::parse(last_sync_file) };
-		const auto last_sync_time{ last_sync_json["last_sync_time"] };
+		const auto last_sync_json = json::parse(last_sync_file);
+		const auto last_sync_time = last_sync_json["last_sync_time"];
 		last_sync_file.close();
 
 		if (rom_epoch != last_sync_time) {
