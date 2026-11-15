@@ -635,11 +635,11 @@ std::vector<fs::path> HumanReadableMap16::to_map16::get_sorted_paths(const fs::p
 }
 
 unsigned int HumanReadableMap16::to_map16::parse_BG_pages(std::vector<Byte>& bg_tiles_vec, unsigned int base_tile_number) {
-	if (!fs::exists("global_pages\\BG_pages")) {
-		throw FilesystemError("Expected directory appears to be missing", fs::path("global_pages\\BG_pages"));
+	if (!fs::exists("global_pages/BG_pages")) {
+		throw FilesystemError("Expected directory appears to be missing", fs::path("global_pages/BG_pages"));
 	}
 
-	const auto sorted_paths = get_sorted_paths("global_pages\\BG_pages");
+	const auto sorted_paths = get_sorted_paths("global_pages/BG_pages");
 
 	unsigned int curr_tile_number = base_tile_number;
 
@@ -664,11 +664,11 @@ unsigned int HumanReadableMap16::to_map16::parse_BG_pages(std::vector<Byte>& bg_
 }
 
 unsigned int HumanReadableMap16::to_map16::parse_FG_pages(std::vector<Byte>& fg_tiles_vec, std::vector<Byte>& acts_like_vec, unsigned int base_tile_number) {
-	if (!fs::exists("global_pages\\FG_pages")) {
-		throw FilesystemError("Expected directory appears to be missing", fs::path("global_pages\\FG_pages"));
+	if (!fs::exists("global_pages/FG_pages")) {
+		throw FilesystemError("Expected directory appears to be missing", fs::path("global_pages/FG_pages"));
 	}
 
-	const auto sorted_paths = get_sorted_paths("global_pages\\FG_pages");
+	const auto sorted_paths = get_sorted_paths("global_pages/FG_pages");
 
 	unsigned int curr_tile_number = base_tile_number;
 
@@ -702,11 +702,11 @@ unsigned int HumanReadableMap16::to_map16::parse_FG_pages(std::vector<Byte>& fg_
 
 unsigned int HumanReadableMap16::to_map16::parse_FG_pages_tileset_specific_page_2(std::vector<Byte>& fg_tiles_vec, std::vector<Byte>& acts_like_vec,
 	std::vector<Byte>& tileset_specific_tiles_vec, unsigned int base_tile_number) {
-	if (!fs::exists("global_pages\\FG_pages")) {
-		throw FilesystemError("Expected directory appears to be missing", fs::path("global_pages\\FG_pages"));
+	if (!fs::exists("global_pages/FG_pages")) {
+		throw FilesystemError("Expected directory appears to be missing", fs::path("global_pages/FG_pages"));
 	}
 
-	const auto sorted_paths = get_sorted_paths("global_pages\\FG_pages");
+	const auto sorted_paths = get_sorted_paths("global_pages/FG_pages");
 
 	unsigned int curr_tile_number = base_tile_number;
 
