@@ -131,7 +131,7 @@ void HumanReadableMap16::from_map16::convert_to_file(FILE* fp, unsigned int tile
 void HumanReadableMap16::from_map16::convert_FG_page(std::vector<Byte> map16_buffer, unsigned int page_number,
 	size_t tiles_start_offset, size_t acts_like_start_offset) {
 	char filename[256];
-	sprintf(filename, "global_pages\\FG_pages\\page_%02X.txt", page_number);
+	sprintf(filename, "global_pages/FG_pages/page_%02X.txt", page_number);
 	FILE* fp = fopen(filename, "w");
 	unsigned int curr_tile_number = page_number * PAGE_SIZE;
 	auto curr_tile_it = map16_buffer.begin() + tiles_start_offset + PAGE_SIZE * _16x16_BYTE_SIZE * page_number;
@@ -159,7 +159,7 @@ void HumanReadableMap16::from_map16::convert_FG_page(std::vector<Byte> map16_buf
 }
 
 void HumanReadableMap16::from_map16::convert_global_page_2_for_tileset_specific_page_2s(std::vector<Byte> map16_buffer, size_t acts_like_offset) {
-	FILE* fp = fopen("global_pages\\FG_pages\\page_02.txt", "w");
+	FILE* fp = fopen("global_pages/FG_pages/page_02.txt", "w");
 
 	auto curr_acts_like_it = map16_buffer.begin() + acts_like_offset + PAGE_SIZE * ACTS_LIKE_SIZE * 2;
 
@@ -183,7 +183,7 @@ void HumanReadableMap16::from_map16::convert_global_page_2_for_tileset_specific_
 
 void HumanReadableMap16::from_map16::convert_BG_page(std::vector<Byte> map16_buffer, unsigned int page_number, size_t tiles_start_offset) {
 	char filename[256];
-	sprintf(filename, "global_pages\\BG_pages\\page_%02X.txt", page_number);
+	sprintf(filename, "global_pages/BG_pages/page_%02X.txt", page_number);
 	FILE* fp = fopen(filename, "w");
 	unsigned int curr_tile_number = page_number * PAGE_SIZE;
 	auto curr_tile_it = map16_buffer.begin() + tiles_start_offset + PAGE_SIZE * _16x16_BYTE_SIZE * page_number;
@@ -210,7 +210,7 @@ void HumanReadableMap16::from_map16::convert_BG_page(std::vector<Byte> map16_buf
 void HumanReadableMap16::from_map16::convert_tileset_group_specific_pages(std::vector<Byte> map16_buffer, unsigned int tileset_group_number,
 	size_t tiles_start_offset, size_t diagonal_pipes_offset) {
 	char filename[256];
-	sprintf(filename, "tileset_group_specific_tiles\\tileset_group_%X.txt", tileset_group_number);
+	sprintf(filename, "tileset_group_specific_tiles/tileset_group_%X.txt", tileset_group_number);
 	FILE* fp = fopen(filename, "w");
 
 	auto curr_tile_it = map16_buffer.begin() + tiles_start_offset + PAGE_SIZE * _16x16_BYTE_SIZE * 2 * tileset_group_number + _16x16_BYTE_SIZE * TILESET_GROUP_SPECIFIC_TILES.at(0);
@@ -261,7 +261,7 @@ void HumanReadableMap16::from_map16::convert_tileset_group_specific_pages(std::v
 
 void HumanReadableMap16::from_map16::convert_tileset_specific_page_2(std::vector<Byte> map16_buffer, unsigned int tileset_number, size_t tiles_start_offset) {
 	char filename[256];
-	sprintf(filename, "tileset_specific_tiles\\tileset_%X.txt", tileset_number);
+	sprintf(filename, "tileset_specific_tiles/tileset_%X.txt", tileset_number);
 	FILE* fp = fopen(filename, "w");
 
 	unsigned int base_tile_number = 0x200;
@@ -290,7 +290,7 @@ void HumanReadableMap16::from_map16::convert_tileset_specific_page_2(std::vector
 
 void HumanReadableMap16::from_map16::convert_normal_pipe_tiles(std::vector<Byte> map16_buffer, unsigned int pipe_number, size_t normal_pipe_offset) {
 	char filename[256];
-	sprintf(filename, "pipe_tiles\\pipe_%X.txt", pipe_number);
+	sprintf(filename, "pipe_tiles/pipe_%X.txt", pipe_number);
 	FILE* fp = fopen(filename, "w");
 
 	auto curr_tile_it = map16_buffer.begin() + normal_pipe_offset + _16x16_BYTE_SIZE * 8 * pipe_number;
@@ -316,8 +316,8 @@ void HumanReadableMap16::from_map16::convert_normal_pipe_tiles(std::vector<Byte>
 void HumanReadableMap16::from_map16::convert_first_two_non_tileset_specific(std::vector<Byte> map16_buffer,
 	size_t tileset_group_specific_offset, size_t acts_like_offset) {
 
-	FILE* fp1 = fopen("global_pages\\FG_pages\\page_00.txt", "w");
-	FILE* fp2 = fopen("global_pages\\FG_pages\\page_01.txt", "w");
+	FILE* fp1 = fopen("global_pages/FG_pages/page_00.txt", "w");
+	FILE* fp2 = fopen("global_pages/FG_pages/page_01.txt", "w");
 
 	std::unordered_set<_2Bytes> tileset_group_specific = std::unordered_set<_2Bytes>(TILESET_GROUP_SPECIFIC_TILES.begin(), TILESET_GROUP_SPECIFIC_TILES.end());
 
@@ -430,8 +430,8 @@ void HumanReadableMap16::from_map16::convert(const fs::path input_file, const fs
 
 
 		fs::create_directory("global_pages");
-		fs::create_directory("global_pages\\FG_pages");
-		fs::create_directory("global_pages\\BG_pages");
+		fs::create_directory("global_pages/FG_pages");
+		fs::create_directory("global_pages/BG_pages");
 		fs::create_directory("tileset_group_specific_tiles");
 
 		if (has_tileset_specific_page_2s(header)) {
